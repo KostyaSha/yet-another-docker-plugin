@@ -1,0 +1,142 @@
+package com.github.kostyasha.yad.commons;
+
+import com.github.kostyasha.yad.DockerSlaveTemplate;
+import hudson.model.Label;
+import hudson.model.Node;
+import hudson.slaves.Cloud;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * (Very) Pure abstraction to clean up docker specific implementation.
+ * Normally it should be in {@see hudson.slaves.AbstractCloudImpl}, but it doesn't provide templates
+ * and has bad counter type.
+ *
+ * @author Kanstantsin Shautsou
+ */
+public abstract class AbstractCloud extends Cloud {
+    /**
+     * Track the count per image name for images currently being
+     * provisioned, but not necessarily reported yet by docker.
+     */
+    protected final Map<DockerSlaveTemplate, Integer> priviosionedImages = new HashMap<>();
+
+    @Nonnull
+    protected List<DockerSlaveTemplate> templates = Collections.emptyList();
+
+    /**
+     * Total max allowed number of containers
+     */
+    protected int containerCap = 50;
+
+    protected AbstractCloud(String name) {
+        super(name);
+    }
+
+    public int getContainerCap() {
+        return containerCap;
+    }
+
+    public void setContainerCap(int containerCap) {
+        this.containerCap = containerCap;
+    }
+
+    @Override
+    public boolean canProvision(Label label) {
+        return getTemplate(label) != null;
+    }
+
+    @CheckForNull
+    public DockerSlaveTemplate getTemplate(String template) {
+        for (DockerSlaveTemplate t : templates) {
+            if (t.getDockerContainerLifecycle().getImage().equals(template)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Gets first {@link DockerSlaveTemplate} that has the matching {@link Label}.
+     */
+    @CheckForNull
+    public DockerSlaveTemplate getTemplate(Label label) {
+        List<DockerSlaveTemplate> labelTemplates = getTemplates(label);
+        if (!labelTemplates.isEmpty()) {
+            return labelTemplates.get(0);
+        }
+
+        return null;
+    }
+
+    /**
+     * Add a new template to the cloud
+     */
+    public synchronized void addTemplate(DockerSlaveTemplate t) {
+        templates.add(t);
+    }
+
+    public List<DockerSlaveTemplate> getTemplates() {
+        return templates;
+    }
+
+    /**
+     * Multiple templates may have the same label.
+     *
+     * @return Templates matched to requested label assuming slave Mode
+     */
+    @Nonnull
+    public List<DockerSlaveTemplate> getTemplates(Label label) {
+        ArrayList<DockerSlaveTemplate> dockerSlaveTemplates = new ArrayList<>();
+
+        for (DockerSlaveTemplate t : templates) {
+            if (label == null && t.getMode() == Node.Mode.NORMAL) {
+                dockerSlaveTemplates.add(t);
+            }
+
+            if (label != null && label.matches(t.getLabelSet())) {
+                dockerSlaveTemplates.add(t);
+            }
+        }
+
+        return dockerSlaveTemplates;
+    }
+
+    /**
+     * Set list of available templates
+     */
+    public void setTemplates(List<DockerSlaveTemplate> replaceTemplates) {
+        if (replaceTemplates != null) {
+            templates = new ArrayList<>(replaceTemplates);
+        } else {
+            templates = Collections.emptyList();
+        }
+    }
+
+    /**
+     * Remove slave template
+     */
+    public synchronized void removeTemplate(DockerSlaveTemplate t) {
+        templates.remove(t);
+    }
+
+    /**
+     * Decrease the count of slaves being "provisioned".
+     */
+    protected void decrementAmiSlaveProvision(DockerSlaveTemplate container) {
+        synchronized (priviosionedImages) {
+            int currentProvisioning = 0;
+            if (priviosionedImages.containsKey(container)) {
+                currentProvisioning = priviosionedImages.get(container);
+            }
+            priviosionedImages.put(container, Math.max(currentProvisioning - 1, 0));
+        }
+    }
+
+}

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.github.kostyasha.yet-another-docker</groupId>
+        <artifactId>yet-another-docker-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>yet-another-docker-plugin</artifactId>
+    <packaging>hpi</packaging>
+
+    <name>Yet Another Docker Plugin</name>
+    <description>Yet Another Docker plugin. Provides docker Cloud provisioning</description>
+    <url>http://wiki.jenkins-ci.org/display/JENKINS/Yet+Another+Docker+Plugin</url>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.github.kostyasha.yet-another-docker</groupId>
+            <artifactId>yet-another-docker-java</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.github.docker-java</groupId>
+                    <artifactId>docker-java</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>ssh-slaves</artifactId>
+            <version>1.10</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>durable-task</artifactId>
+            <version>1.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>docker-commons</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>credentials</artifactId>
+            <version>1.24</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.12</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
+            <version>1.3</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>1.10.19</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <configuration>
+                    <source>${jdk.version}</source>
+                    <target>${jdk.version}</target>
+                    <debug>true</debug>
+                    <optimize>false</optimize>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jenkins-ci.tools</groupId>
+                <artifactId>maven-hpi-plugin</artifactId>
+                <version>${hpi.plugin.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.kohsuke.stapler</groupId>
+                        <artifactId>stapler</artifactId>
+                        <version>${stapler.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <artifactId>yet-another-docker-plugin</artifactId>
+                    <dependentWarExcludes>
+                        org.apache.httpcomponents:*,com.google.guava*
+                    </dependentWarExcludes>
+                    <archive>
+                        <manifestEntries>
+                            <Mask-Classes>com.google.common</Mask-Classes>
+                        </manifestEntries>
+                    </archive>
+                    <maskClasses>com.google.common.</maskClasses>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+            </plugin>
+
+
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>yad-plugin-big-run</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.jenkins-ci.plugins</groupId>
+                    <artifactId>github-pullrequest</artifactId>
+                    <version>0.0.1-beta14</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.jenkins-ci.plugins</groupId>
+                    <artifactId>ssh-credentials</artifactId>
+                    <version>1.11</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.jenkins-ci.plugins</groupId>
+                    <artifactId>token-macro</artifactId>
+                    <version>1.7</version>
+                    <optional>true</optional>
+                </dependency>
+                <dependency>
+                    <groupId>org.jenkins-ci.plugins</groupId>
+                    <artifactId>docker-traceability</artifactId>
+                    <version>1.1</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>yad-plugin-analysis</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>findbugs-maven-plugin</artifactId>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-checkstyle-plugin</artifactId>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-pmd-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

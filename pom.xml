@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>1.609.3</version>
+    </parent>
+
+    <groupId>com.github.kostyasha.yet-another-docker</groupId>
+    <artifactId>yet-another-docker-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Yet Another Docker Plugin Parent</name>
+
+    <developers>
+        <developer>
+            <id>KostyaSha</id>
+            <name>Kanstantsin Shautsou</name>
+            <timezone>UTC+3</timezone>
+        </developer>
+    </developers>
+
+    <!-- jenkins plugins identified only by artifactId(!), so keep stupid naming -->
+    <modules>
+        <module>yet-another-docker-plugin</module>
+        <module>yet-another-docker-java</module>
+    </modules>
+
+    <scm>
+        <connection>scm:git:ssh://github.com/KostyaSha/docker-better-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/KostyaSha/docker-better-plugin.git</developerConnection>
+        <url>https://github.com/KostyaSha/docker-better-plugin</url>
+        <tag>HEAD</tag>
+    </scm>
+    <distributionManagement>
+        <repository>
+            <id>maven.jenkins-ci.org</id>
+            <url>http://maven.jenkins-ci.org:8081/content/repositories/releases/</url>
+        </repository>
+    </distributionManagement>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
+        <findbugs-maven-plugin.version>3.0.2</findbugs-maven-plugin.version>
+        <jenkins.parent.version>${project.parent.version}</jenkins.parent.version>
+        <hpi.plugin.version>1.115</hpi.plugin.version>
+        <stapler.version>1.102</stapler.version>
+        <jdk.version>1.8</jdk.version>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <configuration>
+                        <autoVersionSubmodules>true</autoVersionSubmodules>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                    <configuration>
+                        <source>${jdk.version}</source>
+                        <target>${jdk.version}</target>
+                        <debug>true</debug>
+                        <optimize>false</optimize>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.jenkins-ci.tools</groupId>
+                    <artifactId>maven-hpi-plugin</artifactId>
+                    <version>${hpi.plugin.version}</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.kohsuke.stapler</groupId>
+                            <artifactId>stapler</artifactId>
+                            <version>${stapler.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>findbugs-maven-plugin</artifactId>
+                    <version>${findbugs-maven-plugin.version}</version>
+                    <configuration>
+                        <effort>Max</effort>
+                        <threshold>Low</threshold>
+                        <xmlOutput>true</xmlOutput>
+                        <failOnError>true</failOnError>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>2.17</version>
+                    <executions>
+                        <execution>
+                            <id>checkstyle</id>
+                            <phase>validate</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <encoding>UTF-8</encoding>
+                        <failOnViolation>true</failOnViolation>
+                        <logViolationsToConsole>true</logViolationsToConsole>
+                        <linkXRef>false</linkXRef>
+                        <configLocation>
+                            src/test/resources/checkstyle/checkstyle-config.xml
+                        </configLocation>
+                        <suppressionsLocation>
+                            src/test/resources/checkstyle/checkstyle-suppressions.xml
+                        </suppressionsLocation>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>3.5</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>yet-another-docker-its</id>
+            <modules>
+                <module>yet-another-docker-its</module>
+            </modules>
+        </profile>
+    </profiles>
+</project>

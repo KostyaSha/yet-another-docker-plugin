@@ -1,0 +1,23 @@
+# Yet Another Docker Plugin
+
+Project that produces jenkins hpi plugin with Docker related features.
+
+## History
+
+When https://github.com/jenkinsci/docker-plugin[docker-plugin] was in bad state i started enhancing/fixing it and stabilised it.
+https://github.com/jenkinsci/docker-plugin/issues/235#issuecomment-147975445[But i was unable to continue comfortable development] 
+and left to this fork.
+
+## Docs
+
+In GitHub wiki because i wants to use GitHub with adoc
+
+## Features
+
+- Cloud slaves
+
+## Goals
+
+- Stability
+- Quality
+- https://github.com/docker-java/docker-java[docker-java] reference implementation
