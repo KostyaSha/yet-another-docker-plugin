@@ -1,0 +1,7 @@
+.idea
+target
+work
+*.iml
+yet-another-docker-java/dependency-reduced-pom.xml
+/target
+
