@@ -48,6 +48,7 @@
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
         <findbugs-maven-plugin.version>3.0.2</findbugs-maven-plugin.version>
         <maven-compiler-plugin.version>3.3</maven-compiler-plugin.version>
+        <maven-javadoc-plugin.version>2.10.3</maven-javadoc-plugin.version>
         <jenkins.parent.version>${project.parent.version}</jenkins.parent.version>
         <hpi.plugin.version>1.115</hpi.plugin.version>
         <stapler.version>1.102</stapler.version>
