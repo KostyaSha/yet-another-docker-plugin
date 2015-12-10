@@ -9,7 +9,7 @@
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>yet-another-docker-plugin</artifactId>
+    <artifactId>yet-another-docker-its</artifactId>
 
     <name>Yet Another Docker Plugin ITs</name>
     <description>Yet Another Docker plugin. Provides docker Cloud provisioning</description>
