@@ -248,13 +248,13 @@ public class DockerCloud extends AbstractCloud {
         int estimatedTotalSlaves = countCurrentDockerSlaves(null);
         int estimatedAmiSlaves = countCurrentDockerSlaves(template);
 
-        synchronized (priviosionedImages) {
+        synchronized (provisionedImages) {
             int currentProvisioning = 0;
-            if (priviosionedImages.containsKey(template)) {
-                currentProvisioning = priviosionedImages.get(template);
+            if (provisionedImages.containsKey(template)) {
+                currentProvisioning = provisionedImages.get(template);
             }
 
-            for (int amiCount : priviosionedImages.values()) {
+            for (int amiCount : provisionedImages.values()) {
                 estimatedTotalSlaves += amiCount;
             }
 
@@ -275,7 +275,7 @@ public class DockerCloud extends AbstractCloud {
             LOG.info("Provisioning '{}' number '{}' on '{}'; Total containers: '{}'",
                     dockerImageName, estimatedAmiSlaves, name, estimatedTotalSlaves);
 
-            priviosionedImages.put(template, currentProvisioning + 1);
+            provisionedImages.put(template, currentProvisioning + 1);
             return true;
         }
     }

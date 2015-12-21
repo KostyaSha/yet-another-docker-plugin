@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * (Very) Pure abstraction to clean up docker specific implementation.
@@ -25,7 +24,7 @@ public abstract class AbstractCloud extends Cloud {
      * Track the count per image name for images currently being
      * provisioned, but not necessarily reported yet by docker.
      */
-    protected final Map<DockerSlaveTemplate, Integer> priviosionedImages = new HashMap<>();
+    protected final HashMap<DockerSlaveTemplate, Integer> provisionedImages = new HashMap<>();
 
     @Nonnull
     protected List<DockerSlaveTemplate> templates = Collections.emptyList();
@@ -130,12 +129,12 @@ public abstract class AbstractCloud extends Cloud {
      * Decrease the count of slaves being "provisioned".
      */
     protected void decrementAmiSlaveProvision(DockerSlaveTemplate container) {
-        synchronized (priviosionedImages) {
+        synchronized (provisionedImages) {
             int currentProvisioning = 0;
-            if (priviosionedImages.containsKey(container)) {
-                currentProvisioning = priviosionedImages.get(container);
+            if (provisionedImages.containsKey(container)) {
+                currentProvisioning = provisionedImages.get(container);
             }
-            priviosionedImages.put(container, Math.max(currentProvisioning - 1, 0));
+            provisionedImages.put(container, Math.max(currentProvisioning - 1, 0));
         }
     }
 
