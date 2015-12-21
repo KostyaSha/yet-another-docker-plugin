@@ -7,21 +7,91 @@
         <groupId>com.github.kostyasha.yet-another-docker</groupId>
         <artifactId>yet-another-docker-parent</artifactId>
         <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../</relativePath>
     </parent>
 
     <artifactId>yet-another-docker-its</artifactId>
 
     <name>Yet Another Docker Plugin ITs</name>
     <description>Yet Another Docker plugin. Provides docker Cloud provisioning</description>
-    <url>http://wiki.jenkins-ci.org/display/JENKINS/Yet+Another+Docker+Plugin</url>
+
+    <properties>
+        <logback.version>1.1.3</logback.version>
+    </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.github.kostyasha.yet-another-docker</groupId>
             <artifactId>yet-another-docker-plugin</artifactId>
-            <version>${project.version}</version>
+            <!--<version>${project.version}</version>-->
+            <version>0.1.0-SNAPSHOT</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.kostyasha.yet-another-docker</groupId>
+            <artifactId>yet-another-docker-java</artifactId>
+            <!--<version>${project.version}</version>-->
+            <version>0.1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.github.docker-java</groupId>
+                    <artifactId>docker-java</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+
+        <!-- remove later-->
+        <dependency>
+            <groupId>org.jenkins-ci</groupId>
+            <artifactId>acceptance-test-harness</artifactId>
+            <version>1.17</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>ru.yandex.qatools.clay</groupId>
+            <artifactId>clay-maven-settings-builder</artifactId>
+            <version>2.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ru.yandex.qatools.clay</groupId>
+            <artifactId>clay-aether</artifactId>
+            <version>2.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jenkins-ci.main</groupId>
+            <artifactId>remoting</artifactId>
+            <version>2.52</version>
+        </dependency>
+
+        <!--<dependency>-->
+        <!--<groupId>net.schmizz</groupId>-->
+        <!--<artifactId>sshj</artifactId>-->
+        <!--<version>0.8.1</version>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>junit</groupId>
@@ -47,6 +117,172 @@
             <version>1.10.19</version>
         </dependency>
 
+
+        <!--<dependency>-->
+            <!--<groupId>org.jenkins-ci.plugins</groupId>-->
+            <!--<artifactId>docker-traceability</artifactId>-->
+            <!--<version>1.1</version>-->
+        <!--</dependency>-->
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>docker-commons</artifactId>
+            <version>${docker-commons-plugin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>authentication-tokens</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>token-macro</artifactId>
+            <version>1.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>durable-task</artifactId>
+            <version>1.7</version>
+        </dependency>
+
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <!-- version specified in grandparent pom -->
+                <executions>
+                    <execution>
+                        <id>list-dependencies</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>list</goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>${project.build.outputDirectory}/dependencies.txt</outputFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>resgen</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.github.kostyasha.yet-another-docker</groupId>
+                                    <artifactId>yet-another-docker-plugin</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>hpi</type>
+                                </artifactItem>
+                                <!-- dependencies that goes to unusual locations -->
+                                <!-- bundled plugins -->
+                                <artifactItem>
+                                    <groupId>org.jenkins-ci.plugins</groupId>
+                                    <artifactId>ssh-slaves</artifactId>
+                                    <version>1.10</version>
+                                    <type>hpi</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.jenkins-ci.plugins</groupId>
+                                    <artifactId>credentials</artifactId>
+                                    <version>1.24</version>
+                                    <type>hpi</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.jenkins-ci.plugins</groupId>
+                                    <artifactId>ssh-credentials</artifactId>
+                                    <version>1.11</version>
+                                    <type>hpi</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.jenkins-ci.plugins</groupId>
+                                    <artifactId>javadoc</artifactId>
+                                    <version>1.1</version>
+                                    <type>hpi</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.jenkins-ci.plugins</groupId>
+                                    <artifactId>translation</artifactId>
+                                    <version>1.10</version>
+                                    <type>hpi</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.jenkins-ci.plugins</groupId>
+                                    <artifactId>matrix-project</artifactId>
+                                    <version>${matrix-project.version}</version>
+                                    <type>hpi</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.jenkins-ci.plugins</groupId>
+                                    <artifactId>script-security</artifactId>
+                                    <version>1.13</version>
+                                    <type>hpi</type>
+                                </artifactItem>
+                                <!--<artifactItem>-->
+                                <!--<groupId>org.jenkins-ci.plugins</groupId>-->
+                                <!--<artifactId>github-pullrequest</artifactId>-->
+                                <!--<type>hpi</type>-->
+                                <!--</artifactItem>-->
+                                <artifactItem>
+                                    <groupId>org.jenkins-ci.plugins</groupId>
+                                    <artifactId>token-macro</artifactId>
+                                    <type>hpi</type>
+                                </artifactItem>
+                                <!--<artifactItem>-->
+                                    <!--<groupId>org.jenkins-ci.plugins</groupId>-->
+                                    <!--<artifactId>docker-traceability</artifactId>-->
+                                    <!--<type>hpi</type>-->
+                                <!--</artifactItem>-->
+                                <artifactItem>
+                                    <groupId>org.jenkins-ci.plugins</groupId>
+                                    <artifactId>docker-commons</artifactId>
+                                    <type>hpi</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.jenkins-ci.plugins</groupId>
+                                    <artifactId>authentication-tokens</artifactId>
+                                    <type>hpi</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.jenkins-ci.plugins</groupId>
+                                    <artifactId>durable-task</artifactId>
+                                    <type>hpi</type>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}/docker-it/plugins</outputDirectory>
+                            <stripVersion>true</stripVersion>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>yad-plugin-big-run-its</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.jenkins-ci.plugins</groupId>
+                    <artifactId>github-pullrequest</artifactId>
+                    <version>0.0.1-beta14</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.jenkins-ci.plugins</groupId>
+                    <artifactId>token-macro</artifactId>
+                    <version>1.7</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.jenkins-ci.plugins</groupId>
+                    <artifactId>docker-traceability</artifactId>
+                    <version>1.1</version>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>

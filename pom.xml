@@ -53,6 +53,11 @@
         <hpi.plugin.version>1.115</hpi.plugin.version>
         <stapler.version>1.102</stapler.version>
         <jdk.version>1.8</jdk.version>
+        <!-- addional versions -->
+        <matrix-project.version>1.6</matrix-project.version>
+        <maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
+        <maven-resources-plugin.version>2.7</maven-resources-plugin.version>
+        <docker-commons-plugin.version>1.2</docker-commons-plugin.version>
     </properties>
 
     <repositories>
@@ -159,7 +164,7 @@
 
     <profiles>
         <profile>
-            <id>yet-another-docker-its</id>
+            <id>yad-its</id>
             <modules>
                 <module>yet-another-docker-its</module>
             </modules>
