@@ -177,6 +177,9 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         containerConfig.withLabels(labels);
     }
 
+    /**
+     * Provision slave container and wait for it's availability.
+     */
     private DockerSlave provisionWithWait(DockerSlaveTemplate template) throws IOException, Descriptor.FormException {
         final DockerContainerLifecycle dockerContainerLifecycle = template.getDockerContainerLifecycle();
         final String imageId = dockerContainerLifecycle.getImage();
@@ -331,6 +334,11 @@ public class DockerCloud extends AbstractCloud implements Serializable {
     @Override
     public int hashCode() {
         return name.hashCode();
+    }
+
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     @Extension
