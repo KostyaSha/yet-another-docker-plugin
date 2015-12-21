@@ -70,8 +70,9 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @DataBoundSetter
-    public void setUser(String user) {
+    public DockerComputerJNLPLauncher setUser(String user) {
         this.user = user;
+        return this;
     }
 
     public String getUser() {
@@ -83,8 +84,9 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @DataBoundSetter
-    public void setLaunchTimeout(long launchTimeout) {
+    public DockerComputerJNLPLauncher setLaunchTimeout(long launchTimeout) {
         this.launchTimeout = launchTimeout;
+        return this;
     }
 
     @Override

@@ -74,7 +74,7 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     }
 
     @DataBoundConstructor
-    public DockerSlaveTemplate(String id,
+    public DockerSlaveTemplate(@Nonnull String id,
                                String labelString,
                                String remoteFs,
                                String remoteFsMapping,
@@ -84,13 +84,11 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
             throw new FormException("hidden id must not be null", "id");
         }
         this.id = id;
-
-        this.labelString = Util.fixNull(labelString);
+        setLabelString(labelString);
         this.remoteFs = Strings.isNullOrEmpty(remoteFs) ? "/home/jenkins" : remoteFs;
         this.remoteFsMapping = remoteFsMapping;
         this.maxCapacity = maxCapacity;
         this.dockerContainerLifecycle = dockerContainerLifecycle;
-        this.labelSet = Label.parse(labelString);
     }
 
     public DockerContainerLifecycle getDockerContainerLifecycle() {
@@ -101,9 +99,16 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
         return labelString;
     }
 
+    public DockerSlaveTemplate setLabelString(String labelString) {
+        this.labelString = Util.fixNull(labelString);
+        this.labelSet = Label.parse(labelString);
+        return this;
+    }
+
     @DataBoundSetter
-    public void setMode(Node.Mode mode) {
+    public DockerSlaveTemplate setMode(Node.Mode mode) {
         this.mode = mode;
+        return this;
     }
 
     public Node.Mode getMode() {
@@ -114,8 +119,9 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
      * Experimental option allows set number of executors
      */
     @DataBoundSetter
-    public void setNumExecutors(int numExecutors) {
+    public DockerSlaveTemplate setNumExecutors(int numExecutors) {
         this.numExecutors = numExecutors;
+        return this;
     }
 
     public int getNumExecutors() {
@@ -127,8 +133,9 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     }
 
     @DataBoundSetter
-    public void setRetentionStrategy(RetentionStrategy retentionStrategy) {
+    public DockerSlaveTemplate setRetentionStrategy(RetentionStrategy retentionStrategy) {
         this.retentionStrategy = retentionStrategy;
+        return this;
     }
 
     public RetentionStrategy getRetentionStrategy() {
@@ -147,8 +154,9 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     }
 
     @DataBoundSetter
-    public void setLauncher(DockerComputerLauncher launcher) {
+    public DockerSlaveTemplate setLauncher(DockerComputerLauncher launcher) {
         this.launcher = launcher;
+        return this;
     }
 
     public DockerComputerLauncher getLauncher() {
