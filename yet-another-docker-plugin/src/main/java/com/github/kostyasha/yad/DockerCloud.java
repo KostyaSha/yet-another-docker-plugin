@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,7 +42,9 @@ import static java.util.Objects.isNull;
  * Docker Jenkins Cloud configuration. Contains connection configuration,
  * {@link DockerSlaveTemplate} contains configuration for running docker image.
  */
-public class DockerCloud extends AbstractCloud {
+public class DockerCloud extends AbstractCloud implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private static final Logger LOG = LoggerFactory.getLogger(DockerCloud.class);
 
     private static final String DOCKER_CLOUD_LABEL = DockerCloud.class.getName();
