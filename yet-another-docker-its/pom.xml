@@ -41,6 +41,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.jenkins-ci.main</groupId>
+            <artifactId>cli</artifactId>
+            <version>${jenkins.parent.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
             <version>${logback.version}</version>
@@ -262,27 +268,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>yad-plugin-big-run-its</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.jenkins-ci.plugins</groupId>
-                    <artifactId>github-pullrequest</artifactId>
-                    <version>0.0.1-beta14</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.jenkins-ci.plugins</groupId>
-                    <artifactId>token-macro</artifactId>
-                    <version>1.7</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.jenkins-ci.plugins</groupId>
-                    <artifactId>docker-traceability</artifactId>
-                    <version>1.1</version>
-                </dependency>
-            </dependencies>
-        </profile>
-    </profiles>
 </project>

@@ -7,8 +7,8 @@
         </encoder>
     </appender>
 
+    <logger name="hudson.cli" level="DEBUG"/>
     <logger name="com.github.kostyasha" level="DEBUG"/>
-
     <logger name="com.github.kostyasha.yad.docker_java" level="INFO"/>
 
     <root level="INFO">

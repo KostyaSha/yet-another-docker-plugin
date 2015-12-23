@@ -52,8 +52,9 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
     }
 
     @DataBoundSetter
-    public void setPullStrategy(DockerImagePullStrategy pullStrategy) {
+    public DockerPullImage setPullStrategy(DockerImagePullStrategy pullStrategy) {
         this.pullStrategy = pullStrategy;
+        return this;
     }
 
     public String getCredentialsId() {
@@ -61,8 +62,9 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
     }
 
     @DataBoundSetter
-    public void setCredentialsId(String credentialsId) {
+    public DockerPullImage setCredentialsId(String credentialsId) {
         this.credentialsId = credentialsId;
+        return this;
     }
 
     /**

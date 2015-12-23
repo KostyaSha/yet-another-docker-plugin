@@ -107,7 +107,12 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
         final String containerId = dockerComputer.getContainerId();
         final String rootUrl = Jenkins.getActiveInstance().getRootUrl();
+//        Objects.requireNonNull(rootUrl, "Jenkins root url is not specified!");
+        if (isNull(rootUrl)) {
+            throw new NullPointerException("Jenkins root url is not specified!");
+        }
         final DockerCloud dockerCloud = dockerComputer.getCloud();
+//        Objects.requireNonNull(dockerCloud, "Cloud not found for computer " + computer.getName());
         if (isNull(dockerCloud)) {
             throw new NullPointerException("Cloud not found for computer " + computer.getName());
         }

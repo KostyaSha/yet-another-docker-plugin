@@ -1,6 +1,7 @@
 package com.github.kostyasha.it.rule;
 
 import com.github.kostyasha.it.other.JenkinsDockerImage;
+import com.github.kostyasha.it.utils.DockerHPIContainerUtil;
 import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerException;
@@ -12,6 +13,7 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Buil
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Container;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.ExposedPort;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Image;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Ports;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.VolumesFrom;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientBuilder;
@@ -23,6 +25,8 @@ import com.github.kostyasha.yad.docker_java.org.apache.commons.codec.digest.Dige
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import hudson.cli.CLI;
+import hudson.cli.CLIConnectionFactory;
+import hudson.cli.DockerCLI;
 import org.apache.maven.settings.building.SettingsBuildingException;
 import org.jenkinsci.test.acceptance.Ssh;
 import org.junit.rules.ExternalResource;
@@ -56,8 +60,12 @@ public class DockerRule extends ExternalResource {
     private static final Logger LOG = LoggerFactory.getLogger(DockerRule.class);
 
     public static final String CONTAINER_JAVA_OPTS = "JAVA_OPTS="
-            + "-Dhudson.diyChunking=false "
+            // hack crap https://issues.jenkins-ci.org/browse/JENKINS-23232
+//            + "-Dhudson.diyChunking=false "
             + "-agentlib:jdwp=transport=dt_socket,server=n,address=192.168.99.1:5005,suspend=y "
+            + "-Dhudson.remoting.Launcher.pingIntervalSec=-1 "
+            + "-Dhudson.model.UpdateCenter.never=true "
+            + "-Dhudson.model.LoadStatistics.clock=1000 "
 //            + "-verbose:class "
             ;
     public static final String YAD_PLUGIN_NAME = "yet-another-docker-plugin";
@@ -302,7 +310,7 @@ public class DockerRule extends ExternalResource {
     /**
      * return {@link CLI} for specified jenkins container ID
      */
-    public CLI createCliForContainer(String containerId) throws IOException, InterruptedException {
+    public DockerCLI createCliForContainer(String containerId) throws IOException, InterruptedException {
         final InspectContainerResponse inspect = cli.inspectContainerCmd(containerId).exec();
         return createCliForInspect(inspect);
     }
@@ -334,9 +342,12 @@ public class DockerRule extends ExternalResource {
 
         // recreating data container without data-image doesn't make sense, so reuse boolean
         String dataContainerId = getDataContainerId(refreshDataContainer);
-        // hack crap https://issues.jenkins-ci.org/browse/JENKINS-23232
         final String id = cmd
                 .withEnv(CONTAINER_JAVA_OPTS)
+                .withExposedPorts(new ExposedPort(48000))
+                .withPortSpecs("48000/tcp")
+                .withPortBindings(PortBinding.parse("0.0.0.0:48000:48000"))
+//                .withPortBindings(PortBinding.parse("0.0.0.0:48000:48000"), PortBinding.parse("0.0.0.0:50000:50000"))
                 .withVolumesFrom(new VolumesFrom(dataContainerId))
                 .exec()
                 .getId();
@@ -389,11 +400,17 @@ public class DockerRule extends ExternalResource {
             throw new IllegalStateException("Can't create temp directory " + buildDir.getAbsolutePath());
         }
 
+
         final String dockerfile = generateDockerfileFor(plugins);
         final File dockerfileFile = new File(buildDir, "Dockerfile");
         FileUtils.writeStringToFile(dockerfileFile, dockerfile);
 
-        final File pluginDir = new File(buildDir, JenkinsDockerImage.JENKINS_1_603_1.homePath + "/plugins/");
+
+        final File buildHomePath = new File(buildDir, JenkinsDockerImage.JENKINS_1_609_3.homePath);
+        final File jenkinsConfig = new File(buildHomePath, "config.xml");
+        DockerHPIContainerUtil.copyResourceFromClass(DockerHPIContainerUtil.class, "config.xml", jenkinsConfig);
+
+        final File pluginDir = new File(buildHomePath, "/plugins/");
         if (!pluginDir.mkdirs()) {
             throw new IllegalStateException("Can't create dirs " + pluginDir.getAbsolutePath());
         }
@@ -428,12 +445,15 @@ public class DockerRule extends ExternalResource {
 
     /**
      * Return {@link CLI} for jenkins docker container.
-     * // TODO no way specify CliPort
+     * // TODO no way specify CliPort (hacky resolution {@link DockerCLI})
      */
-    public CLI createCliForInspect(InspectContainerResponse inspect)
+    public DockerCLI createCliForInspect(InspectContainerResponse inspect)
             throws IOException, InterruptedException {
         Integer httpPort = null;
-        Integer cliPort = null;
+        // CLI mess around ports
+        Integer cliPort = null; // should be this
+        Integer jnlpAgentPort = null; // but in reality used this
+
         final Map<ExposedPort, Ports.Binding[]> bindings = inspect.getNetworkSettings().getPorts().getBindings();
         for (Map.Entry<ExposedPort, Ports.Binding[]> entry : bindings.entrySet()) {
             if (entry.getKey().getPort() == 8080) {
@@ -442,26 +462,57 @@ public class DockerRule extends ExternalResource {
             if (entry.getKey().getPort() == 50000) {
                 cliPort = entry.getValue()[0].getHostPort();
             }
+            if (entry.getKey().getPort() == 48000) {
+                final Ports.Binding binding = entry.getValue()[0];
+                jnlpAgentPort = binding.getHostPort();
+            }
         }
 
         final URL url = new URL("http://" + getHost() + ":" + httpPort.toString());
-        LOG.info("Jenkins future http://{}:{}", getHost(), httpPort);
-        LOG.info("Jenkins future http://{}:{}/configure", getHost(), httpPort);
-        return createCliWithWait(url);
+
+        if (jnlpAgentPort == null) {
+            throw new IOException("Can't get jnlpPort." +  bindings.toString());
+        }
+        return createCliWithWait(url, jnlpAgentPort);
     }
 
-    private static CLI createCliWithWait(URL url) throws InterruptedException {
-        for (int i = 0; i < 10; i++) {
+    /**
+     * Create DockerCLI connection against specified jnlpSlaveAgent port
+     */
+    private DockerCLI createCliWithWait(URL url, int port) throws InterruptedException, IOException {
+        DockerCLI cli = null;
+        boolean connected = false;
+        int i = 0;
+        while (i <= 10 && !connected) {
+            i++;
             try {
-                final CLI cli = new CLI(url);
-                cli.upgrade();
-                return cli;
+                final CLIConnectionFactory factory = new CLIConnectionFactory().url(url);
+                cli = new DockerCLI(factory, port);
+                final String channelName = cli.getChannel().getName();
+                // https://github.com/jenkinsci/jenkins/commit/653fbdb65024b1b528e21f682172885f7111bba9
+                if (channelName.contains("CLI connection to")) {
+                    cli.upgrade();
+                    connected = true;
+                    LOG.debug(channelName);
+                } else {
+                    LOG.debug("Cli connection is not via CliPort '{}'. Sleeping for 5s...", channelName);
+                    cli.close();
+                    Thread.sleep(5 * 1000);
+                }
             } catch (IOException e) {
-                LOG.debug("Jenkins is not available. Sleeping for 5s...");
+                LOG.debug("Jenkins is not available. Sleeping for 5s...", e.getMessage());
                 Thread.sleep(5 * 1000);
             }
         }
-        throw new RuntimeException("Can't create CLI");
+
+        if (!connected) {
+            throw new IOException("Can't connect to {}" + url.toString());
+        }
+
+        LOG.info("Jenkins future {}", url);
+        LOG.info("Jenkins future {}/configure", url);
+        LOG.info("Jenkins future {}/log/all", url);
+        return cli;
     }
 
     @Override

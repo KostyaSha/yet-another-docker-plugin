@@ -1,11 +1,10 @@
-package com.github.kostyasha.it.test;
+package com.github.kostyasha.it.dead;
 
 import com.github.kostyasha.it.rule.DockerRule;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
-import hudson.cli.CLI;
+import hudson.cli.DockerCLI;
 import hudson.remoting.Callable;
 import hudson.remoting.Channel;
 import jenkins.model.Jenkins;
@@ -47,7 +46,7 @@ public class SimpleTest implements Serializable {
                 .withLabels(labels);
 
         String jenkinsId = d.runFreshJenkinsContainer(createCmd, PULL_ALWAYS, true);
-        final CLI cli = d.createCliForContainer(jenkinsId);
+        final DockerCLI cli = d.createCliForContainer(jenkinsId);
 
         try (Channel channel = cli.getChannel()) {
             final String resource = getResource(getClass(), "AddDocker.groovy");

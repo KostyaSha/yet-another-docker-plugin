@@ -30,7 +30,7 @@ public class DockerHPIContainerUtil {
     /**
      * Unused and replaced with resources dir.
      */
-    public static Set<Artifact> resolvePluginsFor(String plugin) throws FileNotFoundException, SettingsBuildingException, AetherException {
+    private static Set<Artifact> resolvePluginsFor(String plugin) throws FileNotFoundException, SettingsBuildingException, AetherException {
         Settings settings = loadSettings()
 //                .withActiveProfile("jenkins")
                 .build();

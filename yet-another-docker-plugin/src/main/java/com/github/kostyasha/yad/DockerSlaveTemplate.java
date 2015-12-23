@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
@@ -67,38 +68,38 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     private transient /*almost final*/ Set<LabelAtom> labelSet;
 
     /**
-     * For groovy UI. Generates new unique ID.
+     * Generates new unique ID for new instances.
      */
     public DockerSlaveTemplate() {
         this.id = UUID.randomUUID().toString();
     }
 
+    /**
+     * Custom specified ID. When editing existed UI entry, UI sends it back.
+     */
     @DataBoundConstructor
-    public DockerSlaveTemplate(@Nonnull String id,
-                               String labelString,
-                               String remoteFs,
-                               String remoteFsMapping,
-                               int maxCapacity,
-                               DockerContainerLifecycle dockerContainerLifecycle) throws FormException {
+    public DockerSlaveTemplate(@Nonnull String id) throws FormException {
         if (id == null) {
-            throw new FormException("hidden id must not be null", "id");
+            throw new FormException("Hidden id must not be null", "id");
         }
         this.id = id;
-        setLabelString(labelString);
-        this.remoteFs = Strings.isNullOrEmpty(remoteFs) ? "/home/jenkins" : remoteFs;
-        this.remoteFsMapping = remoteFsMapping;
-        this.maxCapacity = maxCapacity;
-        this.dockerContainerLifecycle = dockerContainerLifecycle;
     }
 
     public DockerContainerLifecycle getDockerContainerLifecycle() {
         return dockerContainerLifecycle;
     }
 
+    @DataBoundSetter
+    public DockerSlaveTemplate setDockerContainerLifecycle(DockerContainerLifecycle dockerContainerLifecycle) {
+        this.dockerContainerLifecycle = dockerContainerLifecycle;
+        return this;
+    }
+
     public String getLabelString() {
         return labelString;
     }
 
+    @DataBoundSetter
     public DockerSlaveTemplate setLabelString(String labelString) {
         this.labelString = Util.fixNull(labelString);
         this.labelSet = Label.parse(labelString);
@@ -163,20 +164,40 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
         return launcher;
     }
 
+    @Nonnull
     public String getRemoteFs() {
-        return remoteFs;
+        return Strings.isNullOrEmpty(remoteFs) ? "/home/jenkins" : remoteFs;
+    }
+
+    @DataBoundSetter
+    public DockerSlaveTemplate setRemoteFs(String remoteFs) {
+        this.remoteFs = remoteFs;
+        return this;
     }
 
     public int getMaxCapacity() {
         return maxCapacity;
     }
 
+    @DataBoundSetter
+    public DockerSlaveTemplate setMaxCapacity(int maxCapacity) {
+        this.maxCapacity = maxCapacity;
+        return this;
+    }
+
     public String getRemoteFsMapping() {
         return remoteFsMapping;
     }
 
+    @DataBoundSetter
+    public DockerSlaveTemplate setRemoteFsMapping(String remoteFsMapping) {
+        this.remoteFsMapping = remoteFsMapping;
+        return this;
+    }
+
+    @Nonnull
     public Set<LabelAtom> getLabelSet() {
-        return labelSet;
+        return labelSet != null ? labelSet : Collections.<LabelAtom>emptySet();
     }
 
     /**

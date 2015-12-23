@@ -42,6 +42,7 @@ import static java.util.Objects.isNull;
  * Docker Jenkins Cloud configuration. Contains connection configuration,
  * {@link DockerSlaveTemplate} contains configuration for running docker image.
  */
+@SuppressFBWarnings(value = {"SE_BAD_FIELD", "SE_NO_SUITABLE_CONSTRUCTOR"})
 public class DockerCloud extends AbstractCloud implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -63,13 +64,14 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         setContainerCap(containerCap);
     }
 
-//    @CheckForNull
+    //    @CheckForNull
     public DockerConnector getConnector() {
         return connector;
     }
 
-    public void setConnector(DockerConnector connector) {
+    public DockerCloud setConnector(DockerConnector connector) {
         this.connector = connector;
+        return this;
     }
 
     /**
@@ -286,7 +288,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         }
     }
 
-//    @CheckForNull
+    //    @CheckForNull
     public static DockerCloud getCloudByName(String name) {
         final Cloud cloud = Jenkins.getActiveInstance().getCloud(name);
         if (cloud instanceof DockerCloud) {

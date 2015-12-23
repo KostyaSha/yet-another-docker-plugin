@@ -1,16 +1,16 @@
-package com.github.kostyasha.it;
+package com.github.kostyasha.it.dead;
 
+import com.github.kostyasha.it.other.JenkinsDockerImage;
 import com.github.kostyasha.it.rule.DockerRule;
 import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.DockerConnector;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
-import hudson.cli.CLI;
+import hudson.cli.DockerCLI;
 import hudson.model.FreeStyleProject;
 import hudson.model.Node;
 import hudson.remoting.Callable;
@@ -46,7 +46,7 @@ public class SomeTest implements Serializable {
         put(SomeTest.class.getPackage().getName(), SomeTest.class.getName());
     }};
 
-    public static final String IMAGE_NAME = "jenkins:1.609.3";
+    public static final JenkinsDockerImage JENKINS_DOCKER_IMAGE = JenkinsDockerImage.JENKINS_1_609_3;
 
     @ClassRule
     public static DockerRule d = new DockerRule(false);
@@ -56,13 +56,13 @@ public class SomeTest implements Serializable {
      */
     @Test
     public void dockerCloudDescriptorMissing() throws Exception {
-        CreateContainerCmd createCmd = d.cli.createContainerCmd(IMAGE_NAME)
+        CreateContainerCmd createCmd = d.cli.createContainerCmd(JENKINS_DOCKER_IMAGE.getDockerImageName())
                 .withPublishAllPorts(true)
                 .withLabels(labels); // mark test method
 
         String jenkinsId = d.runFreshJenkinsContainer(createCmd, PULL_ALWAYS, true);
         // make standard CLI to remote jenkins
-        final CLI cli = d.createCliForContainer(jenkinsId);
+        final DockerCLI cli = d.createCliForContainer(jenkinsId);
 
         try (Channel channel = cli.getChannel()) {
             LOG.info("Remoteclassloading allowed {}", channel.isRemoteClassLoadingAllowed());
@@ -103,12 +103,12 @@ public class SomeTest implements Serializable {
 
     @Test
     public void configureWithGroovyHack() throws Exception {
-        CreateContainerCmd createCmd = d.cli.createContainerCmd(IMAGE_NAME)
+        CreateContainerCmd createCmd = d.cli.createContainerCmd(JENKINS_DOCKER_IMAGE.getDockerImageName())
                 .withPublishAllPorts(true)
                 .withLabels(labels);
 
         String jenkinsId = d.runFreshJenkinsContainer(createCmd, PULL_ALWAYS, true);
-        final CLI cli = d.createCliForContainer(jenkinsId);
+        final DockerCLI cli = d.createCliForContainer(jenkinsId);
 
         try (Channel channel = cli.getChannel()) {
             final String resource = getResource(getClass(), "AddDocker.groovy");
@@ -140,16 +140,16 @@ public class SomeTest implements Serializable {
 
 
     @Test
-    public void someTest() throws Exception {
+    public void addDockerCloudFromTest() throws Exception {
         // mark test method
-        labels.put(SomeTest.class.getName(), "someTest");
+        labels.put(SomeTest.class.getName(), "addDockerCloudFromTest");
 
-        CreateContainerCmd createCmd = d.cli.createContainerCmd(IMAGE_NAME)
+        CreateContainerCmd createCmd = d.cli.createContainerCmd(JENKINS_DOCKER_IMAGE.getDockerImageName())
                 .withPublishAllPorts(true)
                 .withLabels(labels);
 
         String jenkinsId = d.runFreshJenkinsContainer(createCmd, PULL_ALWAYS, true);
-        final CLI cli = d.createCliForContainer(jenkinsId);
+        final DockerCLI cli = d.createCliForContainer(jenkinsId);
 
         try (Channel channel = cli.getChannel()) {
             LOG.info("Remoteclassloading allowed {}", channel.isRemoteClassLoadingAllowed());
