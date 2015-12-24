@@ -188,8 +188,7 @@ public class SimpleBuildTest implements Serializable {
                     3,
                     dockerConnector
             );
-            // dockerCloud has no descriptor at this point
-            //
+
             jenkins.clouds.add(dockerCloud);
 
             final FreeStyleProject project = jenkins.createProject(FreeStyleProject.class, "freestyle-project");
