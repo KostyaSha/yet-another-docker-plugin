@@ -1,8 +1,8 @@
 
- - `mvn install` yet-another-docker-java-shaded module
- - `mvn install` yet-another-docker-plugin module (produces hpi)
+ - `mvn install` `yet-another-docker-java-shaded` module
+ - `mvn install` `yet-another-docker-plugin` module (produces hpi)
  - enable `yet-another-docker-its` profile
- - `mvn package/compile` on yet-another-docker-its
+ - `mvn package/compile` on `yet-another-docker-its`
  - In IDEA manually attach `docker-java-shaded....jar` to plugin and its modules
  (no idea why IDEA doesn't see deps)
  - place `~/.docker.io.properties` with :
