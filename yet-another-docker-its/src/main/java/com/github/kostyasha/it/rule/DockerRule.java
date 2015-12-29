@@ -1,5 +1,6 @@
 package com.github.kostyasha.it.rule;
 
+import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.github.kostyasha.it.other.JenkinsDockerImage;
 import com.github.kostyasha.it.utils.DockerHPIContainerUtil;
 import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
@@ -18,16 +19,20 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Port
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.VolumesFrom;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientBuilder;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.LocalDirectorySSLConfig;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.SSLConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.codec.digest.DigestUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
+import com.github.kostyasha.yad.docker_java.org.apache.commons.io.IOUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import hudson.cli.CLI;
 import hudson.cli.CLIConnectionFactory;
 import hudson.cli.DockerCLI;
 import org.apache.maven.settings.building.SettingsBuildingException;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.test.acceptance.Ssh;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.Description;
@@ -40,6 +45,7 @@ import javax.annotation.CheckForNull;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,7 +62,8 @@ import static org.codehaus.plexus.util.FileUtils.copyFile;
  *
  * @author Kanstantsin Shautsou
  */
-public class DockerRule extends ExternalResource {
+public class DockerRule extends ExternalResource implements Serializable {
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(DockerRule.class);
 
     public static final String CONTAINER_JAVA_OPTS = "JAVA_OPTS="
@@ -91,6 +98,7 @@ public class DockerRule extends ExternalResource {
     private Set<String> provisioned = new HashSet<>();
     //cache
     public transient Description description;
+    public DockerClientConfig clientConfig;
 
     public DockerRule(boolean cleanup) {
         this.cleanup = cleanup;
@@ -160,7 +168,7 @@ public class DockerRule extends ExternalResource {
      * Prepare cached DockerClient `cli`
      */
     private void prepareDockerCli() {
-        DockerClientConfig config = DockerClientConfig.createDefaultConfigBuilder()
+        clientConfig = DockerClientConfig.createDefaultConfigBuilder()
                 .withUri(getDockerUri())
                 .build();
 
@@ -168,7 +176,7 @@ public class DockerRule extends ExternalResource {
                 .withReadTimeout(0)
                 .withConnectTimeout(10000);
 
-        cli = DockerClientBuilder.getInstance(config)
+        cli = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)
                 .build();
     }
@@ -525,5 +533,27 @@ public class DockerRule extends ExternalResource {
                             .exec()
             );
         }
+    }
+
+    public DockerServerCredentials getDockerServerCredentials() throws IOException {
+        String certPath = null;
+        final SSLConfig sslConfig = clientConfig.getSslConfig();
+        if (sslConfig instanceof LocalDirectorySSLConfig) {
+            final LocalDirectorySSLConfig directorySSLConfig = (LocalDirectorySSLConfig) sslConfig;
+            certPath = directorySSLConfig.getDockerCertPath();
+        }
+
+        final String keypem = FileUtils.readFileToString(new File(certPath + "/" + "key.pem"));
+        final String certpem = FileUtils.readFileToString(new File(certPath + "/" + "cert.pem"));
+        final String capem = FileUtils.readFileToString(new File(certPath + "/" + "ca.pem"));
+
+        return new DockerServerCredentials(
+                CredentialsScope.GLOBAL, // scope
+                null, // name
+                null, //desc
+                keypem,
+                certpem,
+                capem
+        );
     }
 }

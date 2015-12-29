@@ -79,7 +79,6 @@ public class DockerCLI {
     public DockerCLI(CLIConnectionFactory factory, int exposedPort) throws IOException, InterruptedException {
         jenkins = factory.jenkins;
         this.exposedPort = exposedPort;
-        ExecutorService exec = factory.exec;
 
         String url = jenkins.toExternalForm();
         if (!url.endsWith("/")) url += '/';

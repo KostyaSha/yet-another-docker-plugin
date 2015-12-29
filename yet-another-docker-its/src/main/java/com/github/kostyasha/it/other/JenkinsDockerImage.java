@@ -6,6 +6,8 @@ package com.github.kostyasha.it.other;
 public class JenkinsDockerImage {
     public static final JenkinsDockerImage JENKINS_1_609_3 = new JenkinsDockerImage("jenkins", "1.609.3",
             "/usr/share/jenkins/ref/");
+    public static final JenkinsDockerImage JENKINS_1_625_3 = new JenkinsDockerImage("jenkins", "1.625.3",
+            "/usr/share/jenkins/ref/");
 
     public final String name;
     public final String tag;
