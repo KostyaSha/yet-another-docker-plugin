@@ -30,6 +30,7 @@
         <dependency>
             <groupId>com.github.kostyasha.yet-another-docker</groupId>
             <artifactId>yet-another-docker-java</artifactId>
+            <!--TODO cleanup? dep fails with variable reference -->
             <!--<version>${project.version}</version>-->
             <version>0.1.0-SNAPSHOT</version>
             <exclusions>
@@ -40,12 +41,33 @@
             </exclusions>
         </dependency>
 
+        <!-- jenkins dep -->
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>
             <artifactId>cli</artifactId>
             <version>${jenkins.parent.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.jenkins-ci.main</groupId>
+            <artifactId>jenkins-test-harness</artifactId>
+            <version>${jenkins.parent.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-jdk14</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- tests logging -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
@@ -69,6 +91,10 @@
                     <artifactId>slf4j-log4j12</artifactId>
                 </exclusion>
                 <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-jdk14</artifactId>
+            </exclusion>
+                <exclusion>
                     <groupId>log4j</groupId>
                     <artifactId>log4j</artifactId>
                 </exclusion>
@@ -85,12 +111,6 @@
             <groupId>ru.yandex.qatools.clay</groupId>
             <artifactId>clay-aether</artifactId>
             <version>2.5</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>remoting</artifactId>
-            <version>2.52</version>
         </dependency>
 
         <!--<dependency>-->
@@ -266,6 +286,14 @@
                     </execution>
                 </executions>
             </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-surefire-plugin</artifactId>-->
+                <!--<version>${maven-surefire-plugin.version}</version>-->
+                <!--<configuration>-->
+                    <!--<forkCount>1</forkCount>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
         </plugins>
     </build>
 </project>

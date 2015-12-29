@@ -41,13 +41,6 @@ import static org.junit.Assert.fail;
 public class SomeTest implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(SomeTest.class);
-
-    Map<String, String> labels = new HashMap<String, String>() {{
-        put(SomeTest.class.getPackage().getName(), SomeTest.class.getName());
-    }};
-
-    public static final JenkinsDockerImage JENKINS_DOCKER_IMAGE = JenkinsDockerImage.JENKINS_1_609_3;
-
     @ClassRule
     public static DockerRule d = new DockerRule(false);
 
@@ -56,11 +49,7 @@ public class SomeTest implements Serializable {
      */
     @Test
     public void dockerCloudDescriptorMissing() throws Exception {
-        CreateContainerCmd createCmd = d.cli.createContainerCmd(JENKINS_DOCKER_IMAGE.getDockerImageName())
-                .withPublishAllPorts(true)
-                .withLabels(labels); // mark test method
-
-        String jenkinsId = d.runFreshJenkinsContainer(createCmd, PULL_ALWAYS, true);
+        String jenkinsId = d.runFreshJenkinsContainer(PULL_ALWAYS, true);
         // make standard CLI to remote jenkins
         final DockerCLI cli = d.createCliForContainer(jenkinsId);
 
@@ -103,11 +92,7 @@ public class SomeTest implements Serializable {
 
     @Test
     public void configureWithGroovyHack() throws Exception {
-        CreateContainerCmd createCmd = d.cli.createContainerCmd(JENKINS_DOCKER_IMAGE.getDockerImageName())
-                .withPublishAllPorts(true)
-                .withLabels(labels);
-
-        String jenkinsId = d.runFreshJenkinsContainer(createCmd, PULL_ALWAYS, true);
+        String jenkinsId = d.runFreshJenkinsContainer(PULL_ALWAYS, true);
         final DockerCLI cli = d.createCliForContainer(jenkinsId);
 
         try (Channel channel = cli.getChannel()) {
@@ -141,14 +126,7 @@ public class SomeTest implements Serializable {
 
     @Test
     public void addDockerCloudFromTest() throws Exception {
-        // mark test method
-        labels.put(SomeTest.class.getName(), "addDockerCloudFromTest");
-
-        CreateContainerCmd createCmd = d.cli.createContainerCmd(JENKINS_DOCKER_IMAGE.getDockerImageName())
-                .withPublishAllPorts(true)
-                .withLabels(labels);
-
-        String jenkinsId = d.runFreshJenkinsContainer(createCmd, PULL_ALWAYS, true);
+        String jenkinsId = d.runFreshJenkinsContainer(PULL_ALWAYS, true);
         final DockerCLI cli = d.createCliForContainer(jenkinsId);
 
         try (Channel channel = cli.getChannel()) {

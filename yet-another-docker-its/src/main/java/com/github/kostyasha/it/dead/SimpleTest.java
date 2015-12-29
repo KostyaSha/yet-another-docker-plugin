@@ -1,7 +1,6 @@
 package com.github.kostyasha.it.dead;
 
 import com.github.kostyasha.it.rule.DockerRule;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import hudson.cli.DockerCLI;
@@ -15,8 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.github.kostyasha.it.utils.DockerHPIContainerUtil.getResource;
 import static com.github.kostyasha.yad.commons.DockerImagePullStrategy.PULL_ALWAYS;
@@ -29,23 +26,13 @@ public class SimpleTest implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(SimpleTest.class);
 
-    Map<String, String> labels = new HashMap<String, String>() {{
-        put(SimpleTest.class.getPackage().getName(), SimpleTest.class.getName());
-    }};
-
-    public static final String IMAGE_NAME = "jenkins:1.609.3";
-
     @ClassRule
     public static DockerRule d = new DockerRule(false);
 
 
     @Test
     public void configureWithGroovyHack() throws Exception {
-        CreateContainerCmd createCmd = d.cli.createContainerCmd(IMAGE_NAME)
-                .withPublishAllPorts(true)
-                .withLabels(labels);
-
-        String jenkinsId = d.runFreshJenkinsContainer(createCmd, PULL_ALWAYS, true);
+        String jenkinsId = d.runFreshJenkinsContainer(PULL_ALWAYS, true);
         final DockerCLI cli = d.createCliForContainer(jenkinsId);
 
         try (Channel channel = cli.getChannel()) {
@@ -75,5 +62,4 @@ public class SimpleTest implements Serializable {
             cli.close();
         }
     }
-
 }

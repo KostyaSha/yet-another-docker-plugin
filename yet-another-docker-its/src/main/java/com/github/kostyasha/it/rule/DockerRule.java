@@ -7,7 +7,6 @@ import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.NotFoundException;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.BuildResponseItem;
@@ -26,7 +25,6 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.P
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.codec.digest.DigestUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
-import com.github.kostyasha.yad.docker_java.org.apache.commons.io.IOUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import hudson.cli.CLI;
 import hudson.cli.CLIConnectionFactory;
@@ -45,7 +43,6 @@ import javax.annotation.CheckForNull;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,6 +51,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.github.kostyasha.it.other.JenkinsDockerImage.JENKINS_DEFAULT;
 import static java.util.Objects.isNull;
 import static org.codehaus.plexus.util.FileUtils.copyFile;
 
@@ -62,14 +60,14 @@ import static org.codehaus.plexus.util.FileUtils.copyFile;
  *
  * @author Kanstantsin Shautsou
  */
-public class DockerRule extends ExternalResource implements Serializable {
+public class DockerRule extends ExternalResource {
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(DockerRule.class);
 
     public static final String CONTAINER_JAVA_OPTS = "JAVA_OPTS="
             // hack crap https://issues.jenkins-ci.org/browse/JENKINS-23232
 //            + "-Dhudson.diyChunking=false "
-            + "-agentlib:jdwp=transport=dt_socket,server=n,address=192.168.99.1:5005,suspend=y "
+//            + "-agentlib:jdwp=transport=dt_socket,server=n,address=192.168.99.1:5005,suspend=y "
             + "-Dhudson.remoting.Launcher.pingIntervalSec=-1 "
             + "-Dhudson.model.UpdateCenter.never=true "
             + "-Dhudson.model.LoadStatistics.clock=1000 "
@@ -77,27 +75,26 @@ public class DockerRule extends ExternalResource implements Serializable {
             ;
     public static final String YAD_PLUGIN_NAME = "yet-another-docker-plugin";
     public static final String NL = "\n";
-    public static final String THIS_PLUGIN = "com.github.kostyasha.yet-another-docker:yet-another-docker-plugin:hpi:0.1.0-SNAPSHOT";
     public static final String DATA_IMAGE = "kostyasha/jenkins-data:sometest";
     public static final String DATA_CONTAINER_NAME = "jenkins_data";
-
-
-    @CheckForNull
-    public DockerRule outerRule;
+    public static final String SLAVE_IMAGE_JNLP = "kostyasha/jenkins-slave:jdk-wget";
 
     @CheckForNull
-    public DockerClient cli;
+    private DockerClient dockerClient;
 
+    // default for docker-machine images
     private String sshUser = "docker";
     private String sshPass = "tcuser";
-    private String host = "192.168.99.100";
+
+    // todo extract from dockerClient that has env resolver?
     private int dockerPort = 2376;
+    private String host = "192.168.99.100";
     private boolean useTls = true;
 
     boolean cleanup = true;
     private Set<String> provisioned = new HashSet<>();
     //cache
-    public transient Description description;
+    public Description description;
     public DockerClientConfig clientConfig;
 
     public DockerRule(boolean cleanup) {
@@ -127,6 +124,10 @@ public class DockerRule extends ExternalResource implements Serializable {
         return sshPass;
     }
 
+    public DockerClient getDCli() {
+        return dockerClient;
+    }
+
     @Override
     public Statement apply(Statement base, Description description) {
         this.description = description;
@@ -136,8 +137,8 @@ public class DockerRule extends ExternalResource implements Serializable {
     @Override
     protected void before() throws Throwable {
         prepareDockerCli();
-        //check cli
-        cli.infoCmd().exec();
+        //check dockerClient
+        getDCli().infoCmd().exec();
         // ensure we have right ssh creds
         checkSsh();
     }
@@ -147,7 +148,7 @@ public class DockerRule extends ExternalResource implements Serializable {
      */
     public void pullImage(DockerImagePullStrategy pullStrategy, String image) throws InterruptedException {
         LOG.info("Pulling image {} with {}...", image, pullStrategy);
-        final List<Image> images = cli.listImagesCmd().withShowAll(true).exec();
+        final List<Image> images = getDCli().listImagesCmd().withShowAll(true).exec();
         boolean imageExists = false;
 
         for (Image candidateImage : images) {
@@ -159,13 +160,13 @@ public class DockerRule extends ExternalResource implements Serializable {
 
         // TODO implement strategies!
 
-        cli.pullImageCmd(image)
+        getDCli().pullImageCmd(image)
                 .exec(new PullImageResultCallback())
                 .awaitSuccess();
     }
 
     /**
-     * Prepare cached DockerClient `cli`
+     * Prepare cached DockerClient `dockerClient`
      */
     private void prepareDockerCli() {
         clientConfig = DockerClientConfig.createDefaultConfigBuilder()
@@ -176,7 +177,7 @@ public class DockerRule extends ExternalResource implements Serializable {
                 .withReadTimeout(0)
                 .withConnectTimeout(10000);
 
-        cli = DockerClientBuilder.getInstance(clientConfig)
+        dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)
                 .build();
     }
@@ -200,11 +201,6 @@ public class DockerRule extends ExternalResource implements Serializable {
         }
     }
 
-//    public Map<String, String> getDockerVars() {
-//        final DockerClientConfig config = DockerClientConfig.createDefaultConfigBuilder().build();
-//        config.
-//    }
-
     /**
      * Docker data container with unique name based on docker data-image (also unique).
      * If we are refreshing container, then it makes sense rebuild data-image.
@@ -214,7 +210,7 @@ public class DockerRule extends ExternalResource implements Serializable {
         boolean dataContainerExist = false;
         String dataContainerId = null;
         LOG.debug("Checking whether data-container exist...");
-        final List<Container> containers = cli.listContainersCmd().withShowAll(true).exec();
+        final List<Container> containers = getDCli().listContainersCmd().withShowAll(true).exec();
         for (Container container : containers) {
             final String[] names = container.getNames();
             for (String name : names) {
@@ -229,7 +225,7 @@ public class DockerRule extends ExternalResource implements Serializable {
         if (dataContainerExist && refresh) {
             LOG.info("Removing data-container for refresh.");
             try {
-                cli.removeContainerCmd(dataContainerId)
+                getDCli().removeContainerCmd(dataContainerId)
                         .withForce()
                         .withRemoveVolumes(true)
                         .exec();
@@ -242,7 +238,7 @@ public class DockerRule extends ExternalResource implements Serializable {
 
         if (!dataContainerExist) {
             LOG.debug("Data container doesn't exist, creating...");
-            final CreateContainerResponse containerResponse = cli.createContainerCmd(DATA_IMAGE)
+            final CreateContainerResponse containerResponse = getDCli().createContainerCmd(DATA_IMAGE)
                     .withName(DATA_CONTAINER_NAME)
                     .withCmd("/bin/true")
                     .exec();
@@ -254,7 +250,7 @@ public class DockerRule extends ExternalResource implements Serializable {
             throw new IllegalStateException("Container id can't be null.");
         }
 
-        cli.inspectContainerCmd(dataContainerId).exec().getId();
+        getDCli().inspectContainerCmd(dataContainerId).exec().getId();
 
         LOG.debug("Data containerId: '{}'", dataContainerId);
         return dataContainerId;
@@ -270,7 +266,7 @@ public class DockerRule extends ExternalResource implements Serializable {
             throws IOException, AetherException, SettingsBuildingException, InterruptedException {
         // prepare data image
         boolean dataImageExist = false;
-        final List<Image> images = cli.listImagesCmd()
+        final List<Image> images = getDCli().listImagesCmd()
                 .withShowAll(true)
                 .exec();
         for (Image image : images) {
@@ -285,7 +281,7 @@ public class DockerRule extends ExternalResource implements Serializable {
         if (dataImageExist && refresh) {
             LOG.info("Removing data-image.");
             // https://github.com/docker-java/docker-java/issues/398
-            cli.removeImageCmd(DATA_IMAGE).withForce().exec();
+            getDCli().removeImageCmd(DATA_IMAGE).withForce().exec();
             dataImageExist = false;
         }
 
@@ -319,7 +315,7 @@ public class DockerRule extends ExternalResource implements Serializable {
      * return {@link CLI} for specified jenkins container ID
      */
     public DockerCLI createCliForContainer(String containerId) throws IOException, InterruptedException {
-        final InspectContainerResponse inspect = cli.inspectContainerCmd(containerId).exec();
+        final InspectContainerResponse inspect = getDCli().inspectContainerCmd(containerId).exec();
         return createCliForInspect(inspect);
     }
 
@@ -327,18 +323,22 @@ public class DockerRule extends ExternalResource implements Serializable {
     /**
      * Run, record and remove after test container with jenkins.
      */
-    public String runFreshJenkinsContainer(CreateContainerCmd cmd,
-                                           DockerImagePullStrategy pullStrategy,
+    public String runFreshJenkinsContainer(DockerImagePullStrategy pullStrategy,
                                            boolean refreshDataContainer)
             throws IOException, AetherException, SettingsBuildingException, InterruptedException {
-        pullImage(pullStrategy, cmd.getImage());
+        pullImage(pullStrategy, JENKINS_DEFAULT.getDockerImageName());
+
+        // labels attached to container allows cleanup container if it wasn't removed
+        final Map<String, String> labels = new HashMap<>();
+        labels.put("test.displayName", description.getDisplayName());
+//        labels.put("test.methodName", description.getMethodName());
 
         //remove existed before
         try {
-            final List<Container> containers = cli.listContainersCmd().withShowAll(true).exec();
+            final List<Container> containers = getDCli().listContainersCmd().withShowAll(true).exec();
             for (Container c : containers) {
-                if (c.getLabels().equals(cmd.getLabels())) {
-                    cli.removeContainerCmd(c.getId())
+                if (c.getLabels().equals(labels)) {
+                    getDCli().removeContainerCmd(c.getId())
                             .withForce()
                             .exec();
                     break;
@@ -350,18 +350,20 @@ public class DockerRule extends ExternalResource implements Serializable {
 
         // recreating data container without data-image doesn't make sense, so reuse boolean
         String dataContainerId = getDataContainerId(refreshDataContainer);
-        final String id = cmd
+        final String id = getDCli().createContainerCmd(JENKINS_DEFAULT.getDockerImageName())
                 .withEnv(CONTAINER_JAVA_OPTS)
-                .withExposedPorts(new ExposedPort(48000))
-                .withPortSpecs("48000/tcp")
+                .withExposedPorts(new ExposedPort(JENKINS_DEFAULT.tcpPort))
+                .withPortSpecs(String.format("%d/tcp", JENKINS_DEFAULT.tcpPort))
                 .withPortBindings(PortBinding.parse("0.0.0.0:48000:48000"))
 //                .withPortBindings(PortBinding.parse("0.0.0.0:48000:48000"), PortBinding.parse("0.0.0.0:50000:50000"))
                 .withVolumesFrom(new VolumesFrom(dataContainerId))
+                .withLabels(labels)
+                .withPublishAllPorts(true)
                 .exec()
                 .getId();
         provisioned.add(id);
 
-        cli.startContainerCmd(id).exec();
+        getDCli().startContainerCmd(id).exec();
         return id;
     }
 
@@ -430,7 +432,7 @@ public class DockerRule extends ExternalResource implements Serializable {
 
         try {
             LOG.info("Building data-image...");
-            cli.buildImageCmd(buildDir)
+            getDCli().buildImageCmd(buildDir)
                     .withTag(DATA_IMAGE)
                     .withForcerm()
                     .exec(new BuildImageResultCallback() {
@@ -464,22 +466,22 @@ public class DockerRule extends ExternalResource implements Serializable {
 
         final Map<ExposedPort, Ports.Binding[]> bindings = inspect.getNetworkSettings().getPorts().getBindings();
         for (Map.Entry<ExposedPort, Ports.Binding[]> entry : bindings.entrySet()) {
-            if (entry.getKey().getPort() == 8080) {
+            if (entry.getKey().getPort() == JENKINS_DEFAULT.httpPort) {
                 httpPort = entry.getValue()[0].getHostPort();
             }
-            if (entry.getKey().getPort() == 50000) {
-                cliPort = entry.getValue()[0].getHostPort();
-            }
-            if (entry.getKey().getPort() == 48000) {
+            if (entry.getKey().getPort() == JENKINS_DEFAULT.tcpPort) {
                 final Ports.Binding binding = entry.getValue()[0];
                 jnlpAgentPort = binding.getHostPort();
+            }
+            if (entry.getKey().getPort() == JENKINS_DEFAULT.jnlpPort) {
+                cliPort = entry.getValue()[0].getHostPort();
             }
         }
 
         final URL url = new URL("http://" + getHost() + ":" + httpPort.toString());
 
         if (jnlpAgentPort == null) {
-            throw new IOException("Can't get jnlpPort." +  bindings.toString());
+            throw new IOException("Can't get jnlpPort." + bindings.toString());
         }
         return createCliWithWait(url, jnlpAgentPort);
     }
@@ -488,23 +490,22 @@ public class DockerRule extends ExternalResource implements Serializable {
      * Create DockerCLI connection against specified jnlpSlaveAgent port
      */
     private DockerCLI createCliWithWait(URL url, int port) throws InterruptedException, IOException {
-        DockerCLI cli = null;
+        DockerCLI tempCli = null;
         boolean connected = false;
         int i = 0;
         while (i <= 10 && !connected) {
             i++;
             try {
                 final CLIConnectionFactory factory = new CLIConnectionFactory().url(url);
-                cli = new DockerCLI(factory, port);
-                final String channelName = cli.getChannel().getName();
-                // https://github.com/jenkinsci/jenkins/commit/653fbdb65024b1b528e21f682172885f7111bba9
+                tempCli = new DockerCLI(factory, port);
+                final String channelName = tempCli.getChannel().getName();
                 if (channelName.contains("CLI connection to")) {
-                    cli.upgrade();
+                    tempCli.upgrade();
                     connected = true;
                     LOG.debug(channelName);
                 } else {
                     LOG.debug("Cli connection is not via CliPort '{}'. Sleeping for 5s...", channelName);
-                    cli.close();
+                    tempCli.close();
                     Thread.sleep(5 * 1000);
                 }
             } catch (IOException e) {
@@ -520,14 +521,14 @@ public class DockerRule extends ExternalResource implements Serializable {
         LOG.info("Jenkins future {}", url);
         LOG.info("Jenkins future {}/configure", url);
         LOG.info("Jenkins future {}/log/all", url);
-        return cli;
+        return tempCli;
     }
 
     @Override
     protected void after() {
         if (cleanup) {
             provisioned.stream().forEach(id ->
-                    cli.removeContainerCmd(id)
+                    getDCli().removeContainerCmd(id)
                             .withForce()
                             .withRemoveVolumes(true)
                             .exec()

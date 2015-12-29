@@ -9,6 +9,8 @@ import org.jenkinsci.remoting.RoleChecker;
  * @author Kanstantsin Shautsou
  */
 public abstract class TCallable<V, T extends Throwable> implements Callable<V, T> {
+    private static final long serialVersionUID = 1L;
+
     @Override
     public void checkRoles(RoleChecker checker) throws SecurityException {
     }

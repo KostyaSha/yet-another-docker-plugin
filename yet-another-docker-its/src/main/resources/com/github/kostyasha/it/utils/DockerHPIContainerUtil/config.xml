@@ -1,4 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <hudson>
+    <!-- https://github.com/jenkinsci/jenkins/commit/653fbdb65024b1b528e21f682172885f7111bba9 -->
     <slaveAgentPort>48000</slaveAgentPort>
 </hudson>

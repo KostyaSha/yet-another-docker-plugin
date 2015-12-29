@@ -15,7 +15,9 @@ import java.util.List;
 /**
  * @author Kanstantsin Shautsou
  */
-public class JenkinsRuleHelpers implements Serializable {
+public final class JenkinsRuleHelpers implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private JenkinsRuleHelpers() {
     }
 
@@ -41,15 +43,17 @@ public class JenkinsRuleHelpers implements Serializable {
 
         while (true) {
             Thread.sleep(10);
-            if (isSomethingHappening(jenkins))
-                streak=0;
-            else
+            if (isSomethingHappening(jenkins)) {
+                streak = 0;
+            } else {
                 streak++;
+            }
 
-            if (streak>5)   // the system is quiet for a while
+            if (streak > 5) {  // the system is quiet for a while
                 return;
+            }
 
-            if (System.currentTimeMillis()-startTime > timeout) {
+            if (System.currentTimeMillis() - startTime > timeout) {
                 List<Queue.Executable> building = new ArrayList<Queue.Executable>();
                 for (Computer c : jenkins.getComputers()) {
                     for (Executor e : c.getExecutors()) {
