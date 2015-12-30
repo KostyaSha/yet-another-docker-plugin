@@ -53,7 +53,7 @@ public class SimpleBuildTest implements Serializable {
 
     @Test
     public void addDockerCloudFromTest() throws Throwable {
-        String jenkinsId = d.runFreshJenkinsContainer(PULL_ALWAYS, true);
+        String jenkinsId = d.runFreshJenkinsContainer(PULL_ALWAYS, false);
         final DockerCLI cli = d.createCliForContainer(jenkinsId);
         try (Channel channel = cli.getChannel()) {
             assertThat(

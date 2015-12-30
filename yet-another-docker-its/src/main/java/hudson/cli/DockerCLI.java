@@ -26,6 +26,7 @@ package hudson.cli;
 
 import hudson.cli.client.Messages;
 import hudson.remoting.Channel;
+import hudson.remoting.ChannelBuilder;
 import hudson.remoting.RemoteInputStream;
 import hudson.remoting.RemoteOutputStream;
 import hudson.remoting.SocketChannelStream;
@@ -141,16 +142,23 @@ public class DockerCLI {
             throw (IOException) new IOException("Failed to negotiate transport security").initCause(e);
         }
 
-        return new Channel(
-                "CLI connection to " + jenkins,  // name
-                pool, //exec
-                Channel.Mode.BINARY,
-                new BufferedInputStream(c.in),
-                new BufferedOutputStream(c.out),
-                null,
-                false,
-                null
-        );
+        return new ChannelBuilder("CLI connection to " + jenkins, pool)
+                .withMode(Channel.Mode.BINARY)
+                .withBaseLoader(null)
+                .withArbitraryCallableAllowed(true)
+                .withRemoteClassLoadingAllowed(true)
+                .build(new BufferedInputStream(c.in), new BufferedOutputStream(c.out));
+
+//        return new Channel(
+//                "CLI connection to " + jenkins,  // name
+//                pool, //exec
+//                Channel.Mode.BINARY,
+//                new BufferedInputStream(c.in),
+//                new BufferedOutputStream(c.out),
+//                null,
+//                false,
+//                null
+//        );
     }
 
     /**

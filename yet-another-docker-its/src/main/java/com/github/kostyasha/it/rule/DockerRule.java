@@ -5,10 +5,10 @@ import com.github.kostyasha.it.other.JenkinsDockerImage;
 import com.github.kostyasha.it.utils.DockerHPIContainerUtil;
 import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Container;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.ExposedPort;
@@ -19,10 +19,12 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Volu
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientBuilder;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.LocalDirectorySSLConfig;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.SSLConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
+import com.github.kostyasha.yad.docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.codec.digest.DigestUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
@@ -40,19 +42,20 @@ import org.slf4j.LoggerFactory;
 import ru.qatools.clay.aether.AetherException;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import static com.github.kostyasha.it.other.JenkinsDockerImage.JENKINS_DEFAULT;
-import static java.util.Objects.isNull;
+import static java.util.Objects.*;
 import static org.codehaus.plexus.util.FileUtils.copyFile;
 
 /**
@@ -124,7 +127,7 @@ public class DockerRule extends ExternalResource {
         return sshPass;
     }
 
-    public DockerClient getDCli() {
+    public DockerClient getDockerCli() {
         return dockerClient;
     }
 
@@ -138,7 +141,7 @@ public class DockerRule extends ExternalResource {
     protected void before() throws Throwable {
         prepareDockerCli();
         //check dockerClient
-        getDCli().infoCmd().exec();
+        getDockerCli().infoCmd().exec();
         // ensure we have right ssh creds
         checkSsh();
     }
@@ -146,23 +149,30 @@ public class DockerRule extends ExternalResource {
     /**
      * Pull docker image on this docker host.
      */
-    public void pullImage(DockerImagePullStrategy pullStrategy, String image) throws InterruptedException {
-        LOG.info("Pulling image {} with {}...", image, pullStrategy);
-        final List<Image> images = getDCli().listImagesCmd().withShowAll(true).exec();
-        boolean imageExists = false;
+    public void pullImage(DockerImagePullStrategy pullStrategy, String imageName) throws InterruptedException {
+        LOG.info("Pulling image {} with {}...", imageName, pullStrategy);
+        final List<Image> images = getDockerCli().listImagesCmd().withShowAll(true).exec();
 
-        for (Image candidateImage : images) {
-            if (candidateImage.getId().equals(image)) {
-                imageExists = true;
-                break;
-            }
+        NameParser.ReposTag repostag = NameParser.parseRepositoryTag(imageName);
+        // if image was specified without tag, then treat as latest
+        final String fullImageName = repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
+
+        boolean hasImage = Iterables.any(images, image -> Arrays.asList(image.getRepoTags()).contains(fullImageName));
+
+        boolean pull = hasImage ?
+                pullStrategy.pullIfExists(imageName) :
+                pullStrategy.pullIfNotExists(imageName);
+
+        if (pull) {
+            LOG.info("Pulling image '{}' {}. This may take awhile...", imageName,
+                    hasImage ? "again" : "since one was not found");
+
+            long startTime = System.currentTimeMillis();
+            //Identifier amiId = Identifier.fromCompoundString(ami);
+            getDockerCli().pullImageCmd(imageName).exec(new PullImageResultCallback()).awaitSuccess();
+            long pullTime = System.currentTimeMillis() - startTime;
+            LOG.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
         }
-
-        // TODO implement strategies!
-
-        getDCli().pullImageCmd(image)
-                .exec(new PullImageResultCallback())
-                .awaitSuccess();
     }
 
     /**
@@ -205,44 +215,50 @@ public class DockerRule extends ExternalResource {
      * Docker data container with unique name based on docker data-image (also unique).
      * If we are refreshing container, then it makes sense rebuild data-image.
      */
-    public String getDataContainerId(boolean refresh) throws AetherException, SettingsBuildingException,
+    public String getDataContainerId(boolean forceRefresh) throws AetherException, SettingsBuildingException,
             InterruptedException, IOException {
-        boolean dataContainerExist = false;
+        final Map<String, File> pluginFiles = getPluginFiles();
         String dataContainerId = null;
+        String dataContainerImage = null;
+
         LOG.debug("Checking whether data-container exist...");
-        final List<Container> containers = getDCli().listContainersCmd().withShowAll(true).exec();
+        final List<Container> containers = getDockerCli().listContainersCmd().withShowAll(true).exec();
+        OUTER:
         for (Container container : containers) {
             final String[] names = container.getNames();
             for (String name : names) {
                 // docker adds "/" before container name
                 if (name.equals("/" + DATA_CONTAINER_NAME)) {
-                    dataContainerExist = true;
                     dataContainerId = container.getId();
+                    dataContainerImage = container.getImage();
+                    LOG.debug("Data container exists {}, based on image {}", dataContainerId, dataContainerImage);
+                    break OUTER;
                 }
             }
         }
 
-        if (dataContainerExist && refresh) {
-            LOG.info("Removing data-container for refresh.");
+        final String dataImage = getDataImage(forceRefresh, pluginFiles, DATA_IMAGE);
+        final boolean dataImagesEquals = dataImage.equals(dataContainerImage);
+        LOG.debug("Data images the same: {}", dataImagesEquals);
+
+        if (nonNull(dataContainerId) && (forceRefresh || !dataImagesEquals)) {
+            LOG.info("Removing data-container. ForceRefresh: {}", forceRefresh);
             try {
-                getDCli().removeContainerCmd(dataContainerId)
-                        .withForce()
+                getDockerCli().removeContainerCmd(dataContainerId)
+                        .withForce() // force is not good
                         .withRemoveVolumes(true)
                         .exec();
             } catch (NotFoundException ignored) {
             }
-            dataContainerExist = false;
+            dataContainerId = null;
         }
 
-        ensureDataImageExist(refresh);
-
-        if (!dataContainerExist) {
+        if (isNull(dataContainerId)) {
             LOG.debug("Data container doesn't exist, creating...");
-            final CreateContainerResponse containerResponse = getDCli().createContainerCmd(DATA_IMAGE)
+            final CreateContainerResponse containerResponse = getDockerCli().createContainerCmd(dataImage)
                     .withName(DATA_CONTAINER_NAME)
                     .withCmd("/bin/true")
                     .exec();
-            LOG.warn("Create warnings {}", containerResponse.getWarnings());
             dataContainerId = containerResponse.getId();
         }
 
@@ -250,7 +266,7 @@ public class DockerRule extends ExternalResource {
             throw new IllegalStateException("Container id can't be null.");
         }
 
-        getDCli().inspectContainerCmd(dataContainerId).exec().getId();
+        getDockerCli().inspectContainerCmd(dataContainerId).exec().getId();
 
         LOG.debug("Data containerId: '{}'", dataContainerId);
         return dataContainerId;
@@ -258,41 +274,37 @@ public class DockerRule extends ExternalResource {
 
     /**
      * Ensures that data-image exist on docker.
-     * TODO optimise and exclude rebuild if hashes from label are the same.
+     * Rebuilds data image if content (plugin hashes) doesn't match.
      *
-     * @param refresh rebuild data image
+     * @param forceUpdate rebuild data image.
      */
-    public void ensureDataImageExist(boolean refresh)
+    public String getDataImage(boolean forceUpdate, final Map<String, File> pluginFiles, String imageName)
             throws IOException, AetherException, SettingsBuildingException, InterruptedException {
-        // prepare data image
-        boolean dataImageExist = false;
-        final List<Image> images = getDCli().listImagesCmd()
+        String existedDataImage = null;
+
+        final List<Image> images = getDockerCli().listImagesCmd()
                 .withShowAll(true)
                 .exec();
+        OUTER:
         for (Image image : images) {
             final String[] repoTags = image.getRepoTags();
             for (String repoTag : repoTags) {
-                if (repoTag.equals(DATA_IMAGE)) {
-                    dataImageExist = true;
+                if (repoTag.equals(imageName)) {
+                    existedDataImage = image.getId();
+                    break OUTER;
                 }
             }
         }
 
-        if (dataImageExist && refresh) {
+        if (nonNull(existedDataImage) && (forceUpdate || !isActualDataImage(pluginFiles, existedDataImage))) {
             LOG.info("Removing data-image.");
-            // https://github.com/docker-java/docker-java/issues/398
-            getDCli().removeImageCmd(DATA_IMAGE).withForce().exec();
-            dataImageExist = false;
+            //TODO https://github.com/docker-java/docker-java/issues/398
+            getDockerCli().removeImageCmd(existedDataImage).withForce().exec();
+            existedDataImage = null;
         }
 
-        if (!dataImageExist) {
+        if (isNull(existedDataImage)) {
             LOG.debug("Preparing plugin files for");
-            final Map<String, File> pluginFiles = new HashMap<>();
-
-            final File pluginsDir = new File(targetDir().getAbsolutePath() + "/docker-it/plugins");
-            for (File plugin : pluginsDir.listFiles()) {
-                pluginFiles.put(plugin.getName().replace(".hpi", ".jpi"), plugin);
-            }
 
 //            final Set<Artifact> artifactResults = resolvePluginsFor(THIS_PLUGIN);
 //            LOG.debug("Resolved plugins: {}", artifactResults);
@@ -305,40 +317,129 @@ public class DockerRule extends ExternalResource {
 //                                    artifact.getFile()
 //                            )
 //            );
-
-            buildImageFor(pluginFiles);
+            existedDataImage = buildImage(pluginFiles);
         }
+
+        return existedDataImage;
     }
 
+
+    @Nonnull
+    public static Map<String, File> getPluginFiles() {
+        final Map<String, File> pluginFiles = new HashMap<>();
+        final File pluginsDir = new File(targetDir().getAbsolutePath() + "/docker-it/plugins");
+        final File[] files = pluginsDir.listFiles();
+        requireNonNull(files, "Files must exist in plugin dir");
+        for (File plugin : files) {
+            pluginFiles.put(plugin.getName().replace(".hpi", ".jpi"), plugin);
+        }
+
+        return pluginFiles;
+    }
+
+    public boolean isActualDataImage(Map<String, File> plugins, String existedDataImage) throws IOException {
+        if (isNull(existedDataImage)) {
+            return false;
+        }
+
+        final InspectImageResponse imageResponse = getDockerCli().inspectImageCmd(existedDataImage).exec();
+        final Map<String, String> imageLabels = imageResponse.getContainerConfig().getLabels();
+        final Map<String, String> generateLabels = generateLabels(plugins);
+
+        //filter non plugin labels
+        for (Map.Entry<String, String> entry : imageLabels.entrySet()) {
+            if (!entry.getKey().endsWith(".jpi")) {
+                imageLabels.remove(entry.getKey());
+            }
+        }
+
+        boolean equals = imageLabels.entrySet().equals(generateLabels.entrySet());
+
+        LOG.debug("Existed data image {} is actual: {}", existedDataImage, equals);
+        return equals;
+    }
+
+    /**
+     * Build docker image containing specified plugins.
+     */
+    public String buildImage(Map<String, File> plugins) throws IOException, InterruptedException {
+        LOG.debug("Building image for {}", plugins);
+//        final File tempDirectory = TempFileHelper.createTempDirectory("build-image", targetDir().toPath());
+        final File buildDir = new File(targetDir().getAbsolutePath() + "/docker-it/build-image");
+        if (buildDir.exists()) {
+            FileUtils.deleteDirectory(buildDir);
+        }
+        if (!buildDir.mkdirs()) {
+            throw new IllegalStateException("Can't create temp directory " + buildDir.getAbsolutePath());
+        }
+
+        final String dockerfile = generateDockerfileFor(plugins);
+        final File dockerfileFile = new File(buildDir, "Dockerfile");
+        FileUtils.writeStringToFile(dockerfileFile, dockerfile);
+
+        final File buildHomePath = new File(buildDir, JenkinsDockerImage.JENKINS_DEFAULT.homePath);
+        final File jenkinsConfig = new File(buildHomePath, "config.xml");
+        DockerHPIContainerUtil.copyResourceFromClass(DockerHPIContainerUtil.class, "config.xml", jenkinsConfig);
+
+        final File pluginDir = new File(buildHomePath, "/plugins/");
+        if (!pluginDir.mkdirs()) {
+            throw new IllegalStateException("Can't create dirs " + pluginDir.getAbsolutePath());
+        }
+
+        for (Map.Entry<String, File> entry : plugins.entrySet()) {
+            final File dst = new File(pluginDir + "/" + entry.getKey());
+            copyFile(entry.getValue(), dst);
+        }
+
+        try {
+            LOG.info("Building data-image...");
+            return getDockerCli().buildImageCmd(buildDir)
+                    .withTag(DATA_IMAGE)
+                    .withForcerm()
+                    .exec(new BuildImageResultCallback() {
+                        public void onNext(BuildResponseItem item) {
+                            String text = item.getStream();
+                            if (nonNull(text)) {
+                                LOG.debug(StringUtils.removeEnd(text, NL));
+                            }
+                            super.onNext(item);
+                        }
+                    })
+                    .awaitImageId();
+        } finally {
+            buildDir.delete();
+        }
+
+    }
 
     /**
      * return {@link CLI} for specified jenkins container ID
      */
     public DockerCLI createCliForContainer(String containerId) throws IOException, InterruptedException {
-        final InspectContainerResponse inspect = getDCli().inspectContainerCmd(containerId).exec();
+        final InspectContainerResponse inspect = getDockerCli().inspectContainerCmd(containerId).exec();
         return createCliForInspect(inspect);
     }
 
 
     /**
      * Run, record and remove after test container with jenkins.
+     *
+     * @param forceRefresh enforce data container and data image refresh
      */
-    public String runFreshJenkinsContainer(DockerImagePullStrategy pullStrategy,
-                                           boolean refreshDataContainer)
+    public String runFreshJenkinsContainer(DockerImagePullStrategy pullStrategy, boolean forceRefresh)
             throws IOException, AetherException, SettingsBuildingException, InterruptedException {
         pullImage(pullStrategy, JENKINS_DEFAULT.getDockerImageName());
 
         // labels attached to container allows cleanup container if it wasn't removed
         final Map<String, String> labels = new HashMap<>();
         labels.put("test.displayName", description.getDisplayName());
-//        labels.put("test.methodName", description.getMethodName());
 
         //remove existed before
         try {
-            final List<Container> containers = getDCli().listContainersCmd().withShowAll(true).exec();
+            final List<Container> containers = getDockerCli().listContainersCmd().withShowAll(true).exec();
             for (Container c : containers) {
-                if (c.getLabels().equals(labels)) {
-                    getDCli().removeContainerCmd(c.getId())
+                if (c.getLabels().equals(labels)) { // equals? container labels vs image labels?
+                    getDockerCli().removeContainerCmd(c.getId())
                             .withForce()
                             .exec();
                     break;
@@ -349,8 +450,8 @@ public class DockerRule extends ExternalResource {
         }
 
         // recreating data container without data-image doesn't make sense, so reuse boolean
-        String dataContainerId = getDataContainerId(refreshDataContainer);
-        final String id = getDCli().createContainerCmd(JENKINS_DEFAULT.getDockerImageName())
+        String dataContainerId = getDataContainerId(forceRefresh);
+        final String id = getDockerCli().createContainerCmd(JENKINS_DEFAULT.getDockerImageName())
                 .withEnv(CONTAINER_JAVA_OPTS)
                 .withExposedPorts(new ExposedPort(JENKINS_DEFAULT.tcpPort))
                 .withPortSpecs(String.format("%d/tcp", JENKINS_DEFAULT.tcpPort))
@@ -363,7 +464,7 @@ public class DockerRule extends ExternalResource {
                 .getId();
         provisioned.add(id);
 
-        getDCli().startContainerCmd(id).exec();
+        getDockerCli().startContainerCmd(id).exec();
         return id;
     }
 
@@ -386,71 +487,24 @@ public class DockerRule extends ExternalResource {
                 .append("COPY ./ /").append(NL)
                 .append("VOLUME /usr/share/jenkins/ref").append(NL);
 
-        for (Map.Entry<String, File> entry : plugins.entrySet()) {
-            final String s = DigestUtils.sha256Hex(new FileInputStream(entry.getValue()));
-            builder.append("LABEL ").append(entry.getKey()).append("=").append(s).append(NL);
+        for (Map.Entry<String, String> entry : generateLabels(plugins).entrySet()) {
+            builder.append("LABEL ").append(entry.getKey()).append("=").append(entry.getValue()).append(NL);
         }
 
-        builder.append("LABEL GENERATION_UUID=").append(UUID.randomUUID()).append(NL);
+//        builder.append("LABEL GENERATION_UUID=").append(UUID.randomUUID()).append(NL);
 
         return builder.toString();
     }
 
-    /**
-     * Build docker image containing specified plugins.
-     */
-    public void buildImageFor(Map<String, File> plugins) throws IOException, InterruptedException {
-        LOG.debug("Building image for {}", plugins);
-//        final File tempDirectory = TempFileHelper.createTempDirectory("build-image", targetDir().toPath());
-        final File buildDir = new File(targetDir().getAbsolutePath() + "/docker-it/build-image");
-        if (buildDir.exists()) {
-            FileUtils.deleteDirectory(buildDir);
-        }
-        if (!buildDir.mkdirs()) {
-            throw new IllegalStateException("Can't create temp directory " + buildDir.getAbsolutePath());
-        }
-
-
-        final String dockerfile = generateDockerfileFor(plugins);
-        final File dockerfileFile = new File(buildDir, "Dockerfile");
-        FileUtils.writeStringToFile(dockerfileFile, dockerfile);
-
-
-        final File buildHomePath = new File(buildDir, JenkinsDockerImage.JENKINS_1_609_3.homePath);
-        final File jenkinsConfig = new File(buildHomePath, "config.xml");
-        DockerHPIContainerUtil.copyResourceFromClass(DockerHPIContainerUtil.class, "config.xml", jenkinsConfig);
-
-        final File pluginDir = new File(buildHomePath, "/plugins/");
-        if (!pluginDir.mkdirs()) {
-            throw new IllegalStateException("Can't create dirs " + pluginDir.getAbsolutePath());
-        }
+    public Map<String, String> generateLabels(Map<String, File> plugins) throws IOException {
+        Map<String, String> labels = new HashMap<>();
 
         for (Map.Entry<String, File> entry : plugins.entrySet()) {
-            final File dst = new File(pluginDir + "/" + entry.getKey());
-            copyFile(entry.getValue(), dst);
+            final String sha256Hex = DigestUtils.sha256Hex(new FileInputStream(entry.getValue()));
+            labels.put(entry.getKey(), sha256Hex);
         }
 
-        try {
-            LOG.info("Building data-image...");
-            getDCli().buildImageCmd(buildDir)
-                    .withTag(DATA_IMAGE)
-                    .withForcerm()
-                    .exec(new BuildImageResultCallback() {
-                        public void onNext(BuildResponseItem item) {
-                            String text = item.getStream();
-                            if (text != null) {
-                                LOG.debug(StringUtils.removeEnd(text, NL));
-                            }
-                            super.onNext(item);
-                        }
-                    })
-                    .awaitImageId();
-        } catch (DockerException ex) {
-            buildDir.delete();
-            throw ex;
-        }
-
-        buildDir.delete();
+        return labels;
     }
 
     /**
@@ -480,7 +534,7 @@ public class DockerRule extends ExternalResource {
 
         final URL url = new URL("http://" + getHost() + ":" + httpPort.toString());
 
-        if (jnlpAgentPort == null) {
+        if (isNull(jnlpAgentPort)) {
             throw new IOException("Can't get jnlpPort." + bindings.toString());
         }
         return createCliWithWait(url, jnlpAgentPort);
@@ -528,7 +582,7 @@ public class DockerRule extends ExternalResource {
     protected void after() {
         if (cleanup) {
             provisioned.stream().forEach(id ->
-                    getDCli().removeContainerCmd(id)
+                    getDockerCli().removeContainerCmd(id)
                             .withForce()
                             .withRemoveVolumes(true)
                             .exec()
