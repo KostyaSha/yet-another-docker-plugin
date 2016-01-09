@@ -1,10 +1,15 @@
 package com.github.kostyasha.yad.DockerConnector
 
+import com.github.kostyasha.yad.DockerConnector
 import lib.CredentialsTagLib
 import lib.FormTagLib
 
 def f = namespace(FormTagLib)
 def c = namespace(CredentialsTagLib)
+
+if (instance == null) {
+    instance = new DockerConnector("http://localhost:2375")
+}
 
 f.entry(title: _("Docker URL"), field: "serverUrl") {
     f.textbox()

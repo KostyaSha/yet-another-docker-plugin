@@ -1,0 +1,19 @@
+
+ - `mvn install` `yet-another-docker-java-shaded` module
+ - `mvn install` `yet-another-docker-plugin` module (produces hpi)
+ - enable `yet-another-docker-its` profile
+ - `mvn package/compile` on `yet-another-docker-its`
+ - In IDEA manually attach `docker-java-shaded....jar` to plugin and its modules
+ (no idea why IDEA doesn't see deps)
+ - place `~/.docker.io.properties` with :
+
+```
+DOCKER_TLS_VERIFY=1
+docker.io.url=https://192.168.99.100:2376
+docker.io.dockerCertPath=/Users/integer/.docker/machine/machines/default
+DOCKER_MACHINE_NAME="default"
+```
+ - If test contains debug callback, then add `Remote` configuration in IDEA and
+ press debug button for it. (Either container will fail connect and start).
+ Remember that after every new connection you need run debug (run listening incoming connection) again.
+ - Run test

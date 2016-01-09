@@ -48,9 +48,9 @@ public class DockerConnector implements Describable<DockerConnector> {
     @CheckForNull
     private String serverUrl;
 
-    private int connectTimeout;
+    private int connectTimeout = 10 * 1000;
 
-    private int readTimeout;
+    private int readTimeout = 0;
 
     @CheckForNull
     private String credentialsId;
@@ -77,18 +77,19 @@ public class DockerConnector implements Describable<DockerConnector> {
     }
 
     @DataBoundSetter
-    public void setConnectTimeout(int connectTimeout) {
+    public DockerConnector setConnectTimeout(int connectTimeout) {
         this.connectTimeout = connectTimeout;
+        return this;
     }
-
 
     public int getReadTimeout() {
         return readTimeout;
     }
 
     @DataBoundSetter
-    public void setReadTimeout(int readTimeout) {
+    public DockerConnector setReadTimeout(int readTimeout) {
         this.readTimeout = readTimeout;
+        return this;
     }
 
     public String getCredentialsId() {
@@ -96,8 +97,9 @@ public class DockerConnector implements Describable<DockerConnector> {
     }
 
     @DataBoundSetter
-    public void setCredentialsId(String credentialsId) {
+    public DockerConnector setCredentialsId(String credentialsId) {
         this.credentialsId = credentialsId;
+        return this;
     }
 
     public DockerClient getClient() {
@@ -110,6 +112,10 @@ public class DockerConnector implements Describable<DockerConnector> {
         }
 
         return client;
+    }
+
+    public void testConnection() {
+        getClient().versionCmd().exec();
     }
 
     @Override
@@ -163,7 +169,7 @@ public class DockerConnector implements Describable<DockerConnector> {
 
         @Override
         public String getDisplayName() {
-            return "Docker client";
+            return "Docker Connector";
         }
     }
 }

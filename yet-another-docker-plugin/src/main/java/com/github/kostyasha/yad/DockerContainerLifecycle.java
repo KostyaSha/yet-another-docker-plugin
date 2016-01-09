@@ -22,7 +22,7 @@ import org.kohsuke.stapler.DataBoundSetter;
  */
 public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerContainerLifecycle> {
 
-    private String image = "myimage";
+    private String image = "";
 
     private DockerPullImage pullImage = new DockerPullImage();
 
@@ -42,8 +42,9 @@ public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerCont
     }
 
     @DataBoundSetter
-    public void setImage(String image) {
+    public DockerContainerLifecycle setImage(String image) {
         this.image = image;
+        return this;
     }
 
     // pull image
@@ -52,8 +53,9 @@ public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerCont
     }
 
     @DataBoundSetter
-    public void setPullImage(DockerPullImage pullImage) {
+    public DockerContainerLifecycle setPullImage(DockerPullImage pullImage) {
         this.pullImage = pullImage;
+        return this;
     }
 
     // createContainer
@@ -62,8 +64,9 @@ public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerCont
     }
 
     @DataBoundSetter
-    public void setCreateContainer(DockerCreateContainer createContainer) {
+    public DockerContainerLifecycle setCreateContainer(DockerCreateContainer createContainer) {
         this.createContainer = createContainer;
+        return this;
     }
 
     // stop container
@@ -72,8 +75,9 @@ public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerCont
     }
 
     @DataBoundSetter
-    public void setStopContainer(DockerStopContainer stopContainer) {
+    public DockerContainerLifecycle setStopContainer(DockerStopContainer stopContainer) {
         this.stopContainer = stopContainer;
+        return this;
     }
 
     // remove container
@@ -82,8 +86,9 @@ public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerCont
     }
 
     @DataBoundSetter
-    public void setRemoveContainer(DockerRemoveContainer removeContainer) {
+    public DockerContainerLifecycle setRemoveContainer(DockerRemoveContainer removeContainer) {
         this.removeContainer = removeContainer;
+        return this;
     }
 
     @Extension
