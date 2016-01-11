@@ -146,6 +146,9 @@
 
         <profile>
             <id>yad-plugin-analysis</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <build>
                 <plugins>
                     <plugin>
