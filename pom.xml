@@ -31,9 +31,9 @@
     </modules>
 
     <scm>
-        <connection>scm:git:ssh://github.com/KostyaSha/docker-better-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/KostyaSha/docker-better-plugin.git</developerConnection>
-        <url>https://github.com/KostyaSha/docker-better-plugin</url>
+        <connection>scm:git:ssh://github.com/KostyaSha/yet-another-docker-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/KostyaSha/yet-another-docker-plugin.git</developerConnection>
+        <url>https://github.com/KostyaSha/yet-another-docker-plugin</url>
         <tag>HEAD</tag>
     </scm>
     <distributionManagement>
