@@ -1,4 +1,4 @@
 language: java
 jdk: oraclejdk8
-install: true
+install: mvn compile
 script: mvn clean verify
