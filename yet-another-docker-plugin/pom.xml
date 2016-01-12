@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.github.kostyasha.yet-another-docker</groupId>
         <artifactId>yet-another-docker-parent</artifactId>
-        <version>0.1.0-alpha3</version>
+        <version>0.1.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>yet-another-docker-plugin</artifactId>
