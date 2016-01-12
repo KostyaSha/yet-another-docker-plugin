@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -11,7 +10,7 @@
 
     <groupId>com.github.kostyasha.yet-another-docker</groupId>
     <artifactId>yet-another-docker-parent</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0-alpha3</version>
     <packaging>pom</packaging>
 
     <name>Yet Another Docker Plugin Parent</name>
@@ -34,7 +33,7 @@
         <connection>scm:git:ssh://github.com/KostyaSha/yet-another-docker-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/KostyaSha/yet-another-docker-plugin.git</developerConnection>
         <url>https://github.com/KostyaSha/yet-another-docker-plugin</url>
-        <tag>HEAD</tag>
+        <tag>yet-another-docker-parent-0.1.0-alpha3</tag>
     </scm>
     <distributionManagement>
         <repository>
