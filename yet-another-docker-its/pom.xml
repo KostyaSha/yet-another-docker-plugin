@@ -144,11 +144,11 @@
         </dependency>
 
 
-        <!--<dependency>-->
-            <!--<groupId>org.jenkins-ci.plugins</groupId>-->
-            <!--<artifactId>docker-traceability</artifactId>-->
-            <!--<version>1.1</version>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>docker-traceability</artifactId>
+            <version>1.1</version>
+        </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>docker-commons</artifactId>
@@ -256,11 +256,11 @@
                                     <artifactId>token-macro</artifactId>
                                     <type>hpi</type>
                                 </artifactItem>
-                                <!--<artifactItem>-->
-                                    <!--<groupId>org.jenkins-ci.plugins</groupId>-->
-                                    <!--<artifactId>docker-traceability</artifactId>-->
-                                    <!--<type>hpi</type>-->
-                                <!--</artifactItem>-->
+                                <artifactItem>
+                                    <groupId>org.jenkins-ci.plugins</groupId>
+                                    <artifactId>docker-traceability</artifactId>
+                                    <type>hpi</type>
+                                </artifactItem>
                                 <artifactItem>
                                     <groupId>org.jenkins-ci.plugins</groupId>
                                     <artifactId>docker-commons</artifactId>

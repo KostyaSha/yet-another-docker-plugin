@@ -3,9 +3,9 @@ package com.github.kostyasha.yad.other;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClientException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.SSLConfig;
 import com.github.kostyasha.yad.docker_java.org.bouncycastle.jce.provider.BouncyCastleProvider;
+import com.github.kostyasha.yad.docker_java.org.glassfish.jersey.SslConfigurator;
 import com.github.kostyasha.yad.utils.CertUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.glassfish.jersey.SslConfigurator;
 
 import javax.net.ssl.SSLContext;
 import java.io.Serializable;

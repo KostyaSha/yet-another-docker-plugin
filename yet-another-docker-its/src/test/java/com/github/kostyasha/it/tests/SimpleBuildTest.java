@@ -125,6 +125,7 @@ public class SimpleBuildTest implements Serializable {
             );
 
             jenkins.clouds.add(dockerCloud);
+            jenkins.save(); // either xmls a half broken
 
             // prepare job
             final FreeStyleProject project = jenkins.createProject(FreeStyleProject.class, "freestyle-project");

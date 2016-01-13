@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <!-- No parent, otherwise we inherit wrong versions from transient jenkins dependencies. -->
@@ -117,7 +118,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>2.4.2</version>
+                <version>3.0-SNAPSHOT</version>
                 <configuration>
                     <createSourcesJar>true</createSourcesJar>
                     <shadeSourcesContent>true</shadeSourcesContent>
@@ -139,16 +140,6 @@
                         </filter>
                     </filters>
                     <artifactSet>
-                        <!--<includes>-->
-                        <!--<include>com.fasterxml.jackson.**</include>-->
-                        <!--<include>javax.annotation:*</include>-->
-                        <!--<include>javax.ws.rs:*</include>-->
-                        <!--<include>org.glassfish.**</include>-->
-                        <!--<include>com.github.jnr:*</include>-->
-                        <!--<include>org.ow2.asm:*</include>-->
-                        <!--<include>org.apache.httpcomponents*:*</include>-->
-                        <!--<include>com.google.guava:*</include>-->
-                        <!--</includes>-->
                         <excludes>
                             <exclude>org.slf4j:*</exclude>
                             <exclude>log4j:*</exclude>
@@ -186,31 +177,13 @@
                             <shadedPattern>${shade-prefix}.org.apache.commons</shadedPattern>
                         </relocation>
 
-                        <!--<relocation>-->
-                        <!--<pattern>org.apache.commons.codec</pattern>-->
-                        <!--<shadedPattern>${shade-prefix}.org.apache.commons.codec</shadedPattern>-->
-                        <!--</relocation>-->
-                        <!--<relocation>-->
-                        <!--<pattern>org.apache.commons.compress</pattern>-->
-                        <!--<shadedPattern>${shade-prefix}.org.apache.commons.compress</shadedPattern>-->
-                        <!--</relocation>-->
-                        <!--<relocation>-->
-                        <!--<pattern>org.apache.commons.io</pattern>-->
-                        <!--<shadedPattern>${shade-prefix}.org.apache.commons.io</shadedPattern>-->
-                        <!--</relocation>-->
-                        <!--<relocation>-->
-                        <!--<pattern>org.apache.commons.lang</pattern>-->
-                        <!--<shadedPattern>${shade-prefix}.org.apache.commons.lang</shadedPattern>-->
-                        <!--</relocation>-->
-
                         <!-- com.github.kostyasha.yad.docker_java.org.glassfish.jersey.internal.RuntimeDelegateImpl could not be instantiated:
                          java.lang.IllegalStateException: No generator was provided and there is no default
                          generator registered -->
-                        <!--<relocation>-->
-                        <!--<pattern>org.glassfish</pattern>-->
-                        <!--<shadedPattern>${shade-prefix}.org.glassfish</shadedPattern>-->
-                        <!--</relocation>-->
-
+                        <relocation>
+                            <pattern>org.glassfish</pattern>
+                            <shadedPattern>${shade-prefix}.org.glassfish</shadedPattern>
+                        </relocation>
 
                         <relocation>
                             <pattern>org.aopalliance</pattern>
