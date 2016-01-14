@@ -10,11 +10,7 @@ and left to this fork.
 
 ## Docs
 
-In GitHub wiki because i wants to use GitHub with adoc
-
-## Features
-
-- Cloud slaves
+Will be in https://github.com/KostyaSha/yet-another-docker-plugin/wiki[GitHub wiki] because i wants to use GitHub with adoc
 
 ## Goals
 
