@@ -20,7 +20,7 @@ Will be in https://github.com/KostyaSha/yet-another-docker-plugin/wiki[GitHub wi
 
 ## Installation
 
-The only release now is in [Experimental Update Center](https://jenkins-ci.org/content/experimental-plugins-update-center/).
+The only release now is in https://jenkins-ci.org/content/experimental-plugins-update-center/[Experimental Update Center].
 Which is also the preferred way of installation. 
 
 If you don't want to change your Update Center, you can the download the `.hpi` from a mirror http://mirrors.jenkins-ci.org/plugins/yet-another-docker-plugin/ and upload it to Jenkins Plugin Manager.
