@@ -96,23 +96,30 @@ public class SimpleBuildTest implements Serializable {
 
             // prepare Docker Cloud
             final DockerConnector dockerConnector = new DockerConnector(
-                    String.format("https://%s:%d", dockerUri.getHost(), dockerUri.getPort()))
-                    .setCredentialsId(dockerServerCredentials.getId())
-                    .setConnectTimeout(10);
+                    String.format("https://%s:%d", dockerUri.getHost(), dockerUri.getPort()));
+            dockerConnector.setCredentialsId(dockerServerCredentials.getId());
+            dockerConnector.setConnectTimeout(10);
             dockerConnector.testConnection();
 
             final DockerComputerJNLPLauncher launcher = new DockerComputerJNLPLauncher(new JNLPLauncher());
-            final DockerContainerLifecycle containerLifecycle = new DockerContainerLifecycle()
-                    .setImage(slaveImage)
-                    .setPullImage(new DockerPullImage().setPullStrategy(PULL_ALWAYS))
-                    .setRemoveContainer(new DockerRemoveContainer().setRemoveVolumes(true).setForce(true));
+            final DockerPullImage pullImage = new DockerPullImage();
+            pullImage.setPullStrategy(PULL_ALWAYS);
 
-            final DockerSlaveTemplate slaveTemplate = new DockerSlaveTemplate()
-                    .setLabelString(dockerLabel)
-                    .setLauncher(launcher)
-                    .setMode(Node.Mode.EXCLUSIVE)
-                    .setRetentionStrategy(new DockerOnceRetentionStrategy(10))
-                    .setDockerContainerLifecycle(containerLifecycle);
+            final DockerRemoveContainer removeContainer = new DockerRemoveContainer();
+            removeContainer.setRemoveVolumes(true);
+            removeContainer.setForce(true);
+
+            final DockerContainerLifecycle containerLifecycle = new DockerContainerLifecycle();
+            containerLifecycle.setImage(slaveImage);
+            containerLifecycle.setPullImage(pullImage);
+            containerLifecycle.setRemoveContainer(removeContainer);
+
+            final DockerSlaveTemplate slaveTemplate = new DockerSlaveTemplate();
+            slaveTemplate.setLabelString(dockerLabel);
+            slaveTemplate.setLauncher(launcher);
+            slaveTemplate.setMode(Node.Mode.EXCLUSIVE);
+            slaveTemplate.setRetentionStrategy(new DockerOnceRetentionStrategy(10));
+            slaveTemplate.setDockerContainerLifecycle(containerLifecycle);
 
             final List<DockerSlaveTemplate> templates = new ArrayList<>();
             templates.add(slaveTemplate);

@@ -42,9 +42,8 @@ public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerCont
     }
 
     @DataBoundSetter
-    public DockerContainerLifecycle setImage(String image) {
+    public void setImage(String image) {
         this.image = image;
-        return this;
     }
 
     // pull image

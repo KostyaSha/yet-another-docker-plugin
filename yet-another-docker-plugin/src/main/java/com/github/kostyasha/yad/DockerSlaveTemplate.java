@@ -90,9 +90,8 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     }
 
     @DataBoundSetter
-    public DockerSlaveTemplate setDockerContainerLifecycle(DockerContainerLifecycle dockerContainerLifecycle) {
+    public void setDockerContainerLifecycle(DockerContainerLifecycle dockerContainerLifecycle) {
         this.dockerContainerLifecycle = dockerContainerLifecycle;
-        return this;
     }
 
     public String getLabelString() {
@@ -100,16 +99,14 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     }
 
     @DataBoundSetter
-    public DockerSlaveTemplate setLabelString(String labelString) {
+    public void setLabelString(String labelString) {
         this.labelString = Util.fixNull(labelString);
         this.labelSet = Label.parse(labelString);
-        return this;
     }
 
     @DataBoundSetter
-    public DockerSlaveTemplate setMode(Node.Mode mode) {
+    public void setMode(Node.Mode mode) {
         this.mode = mode;
-        return this;
     }
 
     public Node.Mode getMode() {
@@ -120,9 +117,8 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
      * Experimental option allows set number of executors
      */
     @DataBoundSetter
-    public DockerSlaveTemplate setNumExecutors(int numExecutors) {
+    public void setNumExecutors(int numExecutors) {
         this.numExecutors = numExecutors;
-        return this;
     }
 
     public int getNumExecutors() {
@@ -134,9 +130,8 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     }
 
     @DataBoundSetter
-    public DockerSlaveTemplate setRetentionStrategy(RetentionStrategy retentionStrategy) {
+    public void setRetentionStrategy(RetentionStrategy retentionStrategy) {
         this.retentionStrategy = retentionStrategy;
-        return this;
     }
 
     public RetentionStrategy getRetentionStrategy() {
@@ -155,9 +150,8 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     }
 
     @DataBoundSetter
-    public DockerSlaveTemplate setLauncher(DockerComputerLauncher launcher) {
+    public void setLauncher(DockerComputerLauncher launcher) {
         this.launcher = launcher;
-        return this;
     }
 
     public DockerComputerLauncher getLauncher() {
@@ -170,9 +164,8 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     }
 
     @DataBoundSetter
-    public DockerSlaveTemplate setRemoteFs(String remoteFs) {
+    public void setRemoteFs(String remoteFs) {
         this.remoteFs = remoteFs;
-        return this;
     }
 
     public int getMaxCapacity() {
@@ -180,9 +173,8 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     }
 
     @DataBoundSetter
-    public DockerSlaveTemplate setMaxCapacity(int maxCapacity) {
+    public void setMaxCapacity(int maxCapacity) {
         this.maxCapacity = maxCapacity;
-        return this;
     }
 
     public String getRemoteFsMapping() {
@@ -190,9 +182,8 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     }
 
     @DataBoundSetter
-    public DockerSlaveTemplate setRemoteFsMapping(String remoteFsMapping) {
+    public void setRemoteFsMapping(String remoteFsMapping) {
         this.remoteFsMapping = remoteFsMapping;
-        return this;
     }
 
     @Nonnull

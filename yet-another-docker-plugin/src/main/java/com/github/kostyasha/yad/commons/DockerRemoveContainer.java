@@ -29,9 +29,8 @@ public class DockerRemoveContainer extends AbstractDescribableImpl<DockerRemoveC
     }
 
     @DataBoundSetter
-    public DockerRemoveContainer setRemoveVolumes(boolean removeVolumes) {
+    public void setRemoveVolumes(boolean removeVolumes) {
         this.removeVolumes = removeVolumes;
-        return this;
     }
 
     public boolean isForce() {
@@ -39,9 +38,8 @@ public class DockerRemoveContainer extends AbstractDescribableImpl<DockerRemoveC
     }
 
     @DataBoundSetter
-    public DockerRemoveContainer setForce(boolean force) {
+    public void setForce(boolean force) {
         this.force = force;
-        return this;
     }
 
     public void exec(DockerClient client, String containerId) {
