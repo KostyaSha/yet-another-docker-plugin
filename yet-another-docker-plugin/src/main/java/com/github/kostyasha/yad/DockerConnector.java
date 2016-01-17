@@ -77,9 +77,8 @@ public class DockerConnector implements Describable<DockerConnector> {
     }
 
     @DataBoundSetter
-    public DockerConnector setConnectTimeout(int connectTimeout) {
+    public void setConnectTimeout(int connectTimeout) {
         this.connectTimeout = connectTimeout;
-        return this;
     }
 
     public int getReadTimeout() {
@@ -87,9 +86,8 @@ public class DockerConnector implements Describable<DockerConnector> {
     }
 
     @DataBoundSetter
-    public DockerConnector setReadTimeout(int readTimeout) {
+    public void setReadTimeout(int readTimeout) {
         this.readTimeout = readTimeout;
-        return this;
     }
 
     public String getCredentialsId() {
@@ -97,9 +95,8 @@ public class DockerConnector implements Describable<DockerConnector> {
     }
 
     @DataBoundSetter
-    public DockerConnector setCredentialsId(String credentialsId) {
+    public void setCredentialsId(String credentialsId) {
         this.credentialsId = credentialsId;
-        return this;
     }
 
     public DockerClient getClient() {

@@ -28,9 +28,8 @@ public class DockerStopContainer extends AbstractDescribableImpl<DockerStopConta
     }
 
     @DataBoundSetter
-    public DockerStopContainer setTimeout(int timeout) {
+    public void setTimeout(int timeout) {
         this.timeout = timeout;
-        return this;
     }
 
     public void exec(DockerClient client, String containerId) {
