@@ -1,4 +1,4 @@
 language: java
 jdk: oraclejdk8
 install: true
-script: mvn clean verify -Ptravis | grep -v Download
+script: mvn clean verify -Ptravis -q -B
