@@ -1,4 +1,4 @@
 language: java
 jdk: oraclejdk8
-install: mvn compile -Ptravis
+install: mvn validate -Ptravis
 script: mvn clean verify -Ptravis
