@@ -11,3 +11,4 @@
  
 ## < 0.1.0-alpha5
  - Failed attempts to release plugin.
+ - Rewrote everything, some logic that @KostyaSha wrote before kept.
