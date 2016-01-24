@@ -4,7 +4,7 @@ Project that produces jenkins hpi plugin with Docker related features.
 
 ## History
 
-When https://github.com/jenkinsci/docker-plugin[docker-plugin] was in bad state i started enhancing/fixing it and stabilised it.
+When https://github.com/jenkinsci/docker-plugin[docker-plugin] was half-working state i https://github.com/jenkinsci/docker-plugin/graphs/contributors[started enhancing/fixing] and stabilised it.
 https://github.com/jenkinsci/docker-plugin/issues/235#issuecomment-147975445[But i was unable to continue comfortable development] 
 and left to this fork.
 
@@ -24,4 +24,12 @@ The only release now is in https://jenkins-ci.org/content/experimental-plugins-u
 Which is also the preferred way of installation. 
 
 If you don't want to change your Update Center, you can the download the `.hpi` from a mirror http://mirrors.jenkins-ci.org/plugins/yet-another-docker-plugin/ and upload it to Jenkins Plugin Manager.
+
+## Disclaimer 
+
+- Backward compatibility may be broken in any time
+
+## Questions
+
+If you have any questions feel free to open GitHub issue.
 
