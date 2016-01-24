@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -46,7 +47,7 @@
         <jenkins.parent.version>1.625.3</jenkins.parent.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
-        <findbugs-maven-plugin.version>3.0.2</findbugs-maven-plugin.version>
+        <findbugs-maven-plugin.version>3.0.3</findbugs-maven-plugin.version>
         <maven-compiler-plugin.version>3.3</maven-compiler-plugin.version>
         <maven-javadoc-plugin.version>2.10.3</maven-javadoc-plugin.version>
         <hpi.plugin.version>1.115</hpi.plugin.version>
@@ -80,10 +81,19 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>${maven-javadoc-plugin.version}</version>
-                    <configuration>
-                        <additionalparam>-Xdoclint:none</additionalparam>
-                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                            <configuration>
+                                <additionalparam>-Xdoclint:none</additionalparam>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
+
                 <plugin>
                     <artifactId>maven-release-plugin</artifactId>
                     <configuration>
