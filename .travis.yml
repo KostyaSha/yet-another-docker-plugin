@@ -2,4 +2,5 @@ sudo: false
 language: java
 jdk: oraclejdk8
 install: true
-script: mvn clean verify -Ptravis -q -B
+script: travis.sh
+
