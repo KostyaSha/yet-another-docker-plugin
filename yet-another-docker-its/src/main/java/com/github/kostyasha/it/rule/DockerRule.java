@@ -323,11 +323,19 @@ public class DockerRule extends ExternalResource {
         return existedDataImage;
     }
 
+    /**
+     * Directory for placing temp files for building images.
+     * Every class should create some subdirectory for their needs.
+     * Path ends with '/';
+     */
+    public static String getDockerItDir() {
+        return targetDir().getAbsolutePath() + "/docker-it/";
+    }
 
     @Nonnull
     public static Map<String, File> getPluginFiles() {
         final Map<String, File> pluginFiles = new HashMap<>();
-        final File pluginsDir = new File(targetDir().getAbsolutePath() + "/docker-it/plugins");
+        final File pluginsDir = new File(getDockerItDir() + "/plugins");
         final File[] files = pluginsDir.listFiles();
         requireNonNull(files, "Files must exist in plugin dir");
         for (File plugin : files) {
