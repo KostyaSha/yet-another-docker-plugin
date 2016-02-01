@@ -1,10 +1,15 @@
 package com.github.kostyasha.yad.utils;
 
+import com.github.kostyasha.yad.docker_java.org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import com.github.kostyasha.yad.docker_java.org.bouncycastle.cert.X509CertificateHolder;
 import com.github.kostyasha.yad.docker_java.org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import com.github.kostyasha.yad.docker_java.org.bouncycastle.openssl.PEMKeyPair;
 import com.github.kostyasha.yad.docker_java.org.bouncycastle.openssl.PEMParser;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckForNull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -24,19 +29,24 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * TODO migrate to docker-java
  *
  * @author Kanstantsin Shautsou
  */
 public class CertUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(CertUtils.class);
 
     private CertUtils() {
     }
 
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
     public static KeyStore createKeyStore(final String keypem, final String certpem) throws NoSuchAlgorithmException,
             InvalidKeySpecException, IOException, CertificateException, KeyStoreException {
         KeyPair keyPair = loadPrivateKey(keypem);
+        requireNonNull(keyPair);
         List<Certificate> privateCertificates = loadCertificates(certpem);
 
         KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -86,29 +96,52 @@ public class CertUtils {
     /**
      * Return KeyPair from "key.pem" from Reader
      */
+    @CheckForNull
     private static KeyPair loadPrivateKey(final Reader reader) throws IOException, NoSuchAlgorithmException,
             InvalidKeySpecException {
         try (PEMParser pemParser = new PEMParser(reader)) {
-            PEMKeyPair pemKeyPair = (PEMKeyPair) pemParser.readObject();
+            Object readObject = pemParser.readObject();
+            while (readObject != null) {
+                if (readObject instanceof PEMKeyPair) {
+                    PEMKeyPair pemKeyPair = (PEMKeyPair) readObject;
 
-            byte[] pemPrivateKeyEncoded = pemKeyPair.getPrivateKeyInfo().getEncoded();
-            byte[] pemPublicKeyEncoded = pemKeyPair.getPublicKeyInfo().getEncoded();
+                    byte[] pemPrivateKeyEncoded = pemKeyPair.getPrivateKeyInfo().getEncoded();
+                    byte[] pemPublicKeyEncoded = pemKeyPair.getPublicKeyInfo().getEncoded();
 
-            KeyFactory factory = KeyFactory.getInstance("RSA");
+                    for (String guessFactory : new String[]{"RSA", "ECDSA"}) {
+                        try {
+                            KeyFactory factory = KeyFactory.getInstance(guessFactory);
+//                            KeyFactory factory = KeyFactory.getInstance("ECDSA");
 
-            X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(pemPublicKeyEncoded);
-            PublicKey publicKey = factory.generatePublic(publicKeySpec);
+                            X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(pemPublicKeyEncoded);
+                            PublicKey publicKey = factory.generatePublic(publicKeySpec);
 
-            PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(pemPrivateKeyEncoded);
-            PrivateKey privateKey = factory.generatePrivate(privateKeySpec);
+                            PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(pemPrivateKeyEncoded);
+                            PrivateKey privateKey = factory.generatePrivate(privateKeySpec);
 
-            return new KeyPair(publicKey, privateKey);
+                            return new KeyPair(publicKey, privateKey);
+                        } catch (InvalidKeySpecException ex) {
+                        }
+                    }
+                } else if (readObject instanceof ASN1ObjectIdentifier) {
+                    // no idea how it can be used
+                    final ASN1ObjectIdentifier asn1ObjectIdentifier = (ASN1ObjectIdentifier) readObject;
+                    LOG.trace("Ignoring asn1ObjectIdentifier {}", asn1ObjectIdentifier);
+                } else {
+                    LOG.warn("Unknown object '{}' from PEMParser", readObject);
+                }
+
+                readObject = pemParser.readObject();
+            }
         }
+
+        return null;
     }
 
     /**
      * Return KeyPair from "key.pem"
      */
+    @CheckForNull
     private static KeyPair loadPrivateKey(final String keypem) throws IOException, NoSuchAlgorithmException,
             InvalidKeySpecException {
         try (StringReader certReader = new StringReader(keypem);

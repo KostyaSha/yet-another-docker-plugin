@@ -239,7 +239,7 @@ public class DockerRule extends ExternalResource {
 
         final String dataImage = getDataImage(forceRefresh, pluginFiles, DATA_IMAGE);
         final boolean dataImagesEquals = dataImage.equals(dataContainerImage);
-        LOG.debug("Data images the same: {}", dataImagesEquals);
+        LOG.debug("Data image is the same: {}", dataImagesEquals);
 
         if (nonNull(dataContainerId) && (forceRefresh || !dataImagesEquals)) {
             LOG.info("Removing data-container. ForceRefresh: {}", forceRefresh);
@@ -346,6 +346,8 @@ public class DockerRule extends ExternalResource {
     }
 
     public boolean isActualDataImage(Map<String, File> plugins, String existedDataImage) throws IOException {
+        //TODO verify that there is at least one .jpi/hpi in data image, either it was build without
+        //executed maven step that puts hpi's into directory for building image
         if (isNull(existedDataImage)) {
             return false;
         }
