@@ -1,9 +1,10 @@
 package com.github.kostyasha.yad.DockerSlaveTemplate
 
-import lib.FormTagLib
 import com.github.kostyasha.yad.DockerSlave
 import com.github.kostyasha.yad.DockerSlaveTemplate
 import com.github.kostyasha.yad.utils.DockerFunctions
+import hudson.model.Slave
+import lib.FormTagLib
 
 def f = namespace(FormTagLib)
 def st = namespace("jelly:stapler")
@@ -89,6 +90,12 @@ f.section(title: _("Jenkins Slave Config")) {
             }
         }
     }
+
+    f.descriptorList(
+            title: _("Node Properties"),
+            descriptors: h.getNodePropertyDescriptors(Slave.class),
+            field: "nodePropertiesUI"
+    )
 
     f.entry(title: _("Remote FS Root Mapping"), field: "remoteFsMapping") {
         f.textbox()
