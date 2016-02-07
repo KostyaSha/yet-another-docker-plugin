@@ -26,7 +26,6 @@ import java.util.Collections;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
-import static com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig.createDefaultConfigBuilder;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 /**
@@ -35,7 +34,7 @@ import static org.apache.commons.lang.StringUtils.isNotBlank;
 public class ClientConfigBuilderForPlugin {
     private static final Logger LOG = LoggerFactory.getLogger(ClientConfigBuilderForPlugin.class);
 
-    private DockerClientConfig.DockerClientConfigBuilder config = createDefaultConfigBuilder();
+    private DockerClientConfig.DockerClientConfigBuilder config = new DockerClientConfig.DockerClientConfigBuilder();
 
     private ClientConfigBuilderForPlugin() {
     }

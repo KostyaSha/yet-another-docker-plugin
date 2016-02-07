@@ -239,7 +239,7 @@ public class DockerRule extends ExternalResource {
 
         final String dataImage = getDataImage(forceRefresh, pluginFiles, DATA_IMAGE);
         final boolean dataImagesEquals = dataImage.equals(dataContainerImage);
-        LOG.debug("Data images the same: {}", dataImagesEquals);
+        LOG.debug("Data image is the same: {}", dataImagesEquals);
 
         if (nonNull(dataContainerId) && (forceRefresh || !dataImagesEquals)) {
             LOG.info("Removing data-container. ForceRefresh: {}", forceRefresh);
@@ -323,11 +323,19 @@ public class DockerRule extends ExternalResource {
         return existedDataImage;
     }
 
+    /**
+     * Directory for placing temp files for building images.
+     * Every class should create some subdirectory for their needs.
+     * Path ends with '/';
+     */
+    public static String getDockerItDir() {
+        return targetDir().getAbsolutePath() + "/docker-it/";
+    }
 
     @Nonnull
     public static Map<String, File> getPluginFiles() {
         final Map<String, File> pluginFiles = new HashMap<>();
-        final File pluginsDir = new File(targetDir().getAbsolutePath() + "/docker-it/plugins");
+        final File pluginsDir = new File(getDockerItDir() + "/plugins");
         final File[] files = pluginsDir.listFiles();
         requireNonNull(files, "Files must exist in plugin dir");
         for (File plugin : files) {
@@ -338,6 +346,8 @@ public class DockerRule extends ExternalResource {
     }
 
     public boolean isActualDataImage(Map<String, File> plugins, String existedDataImage) throws IOException {
+        //TODO verify that there is at least one .jpi/hpi in data image, either it was build without
+        //executed maven step that puts hpi's into directory for building image
         if (isNull(existedDataImage)) {
             return false;
         }
