@@ -13,7 +13,6 @@ import hudson.model.queue.CauseOfBlockage;
 import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
-import hudson.slaves.NodeProperty;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -22,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.util.Collections;
 
 
 /**
@@ -64,7 +62,7 @@ public class DockerSlave extends AbstractCloudSlave {
                 dockerSlaveTemplate.getLabelString(),
                 launcher,
                 dockerSlaveTemplate.getRetentionStrategyCopy(),
-                Collections.<NodeProperty<?>>emptyList()
+                dockerSlaveTemplate.getNodeProperties()
         );
         this.displayName = slaveName; // initial value
         this.containerId = containerId;

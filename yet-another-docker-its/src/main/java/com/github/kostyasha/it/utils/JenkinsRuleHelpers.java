@@ -1,9 +1,12 @@
 package com.github.kostyasha.it.utils;
 
 import hudson.Functions;
+import hudson.cli.DockerCLI;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Queue;
+import hudson.remoting.Callable;
+import hudson.remoting.Channel;
 import jenkins.model.Jenkins;
 
 import java.io.Serializable;
@@ -11,6 +14,9 @@ import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
 
 /**
  * @author Kanstantsin Shautsou
@@ -78,5 +84,12 @@ public final class JenkinsRuleHelpers implements Serializable {
         for (ThreadInfo ti : threadInfos) {
             System.err.println(Functions.dumpThreadInfo(ti, m));
         }
+    }
+
+    public static void caller(DockerCLI cli, Callable<Boolean, Throwable> callable) throws Throwable {
+        assertThat(
+                cli.getChannel().call(callable),
+                equalTo(true)
+        );
     }
 }

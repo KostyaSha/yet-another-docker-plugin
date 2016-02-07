@@ -13,9 +13,14 @@ import hudson.model.Descriptor.FormException;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.labels.LabelAtom;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
+import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -23,9 +28,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.unmodifiableList;
+import static java.util.Objects.nonNull;
 
 /**
  * All configuration (jenkins and docker specific) required for launching slave instances.
@@ -65,6 +76,8 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
      */
     private DockerContainerLifecycle dockerContainerLifecycle = new DockerContainerLifecycle();
 
+    private List<? extends NodeProperty<?>> nodeProperties = null;
+
     private transient /*almost final*/ Set<LabelAtom> labelSet;
 
     /**
@@ -77,12 +90,21 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     /**
      * Custom specified ID. When editing existed UI entry, UI sends it back.
      */
-    @DataBoundConstructor
     public DockerSlaveTemplate(@Nonnull String id) throws FormException {
         if (id == null) {
             throw new FormException("Hidden id must not be null", "id");
         }
         this.id = id;
+    }
+
+    /**
+     * FIXME DescribableList doesn't work with DBS https://gist.github.com/KostyaSha/3414f4f453ea7c7406b4
+     */
+    @DataBoundConstructor
+    public DockerSlaveTemplate(@Nonnull String id, List<? extends NodeProperty<?>> nodePropertiesUI)
+            throws FormException {
+        this(id);
+        setNodeProperties(nodePropertiesUI);
     }
 
     public DockerContainerLifecycle getDockerContainerLifecycle() {
@@ -189,6 +211,26 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     @Nonnull
     public Set<LabelAtom> getLabelSet() {
         return labelSet != null ? labelSet : Collections.<LabelAtom>emptySet();
+    }
+
+    @Nonnull
+    @Restricted(value = NoExternalUse.class) // ancient UI jelly form
+    public DescribableList<NodeProperty<?>, NodePropertyDescriptor> getNodePropertiesUI() throws IOException {
+        return new DescribableList<>(Jenkins.getActiveInstance().getNodesObject(), getNodeProperties());
+    }
+
+    @Restricted(value = NoExternalUse.class) // ancient UI jelly form
+    public void setNodePropertiesUI(DescribableList<NodeProperty<?>, NodePropertyDescriptor> nodePropertiesUI) {
+        setNodeProperties(nodePropertiesUI);
+    }
+
+    @Nonnull
+    public List<? extends NodeProperty<?>> getNodeProperties() {
+        return nonNull(nodeProperties) ? unmodifiableList(nodeProperties) : emptyList();
+    }
+
+    public void setNodeProperties(List<? extends NodeProperty<?>> nodeProperties) {
+        this.nodeProperties = nodeProperties;
     }
 
     /**
