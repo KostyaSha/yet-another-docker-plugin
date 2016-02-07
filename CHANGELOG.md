@@ -3,6 +3,7 @@
 ## Next
 
 ## 0.1.0 (next)
+ - Support NodeProperties (i.e. ToolsInstallation)
  - Support ECDSA keys for docker daemon auth.
  - More integration tests
 
