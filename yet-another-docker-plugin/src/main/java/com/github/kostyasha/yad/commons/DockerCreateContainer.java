@@ -10,7 +10,6 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Port
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Volume;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.VolumesFrom;
 import com.github.kostyasha.yad.docker_java.com.google.common.base.Function;
-import com.github.kostyasha.yad.docker_java.com.google.common.base.MoreObjects;
 import com.github.kostyasha.yad.docker_java.com.google.common.base.Splitter;
 import com.github.kostyasha.yad.docker_java.com.google.common.base.Strings;
 import com.github.kostyasha.yad.docker_java.com.google.common.collect.Iterables;
@@ -27,6 +26,9 @@ import hudson.util.ListBoxModel;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -156,9 +158,18 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         return dnsHosts;
     }
 
-    @DataBoundSetter
     public void setDnsHosts(List<String> dnsHosts) {
         this.dnsHosts = dnsHosts;
+    }
+
+    @Nonnull
+    public String getDnsString() {
+        return joinToStr(dnsHosts);
+    }
+
+    @DataBoundSetter
+    public void setDnsString(String dnsString) {
+        setDnsHosts(splitAndFilterEmpty(dnsString));
     }
 
     // hostname
@@ -208,10 +219,6 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         return this;
     }
 
-    @Nonnull
-    public String getDnsString() {
-        return joinToStr(dnsHosts);
-    }
 
     @CheckForNull
     public List<String> getVolumes() {
@@ -300,14 +307,18 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         return environment;
     }
 
+    public void setEnvironment(List<String> environment) {
+        this.environment = environment;
+    }
+
     @Nonnull
     public String getEnvironmentString() {
         return joinToStr(environment);
     }
 
     @DataBoundSetter
-    public void setEnvironment(List<String> environment) {
-        this.environment = environment;
+    public void setEnvironmentString(String environmentString) {
+        setEnvironment(splitAndFilterEmpty(environmentString));
     }
 
     // extrahosts
@@ -428,51 +439,68 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this)
+        return new ToStringBuilder(this)
+                .append("bindAllPorts", bindAllPorts)
+                .append("command", command)
+                .append("hostname", hostname)
+                .append("dnsHosts", dnsHosts)
+                .append("volumes", volumes)
+                .append("volumesFrom", volumesFrom)
+                .append("environment", environment)
+                .append("bindPorts", bindPorts)
+                .append("memoryLimit", memoryLimit)
+                .append("cpuShares", cpuShares)
+                .append("privileged", privileged)
+                .append("tty", tty)
+                .append("macAddress", macAddress)
+                .append("extraHosts", extraHosts)
                 .toString();
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
+
         if (o == null || getClass() != o.getClass()) return false;
 
         DockerCreateContainer that = (DockerCreateContainer) o;
 
-        if (command != null ? !command.equals(that.command) : that.command != null) return false;
-        if (hostname != null ? !hostname.equals(that.hostname) : that.hostname != null) return false;
-        if (dnsHosts != null ? !dnsHosts.equals(that.dnsHosts) : that.dnsHosts != null) return false;
-        if (volumes != null ? !volumes.equals(that.volumes) : that.volumes != null) return false;
-        if (volumesFrom != null ? !volumesFrom.equals(that.volumesFrom) : that.volumesFrom != null) return false;
-        if (environment != null ? !environment.equals(that.environment) : that.environment != null) return false;
-        if (bindPorts != null ? !bindPorts.equals(that.bindPorts) : that.bindPorts != null) return false;
-        if (bindAllPorts != null ? !bindAllPorts.equals(that.bindAllPorts) : that.bindAllPorts != null) return false;
-        if (memoryLimit != null ? !memoryLimit.equals(that.memoryLimit) : that.memoryLimit != null) return false;
-        if (cpuShares != null ? !cpuShares.equals(that.cpuShares) : that.cpuShares != null) return false;
-        if (privileged != null ? !privileged.equals(that.privileged) : that.privileged != null) return false;
-        if (tty != null ? !tty.equals(that.tty) : that.tty != null) return false;
-        if (macAddress != null ? !macAddress.equals(that.macAddress) : that.macAddress != null) return false;
-        return !(extraHosts != null ? !extraHosts.equals(that.extraHosts) : that.extraHosts != null);
-
+        return new EqualsBuilder()
+                .append(command, that.command)
+                .append(hostname, that.hostname)
+                .append(dnsHosts, that.dnsHosts)
+                .append(volumes, that.volumes)
+                .append(volumesFrom, that.volumesFrom)
+                .append(environment, that.environment)
+                .append(bindPorts, that.bindPorts)
+                .append(bindAllPorts, that.bindAllPorts)
+                .append(memoryLimit, that.memoryLimit)
+                .append(cpuShares, that.cpuShares)
+                .append(privileged, that.privileged)
+                .append(tty, that.tty)
+                .append(macAddress, that.macAddress)
+                .append(extraHosts, that.extraHosts)
+                .isEquals();
     }
 
     @Override
     public int hashCode() {
-        int result = command != null ? command.hashCode() : 0;
-        result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
-        result = 31 * result + (dnsHosts != null ? dnsHosts.hashCode() : 0);
-        result = 31 * result + (volumes != null ? volumes.hashCode() : 0);
-        result = 31 * result + (volumesFrom != null ? volumesFrom.hashCode() : 0);
-        result = 31 * result + (environment != null ? environment.hashCode() : 0);
-        result = 31 * result + (bindPorts != null ? bindPorts.hashCode() : 0);
-        result = 31 * result + (bindAllPorts != null ? bindAllPorts.hashCode() : 0);
-        result = 31 * result + (memoryLimit != null ? memoryLimit.hashCode() : 0);
-        result = 31 * result + (cpuShares != null ? cpuShares.hashCode() : 0);
-        result = 31 * result + (privileged != null ? privileged.hashCode() : 0);
-        result = 31 * result + (tty != null ? tty.hashCode() : 0);
-        result = 31 * result + (macAddress != null ? macAddress.hashCode() : 0);
-        result = 31 * result + (extraHosts != null ? extraHosts.hashCode() : 0);
-        return result;
+        return new HashCodeBuilder(17, 37)
+                .append(command)
+                .append(hostname)
+                .append(dnsHosts)
+                .append(volumes)
+                .append(volumesFrom)
+                .append(environment)
+                .append(bindPorts)
+                .append(bindAllPorts)
+                .append(memoryLimit)
+                .append(cpuShares)
+                .append(privileged)
+                .append(tty)
+                .append(macAddress)
+                .append(extraHosts)
+                .toHashCode();
     }
 
     @Extension

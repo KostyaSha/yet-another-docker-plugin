@@ -30,7 +30,7 @@ f.advanced(title: _("Container settings"), align: "left") {
         f.expandableTextbox()
     }
 
-    f.entry(title: _("Environment"), field: "environmentsString") {
+    f.entry(title: _("Environment"), field: "environmentString") {
         f.expandableTextbox()
     }
 

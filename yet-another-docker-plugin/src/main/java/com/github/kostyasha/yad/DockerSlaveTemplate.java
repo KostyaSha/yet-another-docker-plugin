@@ -19,6 +19,8 @@ import hudson.slaves.RetentionStrategy;
 import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -270,44 +272,41 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
+
         if (o == null || getClass() != o.getClass()) return false;
 
         DockerSlaveTemplate that = (DockerSlaveTemplate) o;
 
-        if (maxCapacity != that.maxCapacity) return false;
-        if (numExecutors != that.numExecutors) return false;
-        if (!id.equals(that.id)) return false;
-        if (labelString != null ? !labelString.equals(that.labelString) : that.labelString != null) return false;
-        if (launcher != null ? !launcher.equals(that.launcher) : that.launcher != null) return false;
-        if (remoteFsMapping != null ? !remoteFsMapping.equals(that.remoteFsMapping) : that.remoteFsMapping != null) {
-            return false;
-        }
-        if (remoteFs != null ? !remoteFs.equals(that.remoteFs) : that.remoteFs != null) return false;
-        if (mode != that.mode) return false;
-        if (retentionStrategy != null ? !retentionStrategy.equals(that.retentionStrategy) :
-                that.retentionStrategy != null) {
-            return false;
-        }
-        if (dockerContainerLifecycle != null ? !dockerContainerLifecycle.equals(that.dockerContainerLifecycle) :
-                that.dockerContainerLifecycle != null) {
-            return false;
-        }
-        return !(labelSet != null ? !labelSet.equals(that.labelSet) : that.labelSet != null);
-
+        return new EqualsBuilder()
+                .append(maxCapacity, that.maxCapacity)
+                .append(numExecutors, that.numExecutors)
+                .append(id, that.id)
+                .append(labelString, that.labelString)
+                .append(launcher, that.launcher)
+                .append(remoteFsMapping, that.remoteFsMapping)
+                .append(remoteFs, that.remoteFs)
+                .append(mode, that.mode)
+                .append(retentionStrategy, that.retentionStrategy)
+                .append(dockerContainerLifecycle, that.dockerContainerLifecycle)
+//                .append(nodeProperties, that.nodeProperties)
+                .isEquals();
     }
 
     @Override
     public String toString() {
-        return "DockerSlaveTemplate{" +
-                ", labelString='" + labelString + '\'' +
-                ", launcher=" + launcher +
-                ", remoteFsMapping='" + remoteFsMapping + '\'' +
-                ", remoteFs='" + remoteFs + '\'' +
-                ", maxCapacity=" + maxCapacity +
-                ", mode=" + mode +
-                ", retentionStrategy=" + retentionStrategy +
-                ", numExecutors=" + numExecutors +
-                '}';
+        return new ToStringBuilder(this)
+                .append("dockerContainerLifecycle", dockerContainerLifecycle)
+                .append("id", id)
+                .append("labelString", labelString)
+                .append("launcher", launcher)
+                .append("remoteFsMapping", remoteFsMapping)
+                .append("remoteFs", remoteFs)
+                .append("maxCapacity", maxCapacity)
+                .append("mode", mode)
+                .append("retentionStrategy", retentionStrategy)
+                .append("numExecutors", numExecutors)
+                .append("nodeProperties", nodeProperties)
+                .toString();
     }
 
     public String getShortDescription() {
