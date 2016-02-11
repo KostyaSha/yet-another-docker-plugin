@@ -86,7 +86,7 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
 
         if (pull) {
             LOG.info("Pulling image '{}' {}. This may take awhile...", imageName,
-                    hasImage ? "again" : "since one was not found");
+                    hasImage ? "again" : "since one wasn't pulled before.");
 
             long startTime = System.currentTimeMillis();
             //Identifier amiId = Identifier.fromCompoundString(ami);

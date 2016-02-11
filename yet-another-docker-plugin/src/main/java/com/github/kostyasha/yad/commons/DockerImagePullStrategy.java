@@ -7,7 +7,7 @@ package com.github.kostyasha.yad.commons;
  */
 public enum DockerImagePullStrategy {
 
-    PULL_ALWAYS("Pull all images every time") {
+    PULL_ALWAYS("Pull always") {
         @Override
         public boolean pullIfNotExists(String imageName) {
             return true;
@@ -18,7 +18,18 @@ public enum DockerImagePullStrategy {
             return true;
         }
     },
-    PULL_LATEST("Pull once and update latest") {
+    PULL_ONCE("Pull once") {
+        @Override
+        public boolean pullIfExists(String imageName) {
+            return false;
+        }
+
+        @Override
+        public boolean pullIfNotExists(String imageName) {
+            return true;
+        }
+    },
+    PULL_LATEST("Pull once but always update latest") {
         @Override
         public boolean pullIfNotExists(String imageName) {
             return true;
@@ -29,7 +40,7 @@ public enum DockerImagePullStrategy {
             return imageName.endsWith(":latest");
         }
     },
-    PULL_NEVER("Never pull") {
+    PULL_NEVER("Pull never") {
         @Override
         public boolean pullIfNotExists(String imageName) {
             return false;
