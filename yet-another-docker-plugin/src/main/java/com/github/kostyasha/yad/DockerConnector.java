@@ -157,7 +157,8 @@ public class DockerConnector implements Describable<DockerConnector> {
                     CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM,
                             Collections.<DomainRequirement>emptyList());
 
-            return new CredentialsListBoxModel().withEmptySelection()
+            return new CredentialsListBoxModel()
+                    .withEmptySelection()
                     .withMatching(CredentialsMatchers.always(), credentials);
         }
 

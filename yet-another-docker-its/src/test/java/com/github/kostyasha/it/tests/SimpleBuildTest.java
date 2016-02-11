@@ -3,6 +3,7 @@ package com.github.kostyasha.it.tests;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.github.kostyasha.it.other.BCallable;
 import com.github.kostyasha.it.other.TestCause;
+import com.github.kostyasha.it.rule.DockerResource;
 import com.github.kostyasha.it.rule.DockerRule;
 import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.DockerConnector;
@@ -66,7 +67,7 @@ public class SimpleBuildTest implements Serializable {
     @Rule
     public MyResource dJenkins = new MyResource();
 
-    public static class MyResource extends ExternalResource {
+    public static class MyResource extends DockerResource {
         public String jenkinsId;
         public DockerCLI cli;
 

@@ -140,11 +140,11 @@ public class ClientConfigBuilderForPlugin {
      * @param credentialsId credentials to find in jenkins
      * @return {@link CertificateCredentials} or {@link StandardUsernamePasswordCredentials} expected
      */
-    private static Credentials lookupSystemCredentials(String credentialsId) {
+    public static Credentials lookupSystemCredentials(String credentialsId) {
         return firstOrNull(
                 lookupCredentials(
                         Credentials.class,
-                        Jenkins.getInstance(),
+                        Jenkins.getActiveInstance(),
                         ACL.SYSTEM,
                         Collections.<DomainRequirement>emptyList()
                 ),

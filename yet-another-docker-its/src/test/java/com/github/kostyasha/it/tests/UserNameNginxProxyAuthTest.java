@@ -3,7 +3,9 @@ package com.github.kostyasha.it.tests;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+import com.github.kostyasha.it.other.BCallable;
 import com.github.kostyasha.it.other.TCallable;
+import com.github.kostyasha.it.rule.DockerResource;
 import com.github.kostyasha.it.rule.DockerRule;
 import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.DockerConnector;
@@ -14,7 +16,6 @@ import com.github.kostyasha.yad.commons.DockerRemoveContainer;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.PortBinding;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Version;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
@@ -22,15 +23,15 @@ import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import hudson.cli.DockerCLI;
 import hudson.model.Node;
-import hudson.remoting.Channel;
 import hudson.slaves.JNLPLauncher;
 import jenkins.model.Jenkins;
 import jenkins.model.JenkinsLocationConfiguration;
-import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,22 +43,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.github.kostyasha.it.rule.DockerRule.getDockerItDir;
+import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.caller;
 import static com.github.kostyasha.yad.commons.DockerImagePullStrategy.PULL_ALWAYS;
 import static java.util.Objects.nonNull;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
 
 /**
  * @author Kanstantsin Shautsou
  */
-@Ignore(value = "Auth doesn't pass")
+@Ignore(value = "docker-java doesn't support docker daemon UsernamePassword auth")
 public class UserNameNginxProxyAuthTest {
     private static final Logger LOG = LoggerFactory.getLogger(UserNameNginxProxyAuthTest.class);
     private static final String DATA_IMAGE_TAG = UserNameNginxProxyAuthTest.class.getSimpleName().toLowerCase();
-    private static final String HOST_CONTAINER_NAME = UserNameNginxProxyAuthTest.class.getName() + "_host";
+    private static final String HOST_CONTAINER_NAME = UserNameNginxProxyAuthTest.class.getCanonicalName() + "_host";
     private static final int CONTAINER_PORT = 44445;
-
-    private String hostContainerId;
 
     @ClassRule
     public static DockerRule d = new DockerRule(false);
@@ -65,82 +63,80 @@ public class UserNameNginxProxyAuthTest {
     @ClassRule
     transient public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
 
-    @Before
-    public void before() throws IOException {
-        prepareNginx();
-    }
+    @Rule
+    public NginxResource nginxContainer = new NginxResource();
 
-    public void prepareNginx() throws IOException {
-        // remove host container
-        try {
-            d.getDockerCli().removeContainerCmd(HOST_CONTAINER_NAME)
-                    .withForce(true)
-                    .withRemoveVolumes(true)
-                    .exec();
-            LOG.info("Removed container {}", HOST_CONTAINER_NAME);
-        } catch (NotFoundException ignore) {
-        }
+    public class NginxResource extends DockerResource {
+        public String hostContainerId;
 
-        // remove data image
-        try {
-            d.getDockerCli().removeImageCmd(DATA_IMAGE_TAG)
-                    .withForce(true)
-                    .exec();
-            LOG.info("Removed image {}", DATA_IMAGE_TAG);
-        } catch (NotFoundException ignore) {
-        }
+        @Override
+        public void before() throws IOException {
+            // remove host container
+            try {
+                d.getDockerCli().removeContainerCmd(HOST_CONTAINER_NAME)
+                        .withForce(true)
+                        .withRemoveVolumes(true)
+                        .exec();
+                LOG.info("Removed container {}", HOST_CONTAINER_NAME);
+            } catch (NotFoundException ignore) {
+            }
+
+            // remove data image
+            try {
+                d.getDockerCli().removeImageCmd(DATA_IMAGE_TAG)
+                        .withForce(true)
+                        .exec();
+                LOG.info("Removed image {}", DATA_IMAGE_TAG);
+            } catch (NotFoundException ignore) {
+            }
 
 
-        final File buildDir = folder.newFolder(getClass().getName());
+            final File buildDir = folder.newFolder(UserNameNginxProxyAuthTest.class.getName());
 
-        File resources = new File("src/test/resources/" + getClass().getName().replace(".", "/") + "/docker");
-        FileUtils.copyDirectory(resources, buildDir);
+            File resources = new File(String.format("src/test/resources/%s/docker",
+                    UserNameNginxProxyAuthTest.class.getName().replace(".", "/"))
+            );
+            FileUtils.copyDirectory(resources, buildDir);
 
-        final String imageId = d.getDockerCli().buildImageCmd(buildDir)
-                .withForcerm()
-                .withTag(DATA_IMAGE_TAG)
-                .exec(new BuildImageResultCallback() {
-                    public void onNext(BuildResponseItem item) {
-                        String text = item.getStream();
-                        if (nonNull(text)) {
-                            LOG.debug(StringUtils.removeEnd(text, DockerRule.NL));
+            final String imageId = d.getDockerCli().buildImageCmd(buildDir)
+                    .withForcerm()
+                    .withTag(DATA_IMAGE_TAG)
+                    .exec(new BuildImageResultCallback() {
+                        public void onNext(BuildResponseItem item) {
+                            String text = item.getStream();
+                            if (nonNull(text)) {
+                                LOG.debug(StringUtils.removeEnd(text, DockerRule.NL));
+                            }
+                            super.onNext(item);
                         }
-                        super.onNext(item);
-                    }
-                })
-                .awaitImageId();
+                    })
+                    .awaitImageId();
 
-        hostContainerId = d.getDockerCli().createContainerCmd(imageId)
-                .withName(HOST_CONTAINER_NAME)
+            hostContainerId = d.getDockerCli().createContainerCmd(imageId)
+                    .withName(HOST_CONTAINER_NAME)
 //                .withExposedPorts(new ExposedPort(4243))
-                .withPortBindings(PortBinding.parse("0.0.0.0:" + CONTAINER_PORT + ":" + CONTAINER_PORT))
+                    .withPortBindings(PortBinding.parse("0.0.0.0:" + CONTAINER_PORT + ":" + CONTAINER_PORT))
 //                .withPortSpecs(String.format("%d/tcp", CONTAINER_PORT))
-                .exec()
-                .getId();
+                    .exec()
+                    .getId();
 
-        d.getDockerCli().startContainerCmd(hostContainerId).exec();
+            d.getDockerCli().startContainerCmd(hostContainerId).exec();
+        }
     }
 
     @Test
     public void testAuth() throws Throwable {
         String jenkinsId = d.runFreshJenkinsContainer(PULL_ALWAYS, false);
         final DockerCLI cli = d.createCliForContainer(jenkinsId);
-        try (Channel channel = cli.getChannel()) {
-            assertThat(
-                    channel.call(
-                            new TestCallable(
-                                    cli.jenkins.getPort(),
-                                    d.clientConfig.getUri(),
-                                    DockerRule.SLAVE_IMAGE_JNLP
-                            )),
-                    equalTo(true)
-            );
-        } finally {
-            cli.close();
-        }
+        caller(cli, new TestCallable(
+                        cli.jenkins.getPort(),
+                        d.clientConfig.getUri(),
+                        DockerRule.SLAVE_IMAGE_JNLP
+                )
+        );
     }
 
-    private static class TestCallable extends TCallable<Boolean, Throwable> {
+    private static class TestCallable extends BCallable {
         private final int jenkinsPort;
         private final URI dockerUri;
         private final String slaveImage;
@@ -158,7 +154,7 @@ public class UserNameNginxProxyAuthTest {
 
             // prepare jenkins global (url, cred)
             JenkinsLocationConfiguration.get().setUrl(String.format("http://%s:%d", dockerUri.getHost(), jenkinsPort));
-            
+
             final UsernamePasswordCredentialsImpl credentials = new UsernamePasswordCredentialsImpl(
                     CredentialsScope.GLOBAL,
                     null,

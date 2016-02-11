@@ -1,15 +1,18 @@
 package com.github.kostyasha.yad.commons;
 
+import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.github.kostyasha.yad.credentials.DockerRegistryAuthCredentials;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.PullImageCmd;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Image;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.google.common.collect.Iterables;
+import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -30,6 +33,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static com.github.kostyasha.yad.client.ClientConfigBuilderForPlugin.lookupSystemCredentials;
 
 /**
  * Contains docker pull image related settings:
@@ -90,7 +95,19 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
 
             long startTime = System.currentTimeMillis();
             //Identifier amiId = Identifier.fromCompoundString(ami);
-            client.pullImageCmd(imageName).exec(new PullImageResultCallback()).awaitSuccess();
+            final PullImageCmd pullImageCmd = client.pullImageCmd(imageName);
+            if (StringUtils.isNotBlank(credentialsId)) {
+                // hostname requirements?
+                Credentials credentials = lookupSystemCredentials(credentialsId);
+                if (credentials instanceof DockerRegistryAuthCredentials) {
+                    final DockerRegistryAuthCredentials authCredentials = (DockerRegistryAuthCredentials) credentials;
+//                    final DockerRegistryToken token = AuthenticationTokens.convert(DockerRegistryToken.class, authCredentials);
+                    pullImageCmd.withAuthConfig(authCredentials.getAuthConfig());
+                }
+            }
+
+            pullImageCmd.exec(new PullImageResultCallback())
+                    .awaitSuccess();
             long pullTime = System.currentTimeMillis() - startTime;
             LOG.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
         }
@@ -114,12 +131,12 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-            List<StandardCredentials> credentials =
-                    CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM,
+            List<DockerRegistryAuthCredentials> credentials =
+                    CredentialsProvider.lookupCredentials(DockerRegistryAuthCredentials.class, context, ACL.SYSTEM,
                             Collections.<DomainRequirement>emptyList());
 
             return new StandardListBoxModel().withEmptySelection()
-                    .withMatching(CredentialsMatchers.always(), credentials);
+                    .withMatching(CredentialsMatchers.instanceOf(DockerRegistryAuthCredentials.class), credentials);
         }
     }
 }
