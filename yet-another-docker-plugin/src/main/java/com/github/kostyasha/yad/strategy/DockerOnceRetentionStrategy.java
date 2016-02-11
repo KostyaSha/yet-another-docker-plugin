@@ -11,6 +11,8 @@ import hudson.slaves.CloudRetentionStrategy;
 import hudson.slaves.EphemeralNode;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.TimeUnit2;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -124,6 +126,26 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
                     }
                 })
         );
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DockerOnceRetentionStrategy that = (DockerOnceRetentionStrategy) o;
+
+        return new EqualsBuilder()
+                .append(idleMinutes, that.idleMinutes)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(idleMinutes)
+                .toHashCode();
     }
 
     @Override

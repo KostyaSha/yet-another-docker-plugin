@@ -5,6 +5,8 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.S
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -36,6 +38,26 @@ public class DockerStopContainer extends AbstractDescribableImpl<DockerStopConta
         client.stopContainerCmd(containerId)
                 .withTimeout(timeout)
                 .exec();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DockerStopContainer that = (DockerStopContainer) o;
+
+        return new EqualsBuilder()
+                .append(timeout, that.timeout)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(timeout)
+                .toHashCode();
     }
 
     @Extension

@@ -24,6 +24,8 @@ import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -113,6 +115,33 @@ public class DockerConnector implements Describable<DockerConnector> {
 
     public void testConnection() {
         getClient().versionCmd().exec();
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DockerConnector that = (DockerConnector) o;
+
+        return new EqualsBuilder()
+                .append(connectTimeout, that.connectTimeout)
+                .append(readTimeout, that.readTimeout)
+                .append(serverUrl, that.serverUrl)
+                .append(credentialsId, that.credentialsId)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(serverUrl)
+                .append(connectTimeout)
+                .append(readTimeout)
+                .append(credentialsId)
+                .toHashCode();
     }
 
     @Override

@@ -326,11 +326,10 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         if (o == null || getClass() != o.getClass()) return false;
 
         DockerCloud that = (DockerCloud) o;
-
+        if (!name.equals(that.name)) return false;
         if (containerCap != that.containerCap) return false;
         if (!templates.equals(that.templates)) return false;
         return !(connector != null ? !connector.equals(that.connector) : that.connector != null);
-
     }
 
     @Override

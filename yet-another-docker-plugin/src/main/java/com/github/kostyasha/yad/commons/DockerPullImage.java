@@ -16,6 +16,8 @@ import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -92,6 +94,16 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
             long pullTime = System.currentTimeMillis() - startTime;
             LOG.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return EqualsBuilder.reflectionEquals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return HashCodeBuilder.reflectionHashCode(this);
     }
 
     @Extension

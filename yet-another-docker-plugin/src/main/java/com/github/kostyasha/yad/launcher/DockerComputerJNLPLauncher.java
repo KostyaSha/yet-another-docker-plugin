@@ -19,6 +19,8 @@ import hudson.util.TimeUnit2;
 import jenkins.model.Jenkins;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -237,6 +239,31 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     @Override
     public boolean waitUp(String cloudId, DockerSlaveTemplate dockerSlaveTemplate, InspectContainerResponse ir) {
         return super.waitUp(cloudId, dockerSlaveTemplate, ir);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DockerComputerJNLPLauncher that = (DockerComputerJNLPLauncher) o;
+
+        return new EqualsBuilder()
+                .append(launchTimeout, that.launchTimeout)
+                .append(jnlpLauncher.tunnel, that.jnlpLauncher.tunnel) // no equals
+                .append(jnlpLauncher.vmargs, that.jnlpLauncher.vmargs) // no equals
+                .append(user, that.user)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(jnlpLauncher)
+                .append(launchTimeout)
+                .append(user)
+                .toHashCode();
     }
 
     @Override

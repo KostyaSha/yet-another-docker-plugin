@@ -7,6 +7,8 @@ import com.github.kostyasha.yad.commons.DockerStopContainer;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -52,9 +54,8 @@ public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerCont
     }
 
     @DataBoundSetter
-    public DockerContainerLifecycle setPullImage(DockerPullImage pullImage) {
+    public void setPullImage(DockerPullImage pullImage) {
         this.pullImage = pullImage;
-        return this;
     }
 
     // createContainer
@@ -63,9 +64,8 @@ public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerCont
     }
 
     @DataBoundSetter
-    public DockerContainerLifecycle setCreateContainer(DockerCreateContainer createContainer) {
+    public void setCreateContainer(DockerCreateContainer createContainer) {
         this.createContainer = createContainer;
-        return this;
     }
 
     // stop container
@@ -74,9 +74,8 @@ public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerCont
     }
 
     @DataBoundSetter
-    public DockerContainerLifecycle setStopContainer(DockerStopContainer stopContainer) {
+    public void setStopContainer(DockerStopContainer stopContainer) {
         this.stopContainer = stopContainer;
-        return this;
     }
 
     // remove container
@@ -85,9 +84,36 @@ public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerCont
     }
 
     @DataBoundSetter
-    public DockerContainerLifecycle setRemoveContainer(DockerRemoveContainer removeContainer) {
+    public void setRemoveContainer(DockerRemoveContainer removeContainer) {
         this.removeContainer = removeContainer;
-        return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DockerContainerLifecycle that = (DockerContainerLifecycle) o;
+
+        return new EqualsBuilder()
+                .append(image, that.image)
+                .append(pullImage, that.pullImage)
+                .append(createContainer, that.createContainer)
+                .append(stopContainer, that.stopContainer)
+                .append(removeContainer, that.removeContainer)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(image)
+                .append(pullImage)
+                .append(createContainer)
+                .append(stopContainer)
+                .append(removeContainer)
+                .toHashCode();
     }
 
     @Extension
