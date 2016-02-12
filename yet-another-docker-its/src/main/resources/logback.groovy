@@ -12,6 +12,6 @@ appender("STDOUT", ConsoleAppender) {
 
 logger("hudson.cli", DEBUG)
 logger("com.github.kostyasha", DEBUG)
-logger("com.github.kostyasha.yad.docker_java", INFO)
+logger("com.github.kostyasha.yad.docker_java", DEBUG)
 
 root(INFO, ["STDOUT"])

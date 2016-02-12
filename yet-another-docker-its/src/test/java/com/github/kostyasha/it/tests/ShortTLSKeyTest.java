@@ -30,6 +30,7 @@ import java.util.Map;
 
 import static com.github.kostyasha.it.rule.DockerRule.getDockerItDir;
 import static com.github.kostyasha.it.utils.DockerHPIContainerUtil.getResource;
+import static com.github.kostyasha.it.utils.DockerUtils.getExposedPort;
 import static java.util.Objects.nonNull;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -162,16 +163,5 @@ public class ShortTLSKeyTest {
         final Version version = dockerClient.versionCmd().exec();
         LOG.info("Daemon version {}", version);
         assertThat(version.getVersion(), notNullValue());
-    }
-
-    private int getExposedPort(InspectContainerResponse inspect, int targetPort) {
-        final Map<ExposedPort, Ports.Binding[]> bindings = inspect.getNetworkSettings().getPorts().getBindings();
-        for (Map.Entry<ExposedPort, Ports.Binding[]> entry : bindings.entrySet()) {
-            if (entry.getKey().getPort() == targetPort) {
-                return entry.getValue()[0].getHostPort();
-            }
-        }
-
-        throw new IllegalArgumentException("Can't find exposed port for port: " + targetPort);
     }
 }

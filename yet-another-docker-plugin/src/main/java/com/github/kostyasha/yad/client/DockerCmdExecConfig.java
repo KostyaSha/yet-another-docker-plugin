@@ -6,7 +6,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Serializable object that store options for {@see com.github.kostyasha.yad.docker_java.jaxrs.DockerCmdExecFactoryImpl}
- * Required for {@see #DockerBuilderPublisher.class} that builds DockerClient on slave side
+ * Required for building DockerClient on slave side
  * TODO create analogue in docker-java https://github.com/docker-java/docker-java/pull/379
  *
  * @author Kanstantsin Shautsou

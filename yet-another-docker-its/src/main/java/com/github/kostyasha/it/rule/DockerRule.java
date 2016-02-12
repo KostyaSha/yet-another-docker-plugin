@@ -33,7 +33,6 @@ import hudson.cli.CLIConnectionFactory;
 import hudson.cli.DockerCLI;
 import org.apache.maven.settings.building.SettingsBuildingException;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
-import org.jenkinsci.test.acceptance.Ssh;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -55,7 +54,9 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.github.kostyasha.it.other.JenkinsDockerImage.JENKINS_DEFAULT;
-import static java.util.Objects.*;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+import static java.util.Objects.requireNonNull;
 import static org.codehaus.plexus.util.FileUtils.copyFile;
 
 /**
@@ -143,7 +144,7 @@ public class DockerRule extends ExternalResource {
         //check dockerClient
         getDockerCli().infoCmd().exec();
         // ensure we have right ssh creds
-        checkSsh();
+//        checkSsh();
     }
 
     /**
@@ -192,24 +193,24 @@ public class DockerRule extends ExternalResource {
                 .build();
     }
 
-    private void checkSsh() {
-        try (Ssh ssh = getSsh()) {
-            ssh.executeRemoteCommand("env");
-        }
-    }
-
-    /**
-     * @return ssh connection to docker host
-     */
-    public Ssh getSsh() {
-        try {
-            Ssh ssh = new Ssh(getHost());
-            ssh.getConnection().authenticateWithPassword(getSshUser(), getSshPass());
-            return ssh;
-        } catch (IOException e) {
-            throw new AssertionError("Failed to create ssh connection", e);
-        }
-    }
+//    private void checkSsh() {
+//        try (Ssh ssh = getSsh()) {
+//            ssh.executeRemoteCommand("env");
+//        }
+//    }
+//
+//    /**
+//     * @return ssh connection to docker host
+//     */
+//    public Ssh getSsh() {
+//        try {
+//            Ssh ssh = new Ssh(getHost());
+//            ssh.getConnection().authenticateWithPassword(getSshUser(), getSshPass());
+//            return ssh;
+//        } catch (IOException e) {
+//            throw new AssertionError("Failed to create ssh connection", e);
+//        }
+//    }
 
     /**
      * Docker data container with unique name based on docker data-image (also unique).

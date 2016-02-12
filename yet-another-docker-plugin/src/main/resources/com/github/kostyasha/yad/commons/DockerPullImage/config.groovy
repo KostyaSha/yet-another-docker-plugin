@@ -11,6 +11,7 @@ f.entry(title: _("Pull strategy"), field: "pullStrategy") {
         text(my.description)
     }
 }
+
 f.entry(title: _("Registry Credentials"), field: "credentialsId") {
     c.select()
 }

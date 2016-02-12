@@ -2,6 +2,7 @@ package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.action.DockerTerminateCmdAction;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.NotModifiedException;
 import com.github.kostyasha.yad.docker_java.com.google.common.base.MoreObjects;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
@@ -147,6 +148,8 @@ public class DockerSlave extends AbstractCloudSlave {
             try {
                 dockerContainerLifecycle.getStopContainer().exec(getClient(), containerId);
                 LOG.info("Stopped container {}", getContainerId());
+            } catch (NotModifiedException ex) {
+                LOG.info("Container '{}' is already stopped.", getContainerId());
             } catch (Exception ex) {
                 LOG.error("Failed to stop instance '{}' for slave '{}' due to exception: {}",
                         getContainerId(), name, ex.getMessage());
