@@ -3,6 +3,8 @@
 ## Next
 
 ## 0.1.0-rc4 (next)
+ - New "pull once" strategy
+ - Support credentials for pull operation
  - Fixed some UI settings with a test case.
  - Support NodeProperties (i.e. ToolsInstallation).
  - Support ECDSA keys for docker daemon auth.
