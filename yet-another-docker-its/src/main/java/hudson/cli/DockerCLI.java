@@ -59,6 +59,8 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static hudson.remoting.RemoteInputStream.Flag.NOT_GREEDY;
+
 /**
  * !!Copy-paste from {@link CLI} !!!
  * https://github.com/jenkinsci/jenkins/pull/1961
@@ -229,7 +231,7 @@ public class DockerCLI {
 
     public int execute(List<String> args, InputStream stdin, OutputStream stdout, OutputStream stderr) {
         return entryPoint.main(args, Locale.getDefault(),
-                new RemoteInputStream(stdin),
+                new RemoteInputStream(stdin, NOT_GREEDY),
                 new RemoteOutputStream(stdout),
                 new RemoteOutputStream(stderr));
     }
