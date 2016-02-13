@@ -1,8 +1,9 @@
 
 
 ## Next
+ -
 
-## 0.1.0-rc4 (next)
+## 0.1.0-rc4
  - New "pull once" strategy
  - Support credentials for pull operation
  - Fixed some UI settings with a test case.
