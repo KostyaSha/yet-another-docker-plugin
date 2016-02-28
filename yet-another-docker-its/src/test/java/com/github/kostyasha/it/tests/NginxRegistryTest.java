@@ -234,7 +234,9 @@ public class NginxRegistryTest {
         writeStringToFile(new File(buildDir, "Dockerfile"),
                 "FROM scratch\n" +
                         "MAINTAINER Kanstantsin Shautsou <kanstantsin.sha@gmail.com>");
-        final String imageId = dockerClient.buildImageCmd(buildDir).exec(new BuildImageResultCallback()).awaitImageId();
+        final String imageId = dockerClient.buildImageCmd(buildDir)
+                .exec(new BuildImageResultCallback())
+                .awaitImageId();
 
         dockerClient.tagImageCmd(imageId, imageName, "tag").exec();
 

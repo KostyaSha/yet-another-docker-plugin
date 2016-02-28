@@ -87,7 +87,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
     @Nonnull
     @Override
     public synchronized Collection<PlannedNode> provision(@CheckForNull Label label, int excessWorkload) {
-        LOG.info("Asked to provision {} slave(s) for: '{}'", excessWorkload, label);
+        LOG.info("Asked to provision load: '{}', for: '{}' label", excessWorkload, label);
 
         List<PlannedNode> r = new ArrayList<>(excessWorkload);
         final List<DockerSlaveTemplate> tryTemplates = getTemplates(label);
@@ -156,10 +156,11 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         // create
         CreateContainerResponse response = containerConfig.exec();
         String containerId = response.getId();
-
+        LOG.debug("Created container {}, for {}", containerId, getDisplayName());
         // start
         StartContainerCmd startCommand = getClient().startContainerCmd(containerId);
         startCommand.exec();
+        LOG.debug("Run container {}, for {}", containerId, getDisplayName());
 
         return containerId;
     }
