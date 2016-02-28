@@ -98,7 +98,8 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
             LOG.debug("not terminating {} because {} says it will be continued", c.getName(), exec);
             return;
         }
-        LOG.debug("terminating {0} since {1} seems to be finished", c.getName(), exec);
+
+        LOG.debug("terminating {} since {} seems to be finished", c.getName(), exec);
         done(c);
     }
 
