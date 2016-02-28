@@ -62,7 +62,7 @@ public class SimpleBuildTest implements Serializable {
 
     //TODO redesign rule internals
     @ClassRule
-    public static DockerRule d = new DockerRule(false);
+    public static DockerRule d = new DockerRule(true);
 
     @Rule
     public MyResource dJenkins = new MyResource();

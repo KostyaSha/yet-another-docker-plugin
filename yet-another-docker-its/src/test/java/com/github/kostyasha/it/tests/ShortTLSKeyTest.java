@@ -7,7 +7,6 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.In
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.ExposedPort;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.PortBinding;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Ports;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Version;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.VolumesFrom;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientBuilder;
@@ -17,6 +16,7 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.DockerCm
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import com.github.kostyasha.yad.other.VariableSSLConfig;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 import static com.github.kostyasha.it.rule.DockerRule.getDockerItDir;
 import static com.github.kostyasha.it.utils.DockerHPIContainerUtil.getResource;
@@ -51,43 +50,14 @@ public class ShortTLSKeyTest {
     private String hostContainerId;
 
     @ClassRule
-    public static DockerRule d = new DockerRule(false);
+    public static DockerRule d = new DockerRule(true);
 
     @ClassRule
     public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
 
     @Before
     public void before() throws IOException {
-        // remove host container
-        try {
-//            d.getDockerCli().inspectContainerCmd(HOST_CONTAINER_NAME).exec();
-            d.getDockerCli().removeContainerCmd(HOST_CONTAINER_NAME)
-                    .withForce(true)
-                    .withRemoveVolumes(true)
-                    .exec();
-            LOG.info("Removed container {}", HOST_CONTAINER_NAME);
-        } catch (NotFoundException ignore) {
-        }
-
-        // remove data container
-        try {
-            d.getDockerCli().removeContainerCmd(DATA_CONTAINER_NAME)
-                    .withForce(true)
-                    .withRemoveVolumes(true)
-                    .exec();
-            LOG.info("Removed container {}", DATA_CONTAINER_NAME);
-        } catch (NotFoundException ignore) {
-        }
-
-        // remove data image
-        try {
-            d.getDockerCli().removeImageCmd(DATA_IMAGE_TAG)
-                    .withForce(true)
-                    .exec();
-            LOG.info("Removed image {}", DATA_IMAGE_TAG);
-        } catch (NotFoundException ignore) {
-        }
-
+        after();
 
         final File buildDir = folder.newFolder(getClass().getName());
 
@@ -131,6 +101,39 @@ public class ShortTLSKeyTest {
                 .getId();
 
         d.getDockerCli().startContainerCmd(hostContainerId).exec();
+    }
+
+    @After
+    public void after() {
+        // remove host container
+        try {
+//            d.getDockerCli().inspectContainerCmd(HOST_CONTAINER_NAME).exec();
+            d.getDockerCli().removeContainerCmd(HOST_CONTAINER_NAME)
+                    .withForce(true)
+                    .withRemoveVolumes(true)
+                    .exec();
+            LOG.info("Removed container {}", HOST_CONTAINER_NAME);
+        } catch (NotFoundException ignore) {
+        }
+
+        // remove data container
+        try {
+            d.getDockerCli().removeContainerCmd(DATA_CONTAINER_NAME)
+                    .withForce(true)
+                    .withRemoveVolumes(true)
+                    .exec();
+            LOG.info("Removed container {}", DATA_CONTAINER_NAME);
+        } catch (NotFoundException ignore) {
+        }
+
+        // remove data image
+        try {
+            d.getDockerCli().removeImageCmd(DATA_IMAGE_TAG)
+                    .withForce(true)
+                    .exec();
+            LOG.info("Removed image {}", DATA_IMAGE_TAG);
+        } catch (NotFoundException ignore) {
+        }
     }
 
     @Test

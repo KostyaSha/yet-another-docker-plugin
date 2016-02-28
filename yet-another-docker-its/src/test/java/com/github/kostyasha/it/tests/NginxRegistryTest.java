@@ -46,7 +46,7 @@ public class NginxRegistryTest {
     private static final Logger LOG = LoggerFactory.getLogger(NginxRegistryTest.class);
 
     @ClassRule
-    public static DockerRule d = new DockerRule(false);
+    public static DockerRule d = new DockerRule(true);
 
     @ClassRule
     transient public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
@@ -76,7 +76,7 @@ public class NginxRegistryTest {
 
         @Override
         protected void before() throws Throwable {
-            ensureContainerRemoved(d.getDockerCli(), HOST_CONTAINER_NAME);
+            after();
 
             hostContainerId = d.getDockerCli().createContainerCmd(IMAGE_NAME)
                     .withName(HOST_CONTAINER_NAME)
@@ -92,6 +92,11 @@ public class NginxRegistryTest {
                     .getId();
 
             d.getDockerCli().startContainerCmd(hostContainerId).exec();
+        }
+
+        @Override
+        protected void after() {
+            ensureContainerRemoved(d.getDockerCli(), HOST_CONTAINER_NAME);
         }
     }
 
@@ -117,18 +122,7 @@ public class NginxRegistryTest {
 
         @Override
         public void before() throws IOException {
-            // remove host container
-            ensureContainerRemoved(d.getDockerCli(), HOST_CONTAINER_NAME);
-
-            // remove data image
-            try {
-                d.getDockerCli().removeImageCmd(DATA_IMAGE_TAG)
-                        .withForce(true)
-                        .exec();
-                LOG.info("Removed image {}", DATA_IMAGE_TAG);
-            } catch (NotFoundException ignore) {
-            }
-
+            after();
 
             final File buildDir = folder.newFolder(getClass().getName());
 
@@ -161,6 +155,21 @@ public class NginxRegistryTest {
 
             d.getDockerCli().startContainerCmd(hostContainerId).exec();
         }
+
+        @Override
+        protected void after() {
+            // remove host container
+            ensureContainerRemoved(d.getDockerCli(), HOST_CONTAINER_NAME);
+
+            // remove data image
+            try {
+                d.getDockerCli().removeImageCmd(DATA_IMAGE_TAG)
+                        .withForce(true)
+                        .exec();
+                LOG.info("Removed image {}", DATA_IMAGE_TAG);
+            } catch (NotFoundException ignore) {
+            }
+        }
     }
 
     public RegistryResource registryResource = new RegistryResource();
@@ -180,7 +189,7 @@ public class NginxRegistryTest {
 
         @Override
         protected void before() throws Throwable {
-            ensureContainerRemoved(d.getDockerCli(), HOST_CONTAINER_NAME);
+            after();
 
             hostContainerId = d.getDockerCli().createContainerCmd(REGISTRY_IMAGE_NAME)
                     .withRestartPolicy(RestartPolicy.alwaysRestart())
@@ -191,6 +200,12 @@ public class NginxRegistryTest {
                     .getId();
 
             d.getDockerCli().startContainerCmd(hostContainerId).exec();
+        }
+
+        @Override
+        protected void after() {
+            ensureContainerRemoved(d.getDockerCli(), HOST_CONTAINER_NAME);
+
         }
     }
 

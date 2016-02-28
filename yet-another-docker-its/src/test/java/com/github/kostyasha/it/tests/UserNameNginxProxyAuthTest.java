@@ -58,7 +58,7 @@ public class UserNameNginxProxyAuthTest {
     private static final int CONTAINER_PORT = 44445;
 
     @ClassRule
-    public static DockerRule d = new DockerRule(false);
+    public static DockerRule d = new DockerRule(true);
 
     @ClassRule
     transient public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
