@@ -9,7 +9,9 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.NotFoundEx
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.github.kostyasha.yad.docker_java.com.google.common.annotations.Beta;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
@@ -94,6 +96,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         return true;
     }
 
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION")
     @Override
     public void launch(@Nonnull SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
         final PrintStream logger = listener.getLogger();
@@ -137,7 +140,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         try {
             final ExecCreateCmdResponse response = connect.execCreateCmd(containerId)
                     .withTty()
-                    .withAttachStdin()
+                    .withAttachStdin(false)
                     .withAttachStderr()
                     .withAttachStdout()
                     .withCmd("/bin/bash", "-cxe", startCmd.replace("$", "\\$"))
@@ -146,20 +149,22 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             LOG.info("Starting connection command for {}", containerId);
             logger.println("Starting connection command for " + containerId);
 
-            try (InputStream exec = connect
+            try (ExecStartResultCallback exec = connect
                     .execStartCmd(response.getId())
                     .withDetach()
                     .withTty()
-                    .exec()
+                    .exec(new ExecStartResultCallback())
             ) {
-                //ignored, just want to be closed
+                exec.awaitCompletion();
             } catch (NotFoundException ex) {
-                listener.error("Can't execute command: " + ex.getMessage());
-                LOG.error("Can't execute jnlp connection command: '{}'", ex.getMessage());
+                listener.error("Can't execute command: " + ex.getMessage().trim());
+                LOG.error("Can't execute jnlp connection command: '{}'", ex.getMessage().trim());
+                throw ex;
             }
         } catch (Exception ex) {
-            listener.error("Can't execute command: " + ex.getMessage());
-            LOG.error("Can't execute jnlp connection command: '{}'", ex.getMessage());
+            listener.error("Can't execute command: " + ex.getMessage().trim());
+            LOG.error("Can't execute jnlp connection command: '{}'", ex.getMessage().trim());
+            node.terminate();
             throw ex;
         }
 
@@ -181,7 +186,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             throw new IOException("Can't connect slave to jenkins");
         }
 
-        LOG.info("Launched slave '{}' based on '{}'", dockerComputer.getName(), containerId);
+        LOG.info("Launched slave '{}' '{}' based on '{}'",
+                dockerComputer.getSlaveVersion(), dockerComputer.getName(), containerId);
         logger.println("Launched slave for " + containerId);
     }
 
