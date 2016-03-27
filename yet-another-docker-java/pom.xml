@@ -234,13 +234,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>travis</id>
-            <properties>
-                <maven-shade-plugin.version>2.4.3</maven-shade-plugin.version>
-            </properties>
-        </profile>
-    </profiles>
 </project>
