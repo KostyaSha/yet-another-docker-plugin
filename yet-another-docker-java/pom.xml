@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <!-- No parent, otherwise we inherit wrong versions from transient jenkins dependencies. -->
@@ -20,7 +21,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <shade-prefix>com.github.kostyasha.yad.docker_java</shade-prefix>
-        <maven-shade-plugin.version>3.0-SNAPSHOT</maven-shade-plugin.version>
+        <maven-shade-plugin.version>3.0-kostyasha</maven-shade-plugin.version>
     </properties>
 
     <repositories>
@@ -33,6 +34,16 @@
         <pluginRepository>
             <id>repo.jenkins-ci.org</id>
             <url>http://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>bintray</id>
+            <url>http://dl.bintray.com/kostyasha/maven-plugins</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
         </pluginRepository>
     </pluginRepositories>
 
