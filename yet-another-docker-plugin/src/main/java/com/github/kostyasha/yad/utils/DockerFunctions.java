@@ -14,16 +14,17 @@ import com.github.kostyasha.yad.launcher.DockerComputerSSHLauncher;
 import com.github.kostyasha.yad.strategy.DockerCloudRetentionStrategy;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import hudson.model.Descriptor;
+import hudson.model.Label;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.RetentionStrategy;
 import jenkins.model.Jenkins;
 
+import javax.annotation.Nonnull;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -82,7 +83,8 @@ public class DockerFunctions {
      *
      * @return the list as a LinkedList of DockerCloud
      */
-    public static synchronized Collection<DockerCloud> getServers() {
+    @Nonnull
+    public static synchronized List<DockerCloud> getDockerClouds() {
         return Jenkins.getActiveInstance().clouds.stream()
                 .filter(Objects::nonNull)
                 .filter(DockerCloud.class::isInstance)
@@ -90,7 +92,14 @@ public class DockerFunctions {
                 .collect(Collectors.toList());
     }
 
-    public DockerCloud getServer(final String serverName) {
-        return Iterables.find(getServers(), input -> serverName.equals(input.getDisplayName()));
+    public static DockerCloud anyCloudForLabel(Label label) {
+        return getDockerClouds().stream()
+                .filter(cloud -> cloud.canProvision(label))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public static DockerCloud firstDockerCloudByName(final String serverName) {
+        return Iterables.find(getDockerClouds(), input -> serverName.equals(input.getDisplayName()));
     }
 }
