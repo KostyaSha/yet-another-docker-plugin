@@ -107,6 +107,9 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     @CheckForNull
     private List<String> extraHosts;
 
+    @CheckForNull
+    private String networkMode;
+
     @DataBoundConstructor
     public DockerCreateContainer() {
     }
@@ -346,6 +349,16 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     }
 
 
+    @CheckForNull
+    public String getNetworkMode() {
+        return StringUtils.trimToNull(networkMode);
+    }
+
+    @DataBoundSetter
+    public void setNetworkMode(String networkMode) {
+        this.networkMode = networkMode;
+    }
+
     /**
      * Fills user specified values
      *
@@ -433,6 +446,10 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
         if (CollectionUtils.isNotEmpty(getExtraHosts())) {
             containerConfig.withExtraHosts(getExtraHosts().toArray(new String[getExtraHosts().size()]));
+        }
+
+        if (StringUtils.isNotBlank(getNetworkMode())) {
+            containerConfig.withNetworkMode(getNetworkMode());
         }
 
         return containerConfig;
