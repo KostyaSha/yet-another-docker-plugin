@@ -47,6 +47,7 @@ import java.util.List;
 import static com.github.kostyasha.yad.utils.BindUtils.joinToStr;
 import static com.github.kostyasha.yad.utils.BindUtils.splitAndFilterEmpty;
 import static org.apache.commons.lang.StringUtils.trimToNull;
+import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 /**
  * Contains docker container create related settings
@@ -439,68 +440,17 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this)
-                .append("bindAllPorts", bindAllPorts)
-                .append("command", command)
-                .append("hostname", hostname)
-                .append("dnsHosts", dnsHosts)
-                .append("volumes", volumes)
-                .append("volumesFrom", volumesFrom)
-                .append("environment", environment)
-                .append("bindPorts", bindPorts)
-                .append("memoryLimit", memoryLimit)
-                .append("cpuShares", cpuShares)
-                .append("privileged", privileged)
-                .append("tty", tty)
-                .append("macAddress", macAddress)
-                .append("extraHosts", extraHosts)
-                .toString();
+        return ToStringBuilder.reflectionToString(this, SHORT_PREFIX_STYLE);
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-
-        if (o == null || getClass() != o.getClass()) return false;
-
-        DockerCreateContainer that = (DockerCreateContainer) o;
-
-        return new EqualsBuilder()
-                .append(command, that.command)
-                .append(hostname, that.hostname)
-                .append(dnsHosts, that.dnsHosts)
-                .append(volumes, that.volumes)
-                .append(volumesFrom, that.volumesFrom)
-                .append(environment, that.environment)
-                .append(bindPorts, that.bindPorts)
-                .append(bindAllPorts, that.bindAllPorts)
-                .append(memoryLimit, that.memoryLimit)
-                .append(cpuShares, that.cpuShares)
-                .append(privileged, that.privileged)
-                .append(tty, that.tty)
-                .append(macAddress, that.macAddress)
-                .append(extraHosts, that.extraHosts)
-                .isEquals();
+        return EqualsBuilder.reflectionEquals(this, o);
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(command)
-                .append(hostname)
-                .append(dnsHosts)
-                .append(volumes)
-                .append(volumesFrom)
-                .append(environment)
-                .append(bindPorts)
-                .append(bindAllPorts)
-                .append(memoryLimit)
-                .append(cpuShares)
-                .append(privileged)
-                .append(tty)
-                .append(macAddress)
-                .append(extraHosts)
-                .toHashCode();
+        return HashCodeBuilder.reflectionHashCode(this);
     }
 
     @Extension
