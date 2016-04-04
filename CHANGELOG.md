@@ -3,7 +3,7 @@
 ## Next
  -
  
-## 0.1.0-rc5
+## 0.1.0-rc6
  - Faster node provisioning strategy. Exclude delay before provision and allow provisioning multiple slaves for single label in a time.
 
 ## 0.1.0-rc5
