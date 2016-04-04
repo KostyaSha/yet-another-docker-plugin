@@ -4,6 +4,9 @@
  -
  
 ## 0.1.0-rc5
+ - Faster node provisioning strategy. Exclude delay before provision and allow provisioning multiple slaves for single label in a time.
+
+## 0.1.0-rc5
  - Fix possible null during pull.
  - Update docker-java
  - Fix possible delay in slave clean-up in case of errors.
