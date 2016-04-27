@@ -1,6 +1,8 @@
 
 
-## Next 0.1.0
+## Next 
+
+## 0.1.0-rc7
  - Add network (net) parameter to docker template settings.
  
 ## 0.1.0-rc6
