@@ -6,6 +6,7 @@ import com.github.kostyasha.yad.commons.DockerCreateContainer;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.ExposedPort;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.NetworkSettings;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Ports;
 import com.github.kostyasha.yad.docker_java.com.google.common.annotations.Beta;
@@ -29,6 +30,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static java.util.Objects.isNull;
 
 /**
  * Configurable SSH launcher that expected ssh port to be exposed from docker container.
@@ -114,10 +117,14 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         String host = null;
         Integer port = 22;
 
-        final InspectContainerResponse.NetworkSettings networkSettings = ir.getNetworkSettings();
+        final NetworkSettings networkSettings = ir.getNetworkSettings();
         final Ports ports = networkSettings.getPorts();
         final Map<ExposedPort, Ports.Binding[]> bindings = ports.getBindings();
         final Ports.Binding[] sshBindings = bindings.get(sshPort);
+
+        if (isNull(sshBindings)) {
+            throw new IllegalStateException("SSH Binding not found for " + ir.getId());
+        }
 
         for (Ports.Binding b : sshBindings) {
             port = b.getHostPort();

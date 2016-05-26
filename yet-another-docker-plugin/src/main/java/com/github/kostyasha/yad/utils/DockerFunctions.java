@@ -1,13 +1,6 @@
 package com.github.kostyasha.yad.utils;
 
 import com.github.kostyasha.yad.DockerCloud;
-import com.github.kostyasha.yad.DockerConnector;
-import com.github.kostyasha.yad.client.ClientBuilderForPlugin;
-import com.github.kostyasha.yad.client.ClientConfigBuilderForPlugin;
-import com.github.kostyasha.yad.client.DockerCmdExecConfig;
-import com.github.kostyasha.yad.client.DockerCmdExecConfigBuilderForPlugin;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.launcher.DockerComputerSSHLauncher;
@@ -20,10 +13,6 @@ import hudson.slaves.RetentionStrategy;
 import jenkins.model.Jenkins;
 
 import javax.annotation.Nonnull;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -57,26 +46,6 @@ public class DockerFunctions {
         return strategies;
     }
 
-
-    /**
-     * Wrapper around exec config and client config builders.
-     * TODO move to MegaBuilder? :D
-     */
-    public static DockerClient createClient(DockerConnector connector)
-            throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        final DockerClientConfig clientConfig = ClientConfigBuilderForPlugin.dockerClientConfig()
-                .forConnector(connector)
-                .build();
-
-        final DockerCmdExecConfig execConfig = DockerCmdExecConfigBuilderForPlugin.builder()
-                .forConnector(connector)
-                .build();
-
-        return ClientBuilderForPlugin.builder()
-                .withDockerClientConfig(clientConfig)
-                .withDockerCmdExecConfig(execConfig)
-                .build();
-    }
 
     /**
      * Get the list of Docker servers.

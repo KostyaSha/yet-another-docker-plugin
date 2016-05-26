@@ -5,10 +5,10 @@ import com.github.kostyasha.yad.DockerComputer;
 import com.github.kostyasha.yad.DockerSlave;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.github.kostyasha.yad.docker_java.com.google.common.annotations.Beta;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -139,10 +139,10 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
         try {
             final ExecCreateCmdResponse response = connect.execCreateCmd(containerId)
-                    .withTty()
+                    .withTty(true)
                     .withAttachStdin(false)
-                    .withAttachStderr()
-                    .withAttachStdout()
+                    .withAttachStderr(true)
+                    .withAttachStdout(true)
                     .withCmd("/bin/bash", "-cxe", startCmd.replace("$", "\\$"))
                     .exec();
 
@@ -151,8 +151,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
             try (ExecStartResultCallback exec = connect
                     .execStartCmd(response.getId())
-                    .withDetach()
-                    .withTty()
+                    .withDetach(true)
+                    .withTty(true)
                     .exec(new ExecStartResultCallback())
             ) {
                 exec.awaitCompletion();

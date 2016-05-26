@@ -1,5 +1,7 @@
 package com.github.kostyasha.yad.client;
 
+import com.github.kostyasha.yad.DockerConnector;
+
 import java.io.Serializable;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -14,15 +16,14 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class DockerCmdExecConfig implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final Integer readTimeout; //sec
-    private final Integer connectTimeout; //sec
+    private Integer readTimeout; //sec
+    private Integer connectTimeout; //sec
 
-    /**
-     * @param readTimeout Value as is from docker-plugin DockerCloud configuration
-     */
-    public DockerCmdExecConfig(Integer readTimeout, Integer connectTimeout) {
-        this.readTimeout = readTimeout;
-        this.connectTimeout = connectTimeout;
+    private DockerCmdExecConfig() {
+    }
+
+    public static DockerCmdExecConfig newDockerCmdExecConfig() {
+        return new DockerCmdExecConfig();
     }
 
     public Integer getReadTimeout() {
@@ -51,4 +52,27 @@ public class DockerCmdExecConfig implements Serializable {
             return null;
         }
     }
+
+    /**
+     * @see #readTimeout
+     */
+    public DockerCmdExecConfig withReadTimeout(Integer readTimeout) {
+        this.readTimeout = readTimeout;
+        return this;
+    }
+
+    /**
+     * @see #connectTimeout
+     */
+    public DockerCmdExecConfig withConnectTimeout(Integer connectTimeout) {
+        this.connectTimeout = connectTimeout;
+        return this;
+    }
+
+    public DockerCmdExecConfig forConnector(DockerConnector connector) {
+        readTimeout = connector.getReadTimeout();
+        connectTimeout = connector.getConnectTimeout();
+        return this;
+    }
+
 }

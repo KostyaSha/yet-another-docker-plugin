@@ -44,7 +44,7 @@ f.section(title: _("Jenkins Slave Config")) {
 
     f.advanced(title: _("Experimental Options"), align: "left") {
         f.dropdownList(name: "retentionStrategy", title: _("Availability"),
-                help: "/help/system-config/master-slave/availability.html") {
+                help: "/help/system-dockerClientConfigBuilder/master-slave/availability.html") {
             DockerFunctions.dockerRetentionStrategyDescriptors.each { sd ->
                 if (sd != null) {
                     def prefix = sd.displayName.equals("Docker Once Retention Strategy") ? "" : "Experimental: "

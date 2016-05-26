@@ -34,7 +34,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.github.kostyasha.yad.client.ClientConfigBuilderForPlugin.lookupSystemCredentials;
+import static com.github.kostyasha.yad.client.ClientBuilderForConnector.lookupSystemCredentials;
 
 /**
  * Contains docker pull image related settings:

@@ -502,7 +502,7 @@ public class DockerRule extends ExternalResource {
             builder.append("LABEL ").append(entry.getKey()).append("=").append(entry.getValue()).append(NL);
         }
 
-//        builder.append("LABEL GENERATION_UUID=").append(UUID.randomUUID()).append(NL);
+//        newClientBuilderForConnector.append("LABEL GENERATION_UUID=").append(UUID.randomUUID()).append(NL);
 
         return builder.toString();
     }
