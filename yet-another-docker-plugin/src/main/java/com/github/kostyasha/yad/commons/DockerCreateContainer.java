@@ -392,7 +392,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
         if (getMemoryLimit() != null && getMemoryLimit() > 0) {
             Long memoryInByte = getMemoryLimit() * 1024 * 1024;
-            containerConfig.withMemoryLimit(memoryInByte);
+            containerConfig.withMemory(memoryInByte);
         }
 
         if (CollectionUtils.isNotEmpty(getDnsHosts())) {

@@ -12,6 +12,8 @@ import hudson.slaves.SlaveComputer;
 
 import java.io.IOException;
 
+import static com.github.kostyasha.yad.docker_java.org.apache.commons.lang.BooleanUtils.isFalse;
+
 
 /**
  * Crappy wrapper... On one hand we need store UI configuration,
@@ -43,7 +45,7 @@ public abstract class DockerComputerLauncher extends ComputerLauncher {
      */
     public boolean waitUp(String cloudId, DockerSlaveTemplate dockerSlaveTemplate,
                           InspectContainerResponse containerInspect) {
-        if (!containerInspect.getState().isRunning()) {
+        if (isFalse(containerInspect.getState().getRunning())) {
             throw new IllegalStateException("Container '" + containerInspect.getId() + "' is not running!");
         }
 

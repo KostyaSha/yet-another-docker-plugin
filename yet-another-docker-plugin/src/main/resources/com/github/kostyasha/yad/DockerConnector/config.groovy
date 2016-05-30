@@ -15,6 +15,14 @@ f.entry(title: _("Docker URL"), field: "serverUrl") {
     f.textbox()
 }
 
+f.entry(title: _("Docker API version"), field: "apiVersion") {
+    f.textbox()
+}
+
+f.entry(title: _("TLS verify"), field: "tlsVerify") {
+    f.checkbox()
+}
+
 f.entry(title: _("Host Credentials"), field: "credentialsId") {
     c.select()
 }

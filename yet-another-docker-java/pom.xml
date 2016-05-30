@@ -50,7 +50,7 @@
         <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java</artifactId>
-            <version>2.2.3</version>
+            <version>3.0.0-RC5</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -214,6 +214,11 @@
                         <relocation>
                             <pattern>jersey.repackaged</pattern>
                             <shadedPattern>${shade-prefix}.jersey.repackaged</shadedPattern>
+                        </relocation>
+                        <!-- netty -->
+                        <relocation>
+                            <pattern>io.netty</pattern>
+                            <shadedPattern>${shade-prefix}.io.netty</shadedPattern>
                         </relocation>
                     </relocations>
                     <transformers>
