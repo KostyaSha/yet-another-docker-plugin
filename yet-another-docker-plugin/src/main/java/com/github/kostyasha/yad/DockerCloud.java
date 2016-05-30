@@ -237,7 +237,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
                     // count only total cloud capacity
                     count++;
                 } else if (labels.containsKey(DOCKER_TEMPLATE_LABEL) &&
-                        labels.get(DOCKER_TEMPLATE_LABEL).equals(String.valueOf(template.hashCode()))) {
+                        labels.get(DOCKER_TEMPLATE_LABEL).equals(template.getId())) {
                     count++;
                 }
             }
