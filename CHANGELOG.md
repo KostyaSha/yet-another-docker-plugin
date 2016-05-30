@@ -2,6 +2,9 @@
 
 ## Next 
 
+## 0.1.0-rc9
+ - Fixed template counting limit.
+
 ## 0.1.0-rc8
  - Add network (net) parameter to docker template settings.
  
