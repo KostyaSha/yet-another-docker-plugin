@@ -1,7 +1,7 @@
 package com.github.kostyasha.it.utils;
 
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.NotFoundException;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.ExposedPort;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Ports;

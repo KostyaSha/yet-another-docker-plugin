@@ -217,7 +217,7 @@ public class NginxRegistryTest {
     @Test
     public void testCliAuth() throws InterruptedException, IOException {
         DockerClientConfig clientConfig = new DockerClientConfig.DockerClientConfigBuilder()
-                .withDockerHost(String.format("http://%s:%d", d.getHost(), dindResource.getExposedPort()))
+                .withDockerHost(String.format("tcp://%s:%d", d.getHost(), dindResource.getExposedPort()))
                 .build();
 
         DockerCmdExecFactoryImpl dockerCmdExecFactory = new DockerCmdExecFactoryImpl()

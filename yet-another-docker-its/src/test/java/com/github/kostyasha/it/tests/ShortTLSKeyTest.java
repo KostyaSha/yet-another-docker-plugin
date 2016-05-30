@@ -2,8 +2,8 @@ package com.github.kostyasha.it.tests;
 
 import com.github.kostyasha.it.rule.DockerRule;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.ExposedPort;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.PortBinding;
@@ -26,6 +26,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 
 import static com.github.kostyasha.it.rule.DockerRule.getDockerItDir;
 import static com.github.kostyasha.it.utils.DockerHPIContainerUtil.getResource;
@@ -65,7 +69,7 @@ public class ShortTLSKeyTest {
         FileUtils.copyDirectory(resources, buildDir);
 
         final String imageId = d.getDockerCli().buildImageCmd(buildDir)
-                .withForcerm()
+                .withForcerm(true)
                 .withTag(DATA_IMAGE_TAG)
                 .exec(new BuildImageResultCallback() {
                     public void onNext(BuildResponseItem item) {
@@ -137,9 +141,10 @@ public class ShortTLSKeyTest {
     }
 
     @Test
-    public void testKey() throws IOException {
+    public void testKey() throws IOException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException,
+            KeyManagementException {
         final InspectContainerResponse inspect = d.getDockerCli().inspectContainerCmd(hostContainerId).exec();
-        assertThat(inspect.getState().isRunning(), is(true));
+        assertThat(inspect.getState().getRunning(), is(true));
         final int exposedPort = getExposedPort(inspect, CONTAINER_PORT);
         LOG.info("Exposed port {}", exposedPort);
 
@@ -151,11 +156,12 @@ public class ShortTLSKeyTest {
         );
 
         DockerClientConfig clientConfig = new DockerClientConfig.DockerClientConfigBuilder()
-                .withUri("https://" + d.getHost() + ":" + CONTAINER_PORT)
-                .withSSLConfig(sslConfig)
+                .withDockerHost("tcp://" + d.getHost() + ":" + CONTAINER_PORT)
+                .withDockerTlsVerify(true)
                 .build();
 
         DockerCmdExecFactoryImpl dockerCmdExecFactory = new DockerCmdExecFactoryImpl()
+                .withSSLContext(sslConfig.getSSLContext())
                 .withReadTimeout(0)
                 .withConnectTimeout(10000);
 

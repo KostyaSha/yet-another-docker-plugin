@@ -27,14 +27,6 @@ f.entry(title: _("Host Credentials"), field: "credentialsId") {
     c.select()
 }
 
-f.entry(title: _("Connection Timeout (seconds)"), field: "connectTimeout") {
-    f.textbox(default: "0")
-}
-
-f.entry(title: _("Read Timeout (seconds)"), field: "readTimeout") {
-    f.textbox(default: "0")
-}
-
 f.validateButton(title: _("Test Connection"), progress: _("Testing..."),
         method: "testConnection",
         with: "serverUrl,credentialsId,version,connectTimeout,readTimeout"

@@ -83,7 +83,7 @@ public class SimpleBuildTest implements Serializable {
             caller(cli, new PrepareCloudCallable(
                     cli.jenkins.getPort(),
                     d.getDockerServerCredentials(),
-                    d.clientConfig.getUri(),
+                    d.clientConfig.getDockerHost(),
                     DockerRule.SLAVE_IMAGE_JNLP
             ));
         }
@@ -122,9 +122,9 @@ public class SimpleBuildTest implements Serializable {
 
             // prepare Docker Cloud
             final DockerConnector dockerConnector = new DockerConnector(
-                    String.format("https://%s:%d", dockerUri.getHost(), dockerUri.getPort()));
+                    String.format("tcp://%s:%d", dockerUri.getHost(), dockerUri.getPort()));
+            dockerConnector.setTlsVerify(true);
             dockerConnector.setCredentialsId(dockerServerCredentials.getId());
-            dockerConnector.setConnectTimeout(10);
             dockerConnector.testConnection();
 
             //launcher

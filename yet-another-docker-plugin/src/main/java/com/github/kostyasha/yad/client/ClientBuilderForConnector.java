@@ -29,7 +29,6 @@ import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 import static com.github.kostyasha.yad.client.ClientConfigBuilderForPlugin.newClientConfigBuilder;
-import static com.github.kostyasha.yad.client.DockerCmdExecConfig.newDockerCmdExecConfig;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
@@ -43,18 +42,12 @@ public class ClientBuilderForConnector {
     private DockerClientConfig dockerClientConfig = null;
     private DockerCmdExecFactory dockerCmdExecFactory = null;
     private SSLConfig sslConfig = null;
-    private DockerCmdExecConfig dockerCmdExecConfig = null;
 
     private ClientBuilderForConnector() {
     }
 
     public ClientBuilderForConnector withDockerCmdExecFactory(DockerCmdExecFactory dockerCmdExecFactory) {
         this.dockerCmdExecFactory = dockerCmdExecFactory;
-        return this;
-    }
-
-    public ClientBuilderForConnector withDockerCmdExecConfig(DockerCmdExecConfig dockerCmdExecConfig) {
-        this.dockerCmdExecConfig = dockerCmdExecConfig;
         return this;
     }
 
@@ -108,12 +101,11 @@ public class ClientBuilderForConnector {
 
     public ClientBuilderForConnector withDockerConnector(DockerConnector connector)
             throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        withDockerClientConfig(newClientConfigBuilder()
-                .forConnector(connector)
-                .build()
+        withDockerClientConfig(
+                newClientConfigBuilder()
+                        .forConnector(connector)
+                        .build()
         );
-
-        withDockerCmdExecConfig(newDockerCmdExecConfig().forConnector(connector));
 
         withCredentials(connector.getCredentialsId());
 
@@ -162,25 +154,4 @@ public class ClientBuilderForConnector {
     public static ClientBuilderForConnector newClientBuilderForConnector() {
         return new ClientBuilderForConnector();
     }
-
-//    /**
-//     * Wrapper around exec config and client config builders.
-//     * TODO move to MegaBuilder? :D
-//     */
-//    public static DockerClient createClient(DockerConnector connector)
-//            throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-//
-//        final DockerClientConfig clientConfig = newClientConfigBuilder()
-//                .forConnector(connector)
-//                .build();
-//
-//        final DockerCmdExecConfig execConfig = newDockerCmdExecConfig()
-//                .forConnector(connector);
-//
-//        return newClientBuilderForConnector()
-//                .withDockerClientConfig(clientConfig)
-//                .withDockerCmdExecConfig(execConfig)
-//                .withCredentials(connector.getCredentialsId())
-//                .build();
-//    }
 }

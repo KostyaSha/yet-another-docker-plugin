@@ -3,7 +3,6 @@ package com.github.kostyasha.yad;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.github.kostyasha.yad.client.DockerCmdExecConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.DockerException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Version;
@@ -37,7 +36,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.github.kostyasha.yad.client.ClientBuilderForConnector.newClientBuilderForConnector;
-import static com.github.kostyasha.yad.client.DockerCmdExecConfig.newDockerCmdExecConfig;
 
 /**
  * Settings for connecting to docker.
@@ -53,10 +51,6 @@ public class DockerConnector implements Describable<DockerConnector> {
     private String apiVersion = null;
 
     private Boolean tlsVerify = true;
-
-    private int connectTimeout = 10 * 1000;
-
-    private int readTimeout = 0;
 
     @CheckForNull
     private String credentialsId = null;
@@ -97,24 +91,6 @@ public class DockerConnector implements Describable<DockerConnector> {
         this.tlsVerify = tlsVerify;
     }
 
-    public int getConnectTimeout() {
-        return connectTimeout;
-    }
-
-    @DataBoundSetter
-    public void setConnectTimeout(int connectTimeout) {
-        this.connectTimeout = connectTimeout;
-    }
-
-    public int getReadTimeout() {
-        return readTimeout;
-    }
-
-    @DataBoundSetter
-    public void setReadTimeout(int readTimeout) {
-        this.readTimeout = readTimeout;
-    }
-
     public String getCredentialsId() {
         return credentialsId;
     }
@@ -127,7 +103,9 @@ public class DockerConnector implements Describable<DockerConnector> {
     public DockerClient getClient() {
         if (client == null) {
             try {
-                client = newClientBuilderForConnector().withDockerConnector(this).build();
+                client = newClientBuilderForConnector()
+                        .withDockerConnector(this)
+                        .build();
             } catch (GeneralSecurityException e) {
                 Throwables.propagate(e);
             }
@@ -163,8 +141,6 @@ public class DockerConnector implements Describable<DockerConnector> {
         DockerConnector that = (DockerConnector) o;
 
         return new EqualsBuilder()
-                .append(connectTimeout, that.connectTimeout)
-                .append(readTimeout, that.readTimeout)
                 .append(serverUrl, that.serverUrl)
                 .append(apiVersion, that.apiVersion)
                 .append(credentialsId, that.credentialsId)
@@ -176,8 +152,6 @@ public class DockerConnector implements Describable<DockerConnector> {
         return new HashCodeBuilder(17, 37)
                 .append(serverUrl)
                 .append(apiVersion)
-                .append(connectTimeout)
-                .append(readTimeout)
                 .append(credentialsId)
                 .toHashCode();
     }
@@ -206,9 +180,7 @@ public class DockerConnector implements Describable<DockerConnector> {
                 @QueryParameter String serverUrl,
                 @QueryParameter String apiVersion,
                 @QueryParameter Boolean tlsVerify,
-                @QueryParameter String credentialsId,
-                @QueryParameter int readTimeout,
-                @QueryParameter int connectTimeout
+                @QueryParameter String credentialsId
         ) throws IOException, ServletException, DockerException {
             try {
                 final DockerClientConfig clientConfig = new DockerClientConfigBuilder()
@@ -217,13 +189,9 @@ public class DockerConnector implements Describable<DockerConnector> {
                         .withDockerTlsVerify(tlsVerify)
                         .build();
 
-                final DockerCmdExecConfig execConfig = newDockerCmdExecConfig()
-                        .withReadTimeout(readTimeout)
-                        .withConnectTimeout(connectTimeout);
 
                 final DockerClient testClient = newClientBuilderForConnector()
                         .withDockerClientConfig(clientConfig)
-                        .withDockerCmdExecConfig(execConfig)
                         .withCredentials(credentialsId)
                         .build();
 
