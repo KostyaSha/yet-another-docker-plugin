@@ -128,7 +128,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         }
 
         for (Ports.Binding b : sshBindings) {
-            port = b.getHostPort();
+            port = Integer.valueOf(b.getHostPortSpec());
             host = b.getHostIp();
         }
 

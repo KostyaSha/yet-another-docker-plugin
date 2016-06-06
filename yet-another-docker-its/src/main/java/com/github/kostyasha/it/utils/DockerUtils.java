@@ -34,7 +34,7 @@ public class DockerUtils {
         final Map<ExposedPort, Ports.Binding[]> bindings = inspect.getNetworkSettings().getPorts().getBindings();
         for (Map.Entry<ExposedPort, Ports.Binding[]> entry : bindings.entrySet()) {
             if (entry.getKey().getPort() == targetPort) {
-                return entry.getValue()[0].getHostPort();
+                return Integer.valueOf(entry.getValue()[0].getHostPortSpec());
             }
         }
 

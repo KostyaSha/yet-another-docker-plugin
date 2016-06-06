@@ -30,11 +30,14 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
+import java.util.concurrent.TimeUnit;
 
 import static com.github.kostyasha.it.rule.DockerRule.getDockerItDir;
 import static com.github.kostyasha.it.utils.DockerHPIContainerUtil.getResource;
 import static com.github.kostyasha.it.utils.DockerUtils.getExposedPort;
+import static com.jayway.awaitility.Awaitility.await;
 import static java.util.Objects.nonNull;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -169,8 +172,10 @@ public class ShortTLSKeyTest {
                 .withDockerCmdExecFactory(dockerCmdExecFactory)
                 .build();
 
-        final Version version = dockerClient.versionCmd().exec();
-        LOG.info("Daemon version {}", version);
-        assertThat(version.getVersion(), notNullValue());
+        await().timeout(10, SECONDS).until(() -> {
+            final Version version = dockerClient.versionCmd().exec();
+            LOG.info("Daemon version {}", version);
+            assertThat(version.getVersion(), notNullValue());
+        });
     }
 }
