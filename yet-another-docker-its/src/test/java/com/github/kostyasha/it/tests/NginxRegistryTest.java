@@ -4,8 +4,8 @@ import com.github.kostyasha.it.rule.DockerResource;
 import com.github.kostyasha.it.rule.DockerRule;
 import com.github.kostyasha.it.utils.DockerUtils;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.AuthConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.ExposedPort;
@@ -132,7 +132,7 @@ public class NginxRegistryTest {
             FileUtils.copyDirectory(resources, buildDir);
 
             final String imageId = d.getDockerCli().buildImageCmd(buildDir)
-                    .withForcerm()
+                    .withForcerm(true)
                     .withTag(DATA_IMAGE_TAG)
                     .exec(new BuildImageResultCallback() {
                         public void onNext(BuildResponseItem item) {
@@ -217,7 +217,7 @@ public class NginxRegistryTest {
     @Test
     public void testCliAuth() throws InterruptedException, IOException {
         DockerClientConfig clientConfig = new DockerClientConfig.DockerClientConfigBuilder()
-                .withUri(String.format("http://%s:%d", d.getHost(), dindResource.getExposedPort()))
+                .withDockerHost(String.format("tcp://%s:%d", d.getHost(), dindResource.getExposedPort()))
                 .build();
 
         DockerCmdExecFactoryImpl dockerCmdExecFactory = new DockerCmdExecFactoryImpl()
@@ -241,10 +241,10 @@ public class NginxRegistryTest {
         dockerClient.tagImageCmd(imageId, imageName, "tag").exec();
 
         final AuthConfig authConfig = new AuthConfig();
-        authConfig.setPassword("docker-registry-password");
-        authConfig.setUsername("docker-registry-login");
-        authConfig.setEmail("sdf@sdf.com");
-        authConfig.setServerAddress(String.format("%s:%d", d.getHost(), nginxContainer.getExposedPort()));
+        authConfig.withPassword("docker-registry-password");
+        authConfig.withUsername("docker-registry-login");
+        authConfig.withEmail("sdf@sdf.com");
+        authConfig.withRegistryAddress(String.format("%s:%d", d.getHost(), nginxContainer.getExposedPort()));
 
         dockerClient.pushImageCmd(imageName)
                 .withTag("tag")

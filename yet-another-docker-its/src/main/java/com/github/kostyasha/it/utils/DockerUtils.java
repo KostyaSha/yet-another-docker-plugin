@@ -1,7 +1,7 @@
 package com.github.kostyasha.it.utils;
 
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.NotFoundException;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.ExposedPort;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Ports;
@@ -34,7 +34,7 @@ public class DockerUtils {
         final Map<ExposedPort, Ports.Binding[]> bindings = inspect.getNetworkSettings().getPorts().getBindings();
         for (Map.Entry<ExposedPort, Ports.Binding[]> entry : bindings.entrySet()) {
             if (entry.getKey().getPort() == targetPort) {
-                return entry.getValue()[0].getHostPort();
+                return Integer.valueOf(entry.getValue()[0].getHostPortSpec());
             }
         }
 

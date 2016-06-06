@@ -1,17 +1,7 @@
 package com.github.kostyasha.yad.client;
 
-import com.cloudbees.plugins.credentials.Credentials;
-import com.cloudbees.plugins.credentials.common.CertificateCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.kostyasha.yad.DockerConnector;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.KeystoreSSLConfig;
-import com.github.kostyasha.yad.other.VariableSSLConfig;
-import hudson.security.ACL;
-import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,12 +11,6 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
-import java.util.Collections;
-
-import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
-import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
-import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
-import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 /**
  * @author lanwen (Merkushev Kirill)
@@ -39,7 +23,7 @@ public class ClientConfigBuilderForPlugin {
     private ClientConfigBuilderForPlugin() {
     }
 
-    public static ClientConfigBuilderForPlugin dockerClientConfig() {
+    public static ClientConfigBuilderForPlugin newClientConfigBuilder() {
         return new ClientConfigBuilderForPlugin();
     }
 
@@ -52,10 +36,8 @@ public class ClientConfigBuilderForPlugin {
     public ClientConfigBuilderForPlugin forConnector(DockerConnector connector)
             throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         LOG.debug("Building connection to docker host '{}'", connector.getServerUrl());
-
-        forServer(connector.getServerUrl(), null);
-
-        return withCredentials(connector.getCredentialsId());
+        config.withDockerTlsVerify(connector.getTlsVerify());
+        return forServer(connector.getServerUrl(), connector.getApiVersion());
     }
 
     /**
@@ -63,46 +45,11 @@ public class ClientConfigBuilderForPlugin {
      *
      * @param uri     docker server uri
      * @param version docker-api version
-     * @return this builder
+     * @return this newClientBuilderForConnector
      */
     public ClientConfigBuilderForPlugin forServer(String uri, @Nullable String version) {
-        config.withUri(URI.create(uri).toString())
-                .withVersion(version);
-        return this;
-    }
-
-    /**
-     * Sets username and password or ssl config by credentials id
-     *
-     * @param credentialsId credentials to find in jenkins
-     * @return docker-java client
-     */
-    public ClientConfigBuilderForPlugin withCredentials(String credentialsId)
-            throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        if (isNotBlank(credentialsId)) {
-            Credentials credentials = lookupSystemCredentials(credentialsId);
-
-            if (credentials instanceof CertificateCredentials) {
-                CertificateCredentials certificateCredentials = (CertificateCredentials) credentials;
-                config.withSSLConfig(new KeystoreSSLConfig(
-                        certificateCredentials.getKeyStore(),
-                        certificateCredentials.getPassword().getPlainText()
-                ));
-            } else if (credentials instanceof StandardUsernamePasswordCredentials) {
-                StandardUsernamePasswordCredentials usernamePasswordCredentials =
-                        ((StandardUsernamePasswordCredentials) credentials);
-
-                config.withUsername(usernamePasswordCredentials.getUsername());
-                config.withPassword(usernamePasswordCredentials.getPassword().getPlainText());
-
-            } else if (credentials instanceof DockerServerCredentials) {
-                final DockerServerCredentials dockerCreds = (DockerServerCredentials) credentials;
-                final VariableSSLConfig sslConfig = new VariableSSLConfig(dockerCreds.getClientKey(),
-                        dockerCreds.getClientCertificate(), dockerCreds.getServerCaCertificate());
-
-                config.withSSLConfig(sslConfig);
-            }
-        }
+        config.withDockerHost(URI.create(uri).toString())
+                .withApiVersion(version);
         return this;
     }
 
@@ -114,42 +61,14 @@ public class ClientConfigBuilderForPlugin {
         return config.build();
     }
 
-    /**
-     * Shortcut to build an actual client.
-     * <p>
-     * Consider if you actually want to do this or alternatively
-     * build the config then build the client, as if your activity is on a remote
-     * node, the client will fail to serialize.
-     */
-    public DockerClient buildClient() {
-        return ClientBuilderForPlugin.builder().withDockerClientConfig(build()).build();
-    }
 
     /**
      * For test purposes mostly
      *
-     * @return docker config builder
+     * @return docker config newClientBuilderForConnector
      */
     /* package */ DockerClientConfig.DockerClientConfigBuilder config() {
         return config;
-    }
-
-    /**
-     * Util method to find credential by id in jenkins
-     *
-     * @param credentialsId credentials to find in jenkins
-     * @return {@link CertificateCredentials} or {@link StandardUsernamePasswordCredentials} expected
-     */
-    public static Credentials lookupSystemCredentials(String credentialsId) {
-        return firstOrNull(
-                lookupCredentials(
-                        Credentials.class,
-                        Jenkins.getActiveInstance(),
-                        ACL.SYSTEM,
-                        Collections.<DomainRequirement>emptyList()
-                ),
-                withId(credentialsId)
-        );
     }
 
 }

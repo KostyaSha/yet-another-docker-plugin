@@ -47,9 +47,9 @@ public class DockerRegistryAuthCredentials extends UsernamePasswordCredentialsIm
     public AuthConfig getAuthConfig() {
         final AuthConfig authConfig = new AuthConfig();
 
-        authConfig.setEmail(getEmail());
-        authConfig.setUsername(getUsername());
-        authConfig.setPassword(getPassword().getPlainText());
+        authConfig.withEmail(getEmail());
+        authConfig.withUsername(getUsername());
+        authConfig.withPassword(getPassword().getPlainText());
 
         return authConfig;
     }

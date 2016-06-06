@@ -4,7 +4,6 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.github.kostyasha.it.other.BCallable;
-import com.github.kostyasha.it.other.TCallable;
 import com.github.kostyasha.it.rule.DockerResource;
 import com.github.kostyasha.it.rule.DockerRule;
 import com.github.kostyasha.yad.DockerCloud;
@@ -13,7 +12,7 @@ import com.github.kostyasha.yad.DockerContainerLifecycle;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad.commons.DockerPullImage;
 import com.github.kostyasha.yad.commons.DockerRemoveContainer;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.NotFoundException;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
@@ -26,12 +25,10 @@ import hudson.model.Node;
 import hudson.slaves.JNLPLauncher;
 import jenkins.model.Jenkins;
 import jenkins.model.JenkinsLocationConfiguration;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +96,7 @@ public class UserNameNginxProxyAuthTest {
             FileUtils.copyDirectory(resources, buildDir);
 
             final String imageId = d.getDockerCli().buildImageCmd(buildDir)
-                    .withForcerm()
+                    .withForcerm(true)
                     .withTag(DATA_IMAGE_TAG)
                     .exec(new BuildImageResultCallback() {
                         public void onNext(BuildResponseItem item) {
@@ -130,7 +127,7 @@ public class UserNameNginxProxyAuthTest {
         final DockerCLI cli = d.createCliForContainer(jenkinsId);
         caller(cli, new TestCallable(
                         cli.jenkins.getPort(),
-                        d.clientConfig.getUri(),
+                        d.clientConfig.getDockerHost(),
                         DockerRule.SLAVE_IMAGE_JNLP
                 )
         );
@@ -167,10 +164,9 @@ public class UserNameNginxProxyAuthTest {
 
             // prepare Docker Cloud
             final DockerConnector dockerConnector = new DockerConnector(
-                    String.format("http://%s:%d", dockerUri.getHost(), CONTAINER_PORT)
+                    String.format("tcp://%s:%d", dockerUri.getHost(), CONTAINER_PORT)
             );
             dockerConnector.setCredentialsId(credentials.getId());
-            dockerConnector.setConnectTimeout(10);
             dockerConnector.testConnection();
 //            final Version version = dockerConnector.getClient().versionCmd().exec();
 //            LOG.info("Version {}", version);

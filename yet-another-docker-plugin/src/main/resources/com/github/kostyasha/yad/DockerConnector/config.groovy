@@ -15,16 +15,16 @@ f.entry(title: _("Docker URL"), field: "serverUrl") {
     f.textbox()
 }
 
+f.entry(title: _("Docker API version"), field: "apiVersion") {
+    f.textbox()
+}
+
+f.entry(title: _("TLS verify"), field: "tlsVerify") {
+    f.checkbox()
+}
+
 f.entry(title: _("Host Credentials"), field: "credentialsId") {
     c.select()
-}
-
-f.entry(title: _("Connection Timeout (seconds)"), field: "connectTimeout") {
-    f.textbox(default: "0")
-}
-
-f.entry(title: _("Read Timeout (seconds)"), field: "readTimeout") {
-    f.textbox(default: "0")
 }
 
 f.validateButton(title: _("Test Connection"), progress: _("Testing..."),

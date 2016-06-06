@@ -74,9 +74,7 @@ public class DockerCloudTest {
             final EnvironmentVariablesNodeProperty variablesNodeProperty = new EnvironmentVariablesNodeProperty(singletonList(entry));
 
             final DockerConnector connector = new DockerConnector("http://sdfs.com:234");
-            connector.setConnectTimeout(123412);
             connector.setCredentialsId(dockerServerCredentials.getId());
-            connector.setReadTimeout(234);
 
             final DockerPullImage pullImage = new DockerPullImage();
             pullImage.setCredentialsId("");

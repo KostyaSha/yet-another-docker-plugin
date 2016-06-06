@@ -118,6 +118,12 @@
             <version>2.5</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.jayway.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>1.7.0</version>
+        </dependency>
+
         <!--<dependency>-->
         <!--<groupId>net.schmizz</groupId>-->
         <!--<artifactId>sshj</artifactId>-->

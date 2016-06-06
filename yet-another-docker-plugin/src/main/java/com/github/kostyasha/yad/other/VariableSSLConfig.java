@@ -1,6 +1,6 @@
 package com.github.kostyasha.yad.other;
 
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClientException;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.DockerClientException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.SSLConfig;
 import com.github.kostyasha.yad.docker_java.org.bouncycastle.jce.provider.BouncyCastleProvider;
 import com.github.kostyasha.yad.docker_java.org.glassfish.jersey.SslConfigurator;

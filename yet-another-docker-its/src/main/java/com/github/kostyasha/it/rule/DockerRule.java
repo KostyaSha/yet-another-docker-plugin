@@ -5,10 +5,10 @@ import com.github.kostyasha.it.other.JenkinsDockerImage;
 import com.github.kostyasha.it.utils.DockerHPIContainerUtil;
 import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Container;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.ExposedPort;
@@ -18,12 +18,10 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Port
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.VolumesFrom;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientBuilder;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.LocalDirectorySSLConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.NameParser;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.SSLConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
 import com.github.kostyasha.yad.docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.codec.digest.DigestUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
@@ -100,6 +98,7 @@ public class DockerRule extends ExternalResource {
     //cache
     public Description description;
     public DockerClientConfig clientConfig;
+    private DockerCmdExecFactoryImpl dockerCmdExecFactory;
 
     public DockerRule(boolean cleanup) {
         this.cleanup = cleanup;
@@ -111,7 +110,7 @@ public class DockerRule extends ExternalResource {
 
     public String getDockerUri() {
         return new StringBuilder()
-                .append(useTls ? "https" : "http").append("://")
+                .append("tcp://")
                 .append(host).append(":").append(dockerPort)
                 .toString();
     }
@@ -181,12 +180,11 @@ public class DockerRule extends ExternalResource {
      */
     private void prepareDockerCli() {
         clientConfig = DockerClientConfig.createDefaultConfigBuilder()
-                .withUri(getDockerUri())
+                .withDockerHost(getDockerUri())
+                .withDockerTlsVerify(useTls)
                 .build();
 
-        DockerCmdExecFactoryImpl dockerCmdExecFactory = new DockerCmdExecFactoryImpl()
-                .withReadTimeout(0)
-                .withConnectTimeout(10000);
+        dockerCmdExecFactory = new DockerCmdExecFactoryImpl();
 
         dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)
@@ -246,7 +244,7 @@ public class DockerRule extends ExternalResource {
             LOG.info("Removing data-container. ForceRefresh: {}", forceRefresh);
             try {
                 getDockerCli().removeContainerCmd(dataContainerId)
-                        .withForce() // force is not good
+                        .withForce(true) // force is not good
                         .withRemoveVolumes(true)
                         .exec();
             } catch (NotFoundException ignored) {
@@ -300,7 +298,7 @@ public class DockerRule extends ExternalResource {
         if (nonNull(existedDataImage) && (forceUpdate || !isActualDataImage(pluginFiles, existedDataImage))) {
             LOG.info("Removing data-image.");
             //TODO https://github.com/docker-java/docker-java/issues/398
-            getDockerCli().removeImageCmd(existedDataImage).withForce().exec();
+            getDockerCli().removeImageCmd(existedDataImage).withForce(true).exec();
             existedDataImage = null;
         }
 
@@ -406,7 +404,7 @@ public class DockerRule extends ExternalResource {
             LOG.info("Building data-image...");
             return getDockerCli().buildImageCmd(buildDir)
                     .withTag(DATA_IMAGE)
-                    .withForcerm()
+                    .withForcerm(true)
                     .exec(new BuildImageResultCallback() {
                         public void onNext(BuildResponseItem item) {
                             String text = item.getStream();
@@ -451,7 +449,7 @@ public class DockerRule extends ExternalResource {
             for (Container c : containers) {
                 if (c.getLabels().equals(labels)) { // equals? container labels vs image labels?
                     getDockerCli().removeContainerCmd(c.getId())
-                            .withForce()
+                            .withForce(true)
                             .exec();
                     break;
                 }
@@ -502,7 +500,7 @@ public class DockerRule extends ExternalResource {
             builder.append("LABEL ").append(entry.getKey()).append("=").append(entry.getValue()).append(NL);
         }
 
-//        builder.append("LABEL GENERATION_UUID=").append(UUID.randomUUID()).append(NL);
+//        newClientBuilderForConnector.append("LABEL GENERATION_UUID=").append(UUID.randomUUID()).append(NL);
 
         return builder.toString();
     }
@@ -532,14 +530,14 @@ public class DockerRule extends ExternalResource {
         final Map<ExposedPort, Ports.Binding[]> bindings = inspect.getNetworkSettings().getPorts().getBindings();
         for (Map.Entry<ExposedPort, Ports.Binding[]> entry : bindings.entrySet()) {
             if (entry.getKey().getPort() == JENKINS_DEFAULT.httpPort) {
-                httpPort = entry.getValue()[0].getHostPort();
+                httpPort = Integer.valueOf(entry.getValue()[0].getHostPortSpec());
             }
             if (entry.getKey().getPort() == JENKINS_DEFAULT.tcpPort) {
                 final Ports.Binding binding = entry.getValue()[0];
-                jnlpAgentPort = binding.getHostPort();
+                jnlpAgentPort = Integer.valueOf(binding.getHostPortSpec());
             }
             if (entry.getKey().getPort() == JENKINS_DEFAULT.jnlpPort) {
-                cliPort = entry.getValue()[0].getHostPort();
+                cliPort = Integer.valueOf(entry.getValue()[0].getHostPortSpec());
             }
         }
 
@@ -594,7 +592,7 @@ public class DockerRule extends ExternalResource {
         if (cleanup) {
             provisioned.stream().forEach(id ->
                     getDockerCli().removeContainerCmd(id)
-                            .withForce()
+                            .withForce(true)
                             .withRemoveVolumes(true)
                             .exec()
             );
@@ -602,12 +600,7 @@ public class DockerRule extends ExternalResource {
     }
 
     public DockerServerCredentials getDockerServerCredentials() throws IOException {
-        String certPath = null;
-        final SSLConfig sslConfig = clientConfig.getSslConfig();
-        if (sslConfig instanceof LocalDirectorySSLConfig) {
-            final LocalDirectorySSLConfig directorySSLConfig = (LocalDirectorySSLConfig) sslConfig;
-            certPath = directorySSLConfig.getDockerCertPath();
-        }
+        String certPath = clientConfig.getDockerCertPath();
 
         final String keypem = FileUtils.readFileToString(new File(certPath + "/" + "key.pem"));
         final String certpem = FileUtils.readFileToString(new File(certPath + "/" + "cert.pem"));
