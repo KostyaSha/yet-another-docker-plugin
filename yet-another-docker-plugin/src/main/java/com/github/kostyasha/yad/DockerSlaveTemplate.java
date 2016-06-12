@@ -21,6 +21,7 @@ import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -294,19 +295,7 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this)
-                .append("dockerContainerLifecycle", dockerContainerLifecycle)
-                .append("id", id)
-                .append("labelString", labelString)
-                .append("launcher", launcher)
-                .append("remoteFsMapping", remoteFsMapping)
-                .append("remoteFs", remoteFs)
-                .append("maxCapacity", maxCapacity)
-                .append("mode", mode)
-                .append("retentionStrategy", retentionStrategy)
-                .append("numExecutors", numExecutors)
-                .append("nodeProperties", nodeProperties)
-                .toString();
+        return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
     }
 
     public String getShortDescription() {

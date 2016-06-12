@@ -28,7 +28,16 @@
             <id>repo.jenkins-ci.org</id>
             <url>https://repo.jenkins-ci.org/public/</url>
         </repository>
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>bintray-kostyasha-maven</id>
+            <name>bintray</name>
+            <url>http://dl.bintray.com/kostyasha/maven</url>
+        </repository>
     </repositories>
+
     <pluginRepositories>
         <pluginRepository>
             <id>repo.jenkins-ci.org</id>
@@ -50,7 +59,7 @@
         <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java</artifactId>
-            <version>3.0.0</version>
+            <version>3.0.0-kostyasha-3</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

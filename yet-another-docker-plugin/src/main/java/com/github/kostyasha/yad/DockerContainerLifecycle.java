@@ -9,6 +9,7 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -86,6 +87,11 @@ public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerCont
     @DataBoundSetter
     public void setRemoveContainer(DockerRemoveContainer removeContainer) {
         this.removeContainer = removeContainer;
+    }
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
     }
 
     @Override

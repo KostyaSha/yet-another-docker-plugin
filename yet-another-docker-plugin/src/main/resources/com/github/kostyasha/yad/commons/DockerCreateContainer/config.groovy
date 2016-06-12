@@ -69,4 +69,9 @@ f.advanced(title: _("Container settings"), align: "left") {
     f.entry(title: _("Network Mode"), field: "networkMode") {
         f.textbox()
     }
+
+    f.entry(title: _("Devices"), field: "devicesString") {
+        f.expandableTextbox()
+    }
+
 }

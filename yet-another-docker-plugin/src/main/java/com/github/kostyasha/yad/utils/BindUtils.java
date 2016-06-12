@@ -14,11 +14,13 @@ public class BindUtils {
     private BindUtils() {
     }
 
-    public static List<String> splitAndFilterEmpty(String s) {
+    @Nonnull
+    public static List<String> splitAndFilterEmpty(@Nonnull String s) {
         return splitAndFilterEmpty(s, "\n");
     }
 
-    public static List<String> splitAndFilterEmpty(String s, String separator) {
+    @Nonnull
+    public static List<String> splitAndFilterEmpty(@Nonnull String s, @Nonnull String separator) {
         return Splitter.on(separator).omitEmptyStrings().splitToList(s);
     }
 

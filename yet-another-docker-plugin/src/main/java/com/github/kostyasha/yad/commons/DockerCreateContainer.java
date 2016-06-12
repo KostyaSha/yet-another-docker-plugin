@@ -6,6 +6,7 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Bind;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Device;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Volume;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.VolumesFrom;
@@ -43,9 +44,11 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.github.kostyasha.yad.utils.BindUtils.joinToStr;
 import static com.github.kostyasha.yad.utils.BindUtils.splitAndFilterEmpty;
+import static java.util.Objects.isNull;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
@@ -109,6 +112,9 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
     @CheckForNull
     private String networkMode;
+
+    @CheckForNull
+    private List<String> devices;
 
     @DataBoundConstructor
     public DockerCreateContainer() {
@@ -218,11 +224,6 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     public void setTty(Boolean tty) {
         this.tty = tty;
     }
-
-    protected Object readResolve() {
-        return this;
-    }
-
 
     @CheckForNull
     public List<String> getVolumes() {
@@ -348,7 +349,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         return joinToStr(getExtraHosts());
     }
 
-
+    // network mode
     @CheckForNull
     public String getNetworkMode() {
         return StringUtils.trimToNull(networkMode);
@@ -357,6 +358,25 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     @DataBoundSetter
     public void setNetworkMode(String networkMode) {
         this.networkMode = trimToNull(networkMode);
+    }
+
+    // devices
+    @Nonnull
+    public List<String> getDevices() {
+        return isNull(devices) ? Collections.EMPTY_LIST : devices;
+    }
+
+    public void setDevices(List<String> devices) {
+        this.devices = devices;
+    }
+
+    public String getDevicesString() {
+        return joinToStr(getDevices());
+    }
+
+    @DataBoundSetter
+    public void setDevicesString(String devicesString) {
+        setDevices(splitAndFilterEmpty(devicesString));
     }
 
     /**
@@ -452,7 +472,18 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             containerConfig.withNetworkMode(getNetworkMode());
         }
 
+        if (!getDevices().isEmpty()) {
+            containerConfig.withDevices(
+                    getDevices().stream().map(Device::parse).collect(Collectors.toList())
+            );
+        }
+
         return containerConfig;
+    }
+
+
+    protected Object readResolve() {
+        return this;
     }
 
     @Override
@@ -528,6 +559,18 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             return FormValidation.ok();
         }
 
+        public FormValidation doCheckDevicesString(@QueryParameter String devicesString) {
+            final List<String> devicesStrings = splitAndFilterEmpty(devicesString);
+            for (String deviceString : devicesStrings) {
+                try {
+                    Device.parse(deviceString);
+                } catch (Exception ex) {
+                    return FormValidation.error("Bad devices configuration", ex);
+                }
+            }
+
+            return FormValidation.ok();
+        }
 
         public static ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
             return new SSHUserListBoxModel().withMatching(

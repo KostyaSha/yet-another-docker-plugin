@@ -6,8 +6,8 @@ import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.DockerException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Version;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
 import com.github.kostyasha.yad.docker_java.com.google.common.base.Preconditions;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import com.github.kostyasha.yad.utils.CredentialsListBoxModel;
@@ -183,7 +183,7 @@ public class DockerConnector implements Describable<DockerConnector> {
                 @QueryParameter String credentialsId
         ) throws IOException, ServletException, DockerException {
             try {
-                final DockerClientConfig clientConfig = new DockerClientConfigBuilder()
+                final DockerClientConfig clientConfig = new DefaultDockerClientConfig.Builder()
                         .withApiVersion(apiVersion)
                         .withDockerHost(serverUrl)
                         .withDockerTlsVerify(tlsVerify)

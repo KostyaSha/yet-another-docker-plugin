@@ -194,7 +194,8 @@ public class SimpleBuildTest implements Serializable {
             // test
             project.scheduleBuild(new TestCause());
 
-            waitUntilNoActivityUpTo(jenkins, 60 * 1000);
+            // image pull may take time
+            waitUntilNoActivityUpTo(jenkins, 10 * 60 * 1000);
 
             final FreeStyleBuild lastBuild = project.getLastBuild();
             assertThat(lastBuild, not(isNull()));

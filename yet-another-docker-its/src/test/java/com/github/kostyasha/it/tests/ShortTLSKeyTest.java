@@ -9,10 +9,12 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Expo
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Version;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.VolumesFrom;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientBuilder;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import com.github.kostyasha.yad.other.VariableSSLConfig;
@@ -49,7 +51,7 @@ public class ShortTLSKeyTest {
     private static final Logger LOG = LoggerFactory.getLogger(ShortTLSKeyTest.class);
     private static final String DATA_IMAGE_TAG = ShortTLSKeyTest.class.getSimpleName().toLowerCase();
     private static final String DATA_CONTAINER_NAME = ShortTLSKeyTest.class.getName() + "_data";
-    private static final String HOST_IMAGE_NAME = "dind_fedora";
+    private static final String HOST_IMAGE_NAME = "kostyasha/dind:fedora23-1.11";
     private static final String HOST_CONTAINER_NAME = ShortTLSKeyTest.class.getName() + "_host";
     public static int CONTAINER_PORT = 44444;
 
@@ -90,6 +92,8 @@ public class ShortTLSKeyTest {
                 .withName(DATA_CONTAINER_NAME)
                 .exec()
                 .getId();
+
+        d.getDockerCli().pullImageCmd(HOST_IMAGE_NAME).exec(new PullImageResultCallback()).awaitSuccess();
 
         hostContainerId = d.getDockerCli().createContainerCmd(HOST_IMAGE_NAME)
                 .withName(HOST_CONTAINER_NAME)
@@ -158,15 +162,13 @@ public class ShortTLSKeyTest {
                 getResource(getClass(), "data_container/keys/ca.pem")
         );
 
-        DockerClientConfig clientConfig = new DockerClientConfig.DockerClientConfigBuilder()
+        DockerClientConfig clientConfig = new DefaultDockerClientConfig.Builder()
                 .withDockerHost("tcp://" + d.getHost() + ":" + CONTAINER_PORT)
                 .withDockerTlsVerify(true)
+                .withCustomSslConfig(sslConfig)
                 .build();
 
-        DockerCmdExecFactoryImpl dockerCmdExecFactory = new DockerCmdExecFactoryImpl()
-                .withSSLContext(sslConfig.getSSLContext())
-                .withReadTimeout(0)
-                .withConnectTimeout(10000);
+        DockerCmdExecFactoryImpl dockerCmdExecFactory = new DockerCmdExecFactoryImpl();
 
         DockerClient dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)

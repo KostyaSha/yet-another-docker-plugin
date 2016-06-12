@@ -16,8 +16,10 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Imag
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Ports;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.VolumesFrom;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientBuilder;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.LocalDirectorySSLConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
@@ -40,6 +42,7 @@ import ru.qatools.clay.aether.AetherException;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -52,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.github.kostyasha.it.other.JenkinsDockerImage.JENKINS_DEFAULT;
+import static com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig.createDefaultConfigBuilder;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
@@ -90,14 +94,14 @@ public class DockerRule extends ExternalResource {
 
     // todo extract from dockerClient that has env resolver?
     private int dockerPort = 2376;
-    private String host = "192.168.99.100";
+    private String host = "192.168.99.101";
     private boolean useTls = true;
 
     boolean cleanup = true;
     private Set<String> provisioned = new HashSet<>();
     //cache
     public Description description;
-    public DockerClientConfig clientConfig;
+    public DefaultDockerClientConfig clientConfig;
     private DockerCmdExecFactoryImpl dockerCmdExecFactory;
 
     public DockerRule(boolean cleanup) {
@@ -179,7 +183,7 @@ public class DockerRule extends ExternalResource {
      * Prepare cached DockerClient `dockerClient`
      */
     private void prepareDockerCli() {
-        clientConfig = DockerClientConfig.createDefaultConfigBuilder()
+        clientConfig = createDefaultConfigBuilder()
                 .withDockerHost(getDockerUri())
                 .withDockerTlsVerify(useTls)
                 .build();
@@ -600,7 +604,9 @@ public class DockerRule extends ExternalResource {
     }
 
     public DockerServerCredentials getDockerServerCredentials() throws IOException {
-        String certPath = clientConfig.getDockerCertPath();
+        final LocalDirectorySSLConfig sslContext = (LocalDirectorySSLConfig) clientConfig.getSSLConfig();
+
+        String certPath =  sslContext.getDockerCertPath();
 
         final String keypem = FileUtils.readFileToString(new File(certPath + "/" + "key.pem"));
         final String certpem = FileUtils.readFileToString(new File(certPath + "/" + "cert.pem"));
