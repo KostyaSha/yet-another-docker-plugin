@@ -1,7 +1,8 @@
 
 
 ## Next 0.1.0-rc10
- - Add devices container create option.
+ -	Added cpusetMems cpusetCpus create options.
+ - Added devices container create option.
  - Switch to docker-java-3.0.0 (custom until https://github.com/docker-java/docker-java/pull/596 )
  - Switch to netty implementation (helps to use with docker-beta)
 
