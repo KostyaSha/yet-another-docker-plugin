@@ -13,6 +13,8 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import static java.util.Objects.nonNull;
+
 /**
  * Wrapper around all operations required during Cloud slave processing
  * The idea to bundle all docker related actions here.
@@ -87,6 +89,12 @@ public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerCont
     @DataBoundSetter
     public void setRemoveContainer(DockerRemoveContainer removeContainer) {
         this.removeContainer = removeContainer;
+    }
+
+    public Object readResolve() {
+        if (nonNull(createContainer)) createContainer.readResolve();
+
+        return this;
     }
 
     @Override

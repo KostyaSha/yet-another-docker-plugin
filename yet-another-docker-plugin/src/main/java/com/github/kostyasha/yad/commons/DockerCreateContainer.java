@@ -116,6 +116,12 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     @CheckForNull
     private List<String> devices;
 
+    @CheckForNull
+    private String cpusetCpus;
+
+    @CheckForNull
+    private String cpusetMems;
+
     @DataBoundConstructor
     public DockerCreateContainer() {
     }
@@ -379,6 +385,26 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         setDevices(splitAndFilterEmpty(devicesString));
     }
 
+    //
+    public String getCpusetCpus() {
+        return cpusetCpus;
+    }
+
+    @DataBoundSetter
+    public void setCpusetCpus(String cpusetCpus) {
+        this.cpusetCpus = cpusetCpus;
+    }
+
+    //
+    public String getCpusetMems() {
+        return cpusetMems;
+    }
+
+    @DataBoundSetter
+    public void setCpusetMems(String cpusetMems) {
+        this.cpusetMems = cpusetMems;
+    }
+
     /**
      * Fills user specified values
      *
@@ -478,11 +504,19 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             );
         }
 
+        if (StringUtils.isNotBlank(getCpusetCpus())) {
+            containerConfig.withCpusetCpus(getCpusetCpus());
+        }
+
+        if (StringUtils.isNotBlank(getCpusetMems())) {
+            containerConfig.withCpusetMems(getCpusetMems());
+        }
+
         return containerConfig;
     }
 
 
-    protected Object readResolve() {
+    public Object readResolve() {
         return this;
     }
 

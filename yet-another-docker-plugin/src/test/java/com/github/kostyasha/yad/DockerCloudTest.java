@@ -101,6 +101,8 @@ public class DockerCloudTest {
             createContainer.setVolumes(singletonList("ssdf:/sdfsdf/sdf"));
             createContainer.setVolumesFrom(singletonList("sdfsd:/sdfsdf"));
             createContainer.setDevices(singletonList("/dev/sdc:/dev/sdc:rw"));
+            createContainer.setCpusetCpus("1");
+            createContainer.setCpusetMems("2");
 
             final DockerStopContainer stopContainer = new DockerStopContainer();
             stopContainer.setTimeout(100);
