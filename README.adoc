@@ -5,7 +5,7 @@ Project that produces jenkins hpi plugin with Docker related features.
 ## History
 
 When https://github.com/jenkinsci/docker-plugin[docker-plugin] was half-working state i https://github.com/jenkinsci/docker-plugin/graphs/contributors[started enhancing/fixing] and stabilised it.
-https://github.com/jenkinsci/docker-plugin/issues/235#issuecomment-147975445[But i was unable to continue comfortable development] 
+https://github.com/jenkinsci/docker-plugin/issues/235#issuecomment-147975445[But was unable to continue comfortable development] 
 and left to this fork.
 
 ## Docs
