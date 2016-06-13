@@ -7,6 +7,7 @@ import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.kostyasha.yad.DockerConnector;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientImpl;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.KeystoreSSLConfig;
@@ -18,7 +19,11 @@ import hudson.security.ACL;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.Validate;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -28,20 +33,22 @@ import java.util.Collections;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
-import static com.github.kostyasha.yad.client.ClientConfigBuilderForPlugin.newClientConfigBuilder;
 import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 /**
  * Builds ClientConfig with helper methods that extracts info for plugin routines.
+ * After the number of refactoring in docker-java and yad-plugin logic maybe messed.
  */
 @SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "https://github.com/docker-java/docker-java/issues/588")
 public class ClientBuilderForConnector {
+    private static final Logger LOG = LoggerFactory.getLogger(ClientBuilderForConnector.class);
 
-    private DockerClientConfig dockerClientConfig = null;
     private DockerCmdExecFactory dockerCmdExecFactory = null;
-    private SSLConfig sslConfig = null;
+    private DockerClientConfig clientConfig = null;
+    // fallback to builder
+    private DefaultDockerClientConfig.Builder configBuilder = new DefaultDockerClientConfig.Builder();
+
 
     private ClientBuilderForConnector() {
     }
@@ -51,8 +58,36 @@ public class ClientBuilderForConnector {
         return this;
     }
 
-    public ClientBuilderForConnector withSslConfig(SSLConfig sslConfig) {
-        this.sslConfig = sslConfig;
+    public ClientBuilderForConnector withSslConfig(SSLConfig sslConfig)
+            throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        configBuilder.withCustomSslConfig(sslConfig);
+        return this;
+    }
+
+    /**
+     * Provides ready to use docker client with information from docker connector
+     *
+     * @param connector docker connector with info about url, version, creds and timeout
+     * @return docker-java client
+     */
+    public ClientBuilderForConnector forConnector(DockerConnector connector)
+            throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        LOG.debug("Building connection to docker host '{}'", connector.getServerUrl());
+        withCredentials(connector.getCredentialsId());
+        configBuilder.withDockerTlsVerify(connector.getTlsVerify());
+        return forServer(connector.getServerUrl(), connector.getApiVersion());
+    }
+
+    /**
+     * Method to setup url and docker-api version. Convenient for test-connection purposes and quick requests
+     *
+     * @param uri     docker server uri
+     * @param version docker-api version
+     * @return this newClientBuilderForConnector
+     */
+    public ClientBuilderForConnector forServer(String uri, @Nullable String version) {
+        configBuilder.withDockerHost(URI.create(uri).toString())
+                .withApiVersion(version);
         return this;
     }
 
@@ -95,37 +130,32 @@ public class ClientBuilderForConnector {
     }
 
     public ClientBuilderForConnector withDockerClientConfig(DockerClientConfig clientConfig) {
-        this.dockerClientConfig = clientConfig;
+        this.clientConfig = clientConfig;
         return this;
     }
 
     public ClientBuilderForConnector withDockerConnector(DockerConnector connector)
             throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        withDockerClientConfig(
-                newClientConfigBuilder()
-                        .forConnector(connector)
-                        .build()
-        );
-
-        withCredentials(connector.getCredentialsId());
+        forConnector(connector);
 
         return this;
     }
 
     public DockerClient build() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException,
             KeyManagementException {
-        Validate.notNull(dockerClientConfig, "ClientConfig must be set");
-//        Validate.notNull(dockerCmdExecFactory, "DockerCmdExecFactory must be set");
 
         if (isNull(dockerCmdExecFactory)) {
             dockerCmdExecFactory = new DockerCmdExecFactoryImpl();
         }
 
-        if (nonNull(sslConfig)) {
-            dockerCmdExecFactory.withSSLContext(sslConfig.getSSLContext());
+        if (isNull(clientConfig)) {
+            Validate.notNull(configBuilder, "configBuilder must be set");
+            clientConfig = configBuilder.build();
+        } else {
+            Validate.notNull(clientConfig, "clientConfig must be defined");
         }
 
-        return DockerClientImpl.getInstance(dockerClientConfig)
+        return DockerClientImpl.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory);
     }
 

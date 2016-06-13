@@ -1,1 +1,1 @@
-subjectAltName = IP:192.168.99.100,IP:127.0.0.1
+subjectAltName = IP:192.168.99.100,IP:192.168.99.101,IP:127.0.0.1

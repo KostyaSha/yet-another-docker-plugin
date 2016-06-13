@@ -9,9 +9,9 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.In
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.DockerException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Container;
-import com.github.kostyasha.yad.docker_java.com.google.common.base.MoreObjects;
 import com.github.kostyasha.yad.docker_java.com.google.common.base.Throwables;
 import com.github.kostyasha.yad.docker_java.javax.ws.rs.ProcessingException;
+import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.builder.ToStringBuilder;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Computer;
@@ -318,7 +318,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this).toString();
+        return ToStringBuilder.reflectionToString(this);
     }
 
     @Override

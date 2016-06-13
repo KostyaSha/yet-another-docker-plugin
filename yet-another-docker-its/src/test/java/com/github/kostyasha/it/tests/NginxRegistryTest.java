@@ -11,11 +11,13 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Buil
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.ExposedPort;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.RestartPolicy;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientBuilder;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PushImageResultCallback;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -57,7 +59,7 @@ public class NginxRegistryTest {
      * Depends on nginx because sets it as insecure.
      */
     public class DindResource extends DockerResource {
-        public final String IMAGE_NAME = "dind_fedora";
+        public final String IMAGE_NAME = "kostyasha/dind:fedora23-1.11";
         public final int CONTAINER_PORT = 4243;
         public final String HOST_CONTAINER_NAME = getClass().getCanonicalName() + "_host";
 
@@ -77,6 +79,8 @@ public class NginxRegistryTest {
         @Override
         protected void before() throws Throwable {
             after();
+
+            d.getDockerCli().pullImageCmd(IMAGE_NAME).exec(new PullImageResultCallback()).awaitSuccess();
 
             hostContainerId = d.getDockerCli().createContainerCmd(IMAGE_NAME)
                     .withName(HOST_CONTAINER_NAME)
@@ -191,6 +195,8 @@ public class NginxRegistryTest {
         protected void before() throws Throwable {
             after();
 
+            d.getDockerCli().pullImageCmd(REGISTRY_IMAGE_NAME).exec(new PullImageResultCallback()).awaitSuccess();
+
             hostContainerId = d.getDockerCli().createContainerCmd(REGISTRY_IMAGE_NAME)
                     .withRestartPolicy(RestartPolicy.alwaysRestart())
                     .withName(HOST_CONTAINER_NAME)
@@ -216,13 +222,12 @@ public class NginxRegistryTest {
 
     @Test
     public void testCliAuth() throws InterruptedException, IOException {
-        DockerClientConfig clientConfig = new DockerClientConfig.DockerClientConfigBuilder()
+        DockerClientConfig clientConfig = new DefaultDockerClientConfig.Builder()
+                .withDockerTlsVerify(false)
                 .withDockerHost(String.format("tcp://%s:%d", d.getHost(), dindResource.getExposedPort()))
                 .build();
 
-        DockerCmdExecFactoryImpl dockerCmdExecFactory = new DockerCmdExecFactoryImpl()
-                .withReadTimeout(0)
-                .withConnectTimeout(10000);
+        DockerCmdExecFactoryImpl dockerCmdExecFactory = new DockerCmdExecFactoryImpl();
 
         DockerClient dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)
