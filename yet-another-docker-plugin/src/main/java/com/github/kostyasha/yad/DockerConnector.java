@@ -82,7 +82,7 @@ public class DockerConnector implements Describable<DockerConnector> {
         this.apiVersion = StringUtils.trimToNull(apiVersion);
     }
 
-    public boolean getTlsVerify() {
+    public Boolean getTlsVerify() {
         return tlsVerify;
     }
 

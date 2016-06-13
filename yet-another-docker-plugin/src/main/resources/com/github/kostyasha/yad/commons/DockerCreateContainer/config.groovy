@@ -74,4 +74,12 @@ f.advanced(title: _("Container settings"), align: "left") {
         f.expandableTextbox()
     }
 
+    f.entry(title: _("Cpuset constraint: CPUs"), field: "cpusetCpus") {
+        f.textbox()
+    }
+
+    f.entry(title: _("Cpuset constraint: MEMs"), field: "cpusetMems") {
+        f.textbox()
+    }
+
 }
