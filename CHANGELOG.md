@@ -1,6 +1,8 @@
 
 
-## Next 0.1.0-rc10
+## Next
+
+##  0.1.0-rc10
  -	Added cpusetMems cpusetCpus create options.
  - Added devices container create option.
  - Switch to docker-java-3.0.0 (custom until https://github.com/docker-java/docker-java/pull/596 )
