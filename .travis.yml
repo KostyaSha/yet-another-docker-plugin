@@ -26,6 +26,6 @@ addons:
       name: "KostyaSha/yet-another-docker-plugin"
       description: "Build submitted via Travis CI"
     notification_email: "kanstantsin.sha@gmail.com"
-    build_command_prepend: "mvn clean"
-    build_command:   "mvn -DskipTests=true compile"
+    build_command_prepend: "./mvnw clean"
+    build_command:   "./mvnw -DskipTests=true compile"
 #    branch_pattern: coverity_scan
