@@ -28,4 +28,4 @@ addons:
     notification_email: "kanstantsin.sha@gmail.com"
     build_command_prepend: "./mvnw clean"
     build_command:   "./mvnw -DskipTests=true compile"
-#    branch_pattern: coverity_scan
+    branch_pattern: travisCoverity
