@@ -2,6 +2,9 @@
 
 ## Next
 
+## 0.1.0-rc12
+ - Prepare release for jitpack.
+
 ## 0.1.0-rc11
  - Fix NPE when dockerTlsVerify was undefined.
 
