@@ -12,7 +12,7 @@ after_success:
 
 install: true
 
-script: ./travis.sh
+script: if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./travis.sh ; fi
 
 env:
   global:
