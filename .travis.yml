@@ -1,9 +1,31 @@
 sudo: required
+
 language: java
+
 jdk: oraclejdk8
+
 before_install:
  - pip install --user codecov
+
 after_success:
  - codecov
+
 install: true
-script: ./travis.sh
+
+script: if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./travis.sh ; fi
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "jC6k+HD0W1CmVj6+q1DAtXN8azeAWp+8BKCwqhBgjCDJOk00ZaFWy14rkNUWGPq7bqHZG0hdd/aZWz8+KqnO9rBTVijyC4WyL+Oxg5Y9OsM2+x8+M6p34Uw5XDFt4q0jMomP4EWqunr2gmytGSrQqRQDxuvksxSVmCMhJTBF9psZjWjQQoMsC0A8jTFM6sWIqFTisLZWl0oxf4A4XPgl3oaXKyxEK1zONWwbQ/iqT+yXUD/43gU+u57+StEjE+HNvGqxglOLZqJsjnFRQo+T9+JV0JR6Mc+n/QHscnQNlJJopI8atCYWskKUkj443ocsaO4MlxTAOJhwiOuvoVREmpJAsZ2V052fijiFi7G250Q/wQ6bmqZuovO2JSFdkmp2HHXfJtbRhRhZeZ22CAh8JHvJ3iB40yI9dFY/P6KmPfk3g6IlHDIJqcDLxue2/xtbfibVwBptZYVXZjLcYmjHsk7mhyS3EGqjyYTKOO5e8X5+Isfcr/PkEZIJvup+WmlfjjfZwV35TEr+TCLRMRU9BJZohCamR6FhMAC9CvhCde8OoB1zAeegAKepZARwegpcLLrJXVCiARvs+WU52s/pCEaDnPO/OpKE343MSjV3g+uKn2YPfNoLno9aOJMKUwTtJc72ppCPxRBxwdZiPZ35SEtWNqe+D+pGDBcg+CDACl0="
+
+addons:
+  coverity_scan:
+    project:
+      name: "KostyaSha/yet-another-docker-plugin"
+      description: "Build submitted via Travis CI"
+    notification_email: "kanstantsin.sha@gmail.com"
+    build_command_prepend: "./mvnw clean"
+    build_command: "./travis.sh"
+    branch_pattern: master
