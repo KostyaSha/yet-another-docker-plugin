@@ -2,6 +2,12 @@
 
 ## Next
 
+## 0.1.0-rc14
+ - Fix UI databinding for tlsVerify
+
+## 0.1.0-rc13
+ - change git tag names for releases
+
 ## 0.1.0-rc12
  - Prepare release for jitpack.
 
