@@ -87,7 +87,7 @@ public class DockerConnector implements Describable<DockerConnector> {
     }
 
     @DataBoundSetter
-    public void setTlsVerify(boolean tlsVerify) {
+    public void setTlsVerify(Boolean tlsVerify) {
         this.tlsVerify = tlsVerify;
     }
 
