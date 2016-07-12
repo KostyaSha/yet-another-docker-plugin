@@ -7,12 +7,12 @@ import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.kostyasha.yad.DockerConnector;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientImpl;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.KeystoreSSLConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.SSLConfig;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
+import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad.other.VariableSSLConfig;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.security.ACL;
@@ -48,8 +48,9 @@ public class ClientBuilderForConnector {
     private DockerCmdExecFactory dockerCmdExecFactory = null;
     private DockerClientConfig clientConfig = null;
     // fallback to builder
-    private DefaultDockerClientConfig.Builder configBuilder = new DefaultDockerClientConfig.Builder();
+    private Builder configBuilder = new Builder();
 
+    private ConnectorType connectorType = null;
 
     private ClientBuilderForConnector() {
     }
@@ -75,11 +76,17 @@ public class ClientBuilderForConnector {
             throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         LOG.debug("Building connection to docker host '{}'", connector.getServerUrl());
         withCredentials(connector.getCredentialsId());
+        withConnectorType(connector.getConnectorType());
         if (nonNull(connector.getTlsVerify())) {
             configBuilder.withDockerTlsVerify(connector.getTlsVerify());
         } // either it fallback to docker-java default
 
         return forServer(connector.getServerUrl(), connector.getApiVersion());
+    }
+
+    public ClientBuilderForConnector withConnectorType(ConnectorType connectorType) {
+        this.connectorType = connectorType;
+        return this;
     }
 
     /**
@@ -133,6 +140,11 @@ public class ClientBuilderForConnector {
         return this;
     }
 
+    public ClientBuilderForConnector withConfigBuilder(Builder configBuilder) {
+        this.configBuilder = configBuilder;
+        return this;
+    }
+
     public ClientBuilderForConnector withDockerClientConfig(DockerClientConfig clientConfig) {
         this.clientConfig = clientConfig;
         return this;
@@ -149,7 +161,11 @@ public class ClientBuilderForConnector {
             KeyManagementException {
 
         if (isNull(dockerCmdExecFactory)) {
-            dockerCmdExecFactory = new DockerCmdExecFactoryImpl();
+            if (connectorType == ConnectorType.JERSEY) {
+                dockerCmdExecFactory = new com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl();
+            } else {
+                dockerCmdExecFactory = new com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl();
+            }
         }
 
         if (isNull(clientConfig)) {

@@ -27,7 +27,13 @@ f.entry(title: _("Host Credentials"), field: "credentialsId") {
     c.select()
 }
 
+f.entry(title: "Type", field: "connectorType") {
+    f.enum() {
+        text(my.name())
+    }
+}
+
 f.validateButton(title: _("Test Connection"), progress: _("Testing..."),
         method: "testConnection",
-        with: "serverUrl,credentialsId,version,connectTimeout,readTimeout"
+        with: "serverUrl,credentialsId,version,connectTimeout,readTimeout,connectorType"
 )

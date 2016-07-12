@@ -7,9 +7,9 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClie
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.DockerException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Version;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.google.common.base.Preconditions;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
+import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad.utils.CredentialsListBoxModel;
 import com.google.common.base.Throwables;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -23,6 +23,7 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -36,6 +37,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.github.kostyasha.yad.client.ClientBuilderForConnector.newClientBuilderForConnector;
+import static com.github.kostyasha.yad.other.ConnectorType.NETTY;
+import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
 
 /**
  * Settings for connecting to docker.
@@ -57,6 +60,8 @@ public class DockerConnector implements Describable<DockerConnector> {
 
     @CheckForNull
     private transient DockerClient client = null;
+
+    private ConnectorType connectorType = NETTY;
 
     @DataBoundConstructor
     public DockerConnector(String serverUrl) {
@@ -98,6 +103,19 @@ public class DockerConnector implements Describable<DockerConnector> {
     @DataBoundSetter
     public void setCredentialsId(String credentialsId) {
         this.credentialsId = credentialsId;
+    }
+
+    /**
+     * @see #connectorType
+     */
+    @CheckForNull
+    public ConnectorType getConnectorType() {
+        return connectorType;
+    }
+
+    @DataBoundSetter
+    public void setConnectorType(ConnectorType connectorType) {
+        this.connectorType = connectorType;
     }
 
     public DockerClient getClient() {
@@ -144,6 +162,8 @@ public class DockerConnector implements Describable<DockerConnector> {
                 .append(serverUrl, that.serverUrl)
                 .append(apiVersion, that.apiVersion)
                 .append(credentialsId, that.credentialsId)
+                .append(tlsVerify, that.tlsVerify)
+                .append(connectorType, that.connectorType)
                 .isEquals();
     }
 
@@ -153,6 +173,8 @@ public class DockerConnector implements Describable<DockerConnector> {
                 .append(serverUrl)
                 .append(apiVersion)
                 .append(credentialsId)
+                .append(tlsVerify)
+                .append(connectorType)
                 .toHashCode();
     }
 
@@ -180,24 +202,24 @@ public class DockerConnector implements Describable<DockerConnector> {
                 @QueryParameter String serverUrl,
                 @QueryParameter String apiVersion,
                 @QueryParameter Boolean tlsVerify,
-                @QueryParameter String credentialsId
+                @QueryParameter String credentialsId,
+                @QueryParameter ConnectorType connectorType
         ) throws IOException, ServletException, DockerException {
             try {
-                final DockerClientConfig clientConfig = new DefaultDockerClientConfig.Builder()
+                DefaultDockerClientConfig.Builder configBuilder = new DefaultDockerClientConfig.Builder()
                         .withApiVersion(apiVersion)
                         .withDockerHost(serverUrl)
-                        .withDockerTlsVerify(tlsVerify)
-                        .build();
-
+                        .withDockerTlsVerify(tlsVerify);
 
                 final DockerClient testClient = newClientBuilderForConnector()
-                        .withDockerClientConfig(clientConfig)
+                        .withConfigBuilder(configBuilder)
+                        .withConnectorType(connectorType)
                         .withCredentials(credentialsId)
                         .build();
 
                 Version verResult = testClient.versionCmd().exec();
 
-                return FormValidation.ok(verResult.toString());
+                return FormValidation.ok(ToStringBuilder.reflectionToString(verResult, MULTI_LINE_STYLE));
             } catch (Exception e) {
                 return FormValidation.error(e, e.getMessage());
             }
