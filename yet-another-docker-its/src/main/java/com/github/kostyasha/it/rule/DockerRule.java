@@ -94,7 +94,7 @@ public class DockerRule extends ExternalResource {
 
     // todo extract from dockerClient that has env resolver?
     private int dockerPort = 2376;
-    private String host = "192.168.99.101";
+    private String host = "192.168.99.100";
     private boolean useTls = true;
 
     boolean cleanup = true;

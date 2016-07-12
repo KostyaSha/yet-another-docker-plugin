@@ -7,11 +7,13 @@ import com.github.kostyasha.it.rule.DockerResource;
 import com.github.kostyasha.it.rule.DockerRule;
 import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.DockerConnector;
+import com.github.kostyasha.yad.DockerConnector.DescriptorImpl;
 import com.github.kostyasha.yad.DockerContainerLifecycle;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad.commons.DockerPullImage;
 import com.github.kostyasha.yad.commons.DockerRemoveContainer;
 import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
+import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import hudson.cli.DockerCLI;
 import hudson.model.FreeStyleBuild;
@@ -119,6 +121,11 @@ public class SimpleBuildTest implements Serializable {
             JenkinsLocationConfiguration.get().setUrl(String.format("http://%s:%d", dockerUri.getHost(), jenkinsPort));
 
             SystemCredentialsProvider.getInstance().getCredentials().add(dockerServerCredentials);
+
+            //verify doTestConnection
+            final DescriptorImpl descriptor = (DescriptorImpl) jenkins.getDescriptor(DockerConnector.class);
+            descriptor.doTestConnection(dockerUri.getHost(), "", true, dockerServerCredentials.getId(), ConnectorType.NETTY);
+            descriptor.doTestConnection(dockerUri.getHost(), "", true, dockerServerCredentials.getId(), ConnectorType.JERSEY);
 
             // prepare Docker Cloud
             final DockerConnector dockerConnector = new DockerConnector(
