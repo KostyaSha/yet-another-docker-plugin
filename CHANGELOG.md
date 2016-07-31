@@ -2,6 +2,10 @@
 
 ## Next
 
+## 0.1.0-rc15
+ - Fix image.getRepoTags() NPE.
+ - Fix http -> tcp UI help.
+
 ## 0.1.0-rc14
  - Fix UI databinding for tlsVerify
 
