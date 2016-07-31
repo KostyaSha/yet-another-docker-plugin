@@ -24,9 +24,11 @@ Will be in https://github.com/KostyaSha/yet-another-docker-plugin/wiki[GitHub wi
 
 ## Installation
 
-Main Jenkins Update center.
+Java 8 is required.
 
-If you don't want to change your Update Center, you can the download the `.hpi` from a mirror http://mirrors.jenkins-ci.org/plugins/yet-another-docker-plugin/ and upload it to Jenkins Plugin Manager.
+Main Jenkins Update center or Jucies.
+
+If you don't want to change your Update Center, you can download `.hpi` from the mirror http://mirrors.jenkins-ci.org/plugins/yet-another-docker-plugin/ or and upload it to Jenkins Plugin Manager.
 
 ## Disclaimer 
 
