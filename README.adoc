@@ -1,5 +1,6 @@
 # Yet Another Docker Plugin
 
+image:https://img.shields.io/badge/java-1.8-yellow.svg["Minimal java version"]
 image:https://scan.coverity.com/projects/9176/badge.svg?flat=1["Coverity Scan Build Status", link="https://scan.coverity.com/projects/kostyasha-yet-another-docker-plugin"]
 image:https://travis-ci.org/KostyaSha/yet-another-docker-plugin.svg?branch=master["Build Status", link="https://travis-ci.org/KostyaSha/yet-another-docker-plugin"]
 image:https://codecov.io/github/KostyaSha/yet-another-docker-plugin/coverage.svg?branch=master["codecov.io", link="http://codecov.io/github/christiangalsterer/httpbeat?branch=master"]
