@@ -21,7 +21,7 @@ sudo -E apt-get install -q -y wget
 sudo -E apt-get -q -y --purge remove docker-engine || :
 sudo -E apt-cache policy docker-engine
 
-./get-docker-com.sh
+./.travis/get-docker-com.sh
 #mkdir "${HOME}/.cache" || :
 #pushd "${HOME}/.cache"
 # wget -N "https://apt.dockerproject.org/repo/pool/main/d/docker-engine/docker-engine_${DOCKER_VERSION}_amd64.deb"
