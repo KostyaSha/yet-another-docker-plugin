@@ -18,12 +18,12 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Port
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.VolumesFrom;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientBuilder;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.LocalDirectorySSLConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.codec.digest.DigestUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
@@ -88,47 +88,26 @@ public class DockerRule extends ExternalResource {
     @CheckForNull
     private DockerClient dockerClient;
 
-    // default for docker-machine images
-    private String sshUser = "docker";
-    private String sshPass = "tcuser";
-
-    // todo extract from dockerClient that has env resolver?
-    private int dockerPort = 2376;
-    private String host = "192.168.99.101";
-    private boolean useTls = true;
-
     boolean cleanup = true;
     private Set<String> provisioned = new HashSet<>();
     //cache
     public Description description;
     public DefaultDockerClientConfig clientConfig;
-    private DockerCmdExecFactoryImpl dockerCmdExecFactory;
+    private NettyDockerCmdExecFactory dockerCmdExecFactory;
 
     public DockerRule(boolean cleanup) {
         this.cleanup = cleanup;
     }
 
-    public DockerRule(String host) {
-        this.host = host;
-    }
-
-    public String getDockerUri() {
-        return new StringBuilder()
-                .append("tcp://")
-                .append(host).append(":").append(dockerPort)
-                .toString();
-    }
+//    public String getDockerUri() {
+//        return new StringBuilder()
+//                .append("tcp://")
+//                .append(host).append(":").append(dockerPort)
+//                .toString();
+//    }
 
     public String getHost() {
-        return host;
-    }
-
-    public String getSshUser() {
-        return sshUser;
-    }
-
-    public String getSshPass() {
-        return sshPass;
+        return clientConfig.getDockerHost().getHost();
     }
 
     public DockerClient getDockerCli() {
@@ -180,15 +159,14 @@ public class DockerRule extends ExternalResource {
     }
 
     /**
-     * Prepare cached DockerClient `dockerClient`
+     * Prepare cached DockerClient `dockerClient`.
+     * Pick system/file connection settings.
      */
     private void prepareDockerCli() {
         clientConfig = createDefaultConfigBuilder()
-                .withDockerHost(getDockerUri())
-                .withDockerTlsVerify(useTls)
                 .build();
 
-        dockerCmdExecFactory = new DockerCmdExecFactoryImpl();
+        dockerCmdExecFactory = new NettyDockerCmdExecFactory();
 
         dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)

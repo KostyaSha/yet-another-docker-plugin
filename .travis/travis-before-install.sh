@@ -36,13 +36,16 @@ sudo -E restart docker
 sleep 10
 docker version
 docker info
+ip a
 
 set +u
 
-#cat <<EOF > "${HOME}/.docker-java.properties"
+cat <<EOF > "${HOME}/.docker-java.properties"
+DOCKER_TLS_VERIFY=""
+DOCKER_HOST=tcp://localhost:2375
 #registry.username=${registry_username}
 #registry.password=${registry_password}
 #registry.email=${registry_email}
 #registry.url=https://index.docker.io/v1/
 #
-#EOF
+EOF
