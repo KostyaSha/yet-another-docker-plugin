@@ -13,8 +13,8 @@ fi
 
 set -exu
 
-docker info
-docker version
+#docker info
+#docker version
 
 sudo -E apt-get update
 sudo -E apt-get install -q -y wget

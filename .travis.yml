@@ -12,8 +12,6 @@ after_success:
 
 install: true
 
-script: if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./travis.sh ; fi
-
 env:
   global:
     - DOCKER_TLS_VERIFY=""
@@ -41,6 +39,7 @@ before_install:
 
 script:
   - ./.travis/travis-script.sh
+#script: if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./travis.sh ; fi
 
 after_success:
   - ./.travis/travis-after-success.sh
