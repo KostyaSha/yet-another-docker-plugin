@@ -31,7 +31,7 @@ cache:
   directories:
   - $HOME/.travis_cache
   - /tmp/coverity-cache
-#  - $HOME/.m2 # install will pollute it
+  - $HOME/.m2 # install will pollute it
 
 before_install:
   - pip install --user codecov
