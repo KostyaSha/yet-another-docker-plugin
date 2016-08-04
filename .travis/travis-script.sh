@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
 (
- sleep 60 && echo "NOSLEEP TRAVIS"
+    while true
+    do
+        sleep 60 && echo "NO_SLEEP_TRAVIS"
+    done
 )&
 
 set -ex
