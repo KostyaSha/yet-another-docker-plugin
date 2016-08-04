@@ -19,6 +19,6 @@ else
         #curl -s "https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh" | bash
         ./.travis/travisci_build_coverity_scan.sh
     else
-        ./mvnw verify -Pyad-its
+        ./mvnw verify -Pyad-its | grep -v Downloading
     fi
 fi
