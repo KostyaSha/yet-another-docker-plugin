@@ -38,7 +38,7 @@ before_install:
   - ./.travis/travis-before-install.sh
 
 script:
-  - travis_wait ./.travis/travis-script.sh
+  - ./.travis/travis-script.sh
 #script: if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./travis.sh ; fi
 
 after_success:
