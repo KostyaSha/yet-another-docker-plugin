@@ -44,14 +44,12 @@ ip r ls
 docker network inspect bridge
 docker network inspect --format='{{(index .IPAM.Config 0).Gateway }}' bridge
 
-set +u
 
 cat <<EOF > "${HOME}/.docker-java.properties"
 DOCKER_TLS_VERIFY=""
 DOCKER_HOST=tcp://$(ip r | grep default | awk '{ print $3 }'):2375
-#registry.username=${registry_username}
-#registry.password=${registry_password}
-#registry.email=${registry_email}
-#registry.url=https://index.docker.io/v1/
-#
+
 EOF
+
+set +u
+
