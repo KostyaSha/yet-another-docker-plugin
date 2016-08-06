@@ -43,9 +43,15 @@ script:
 
 after_success:
   - ./.travis/travis-after-success.sh
+  - rm -rf ~/.m2/repository/com/github/kostyasha/yet-another-docker
+
+after_failure:
+  - rm -rf ~/.m2/repository/com/github/kostyasha/yet-another-docker
+
+before_deploy:
+  - rm -rf ~/.m2/repository/com/github/kostyasha/yet-another-docker || :
 
 after_script:
-  - rm -rf ~/.m2/repository/com/github/kostyasha/yet-another-docker
   - sudo cat /var/log/upstart/docker.log
   - docker ps -a
   - docker images
