@@ -34,7 +34,7 @@ pushd "yet-another-docker-its"
     mv "src/test/resources/travis-logback.xml" "src/test/resources/logback.xml"
 popd
 
-echo 'DOCKER_OPTS="-H=unix:///var/run/docker.sock -H=tcp://127.0.0.1:2375"' | sudo tee -a /etc/default/docker
+echo 'DOCKER_OPTS="-H=unix:///var/run/docker.sock -H=tcp://0.0.0.0:2375"' | sudo tee -a /etc/default/docker
 sudo -E restart docker
 sleep 10
 docker version
