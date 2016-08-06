@@ -59,3 +59,15 @@ after_script:
 #    build_command_prepend: "./mvnw clean"
 #    build_command: "./travis.sh"
 #    branch_pattern: master
+addons:
+  artifacts: true
+  paths:
+    - /home/travis/build/KostyaSha/yet-another-docker-plugin/yet-another-docker-its/target/surefire-reports
+
+#deploy:
+#  provider: s3
+#  access_key_id:
+#  bucket: "travis-kostyasha"
+#  s3_region: "us-west-2"
+#  local_dir:  /home/travis/build/KostyaSha/yet-another-docker-plugin/yet-another-docker-its/target/surefire-reports
+#  upload-dir:
