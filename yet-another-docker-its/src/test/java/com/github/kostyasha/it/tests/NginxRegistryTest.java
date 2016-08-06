@@ -4,6 +4,7 @@ import com.github.kostyasha.it.rule.DockerResource;
 import com.github.kostyasha.it.rule.DockerRule;
 import com.github.kostyasha.it.utils.DockerUtils;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.AuthConfig;
@@ -17,7 +18,9 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerCli
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PushImageResultCallback;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -222,12 +225,13 @@ public class NginxRegistryTest {
 
     @Test
     public void testCliAuth() throws InterruptedException, IOException {
+        LOG.info("running test");
         DockerClientConfig clientConfig = new DefaultDockerClientConfig.Builder()
                 .withDockerTlsVerify(false)
                 .withDockerHost(String.format("tcp://%s:%d", d.getHost(), dindResource.getExposedPort()))
                 .build();
 
-        DockerCmdExecFactoryImpl dockerCmdExecFactory = new DockerCmdExecFactoryImpl();
+        DockerCmdExecFactory dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
 
         DockerClient dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)

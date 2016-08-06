@@ -20,6 +20,7 @@ public class DockerUtils {
     }
 
     public static void ensureContainerRemoved(DockerClient cli, String containerName) {
+        LOG.info("Ensuring container '{}' is removed", containerName);
         try {
             cli.removeContainerCmd(containerName)
                     .withForce(true)

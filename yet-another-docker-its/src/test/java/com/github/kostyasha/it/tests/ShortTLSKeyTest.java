@@ -2,6 +2,7 @@ package com.github.kostyasha.it.tests;
 
 import com.github.kostyasha.it.rule.DockerRule;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.BuildResponseItem;
@@ -14,7 +15,9 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerCli
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import com.github.kostyasha.yad.other.VariableSSLConfig;
@@ -168,7 +171,8 @@ public class ShortTLSKeyTest {
                 .withCustomSslConfig(sslConfig)
                 .build();
 
-        DockerCmdExecFactoryImpl dockerCmdExecFactory = new DockerCmdExecFactoryImpl();
+//        DockerCmdExecFactory dockerCmdExecFactory = new NettyDockerCmdExecFactory();
+        DockerCmdExecFactory dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
 
         DockerClient dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)

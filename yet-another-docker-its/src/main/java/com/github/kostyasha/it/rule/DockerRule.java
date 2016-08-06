@@ -22,7 +22,6 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.LocalDire
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.codec.digest.DigestUtils;
@@ -38,11 +37,9 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.qatools.clay.aether.AetherException;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -94,6 +91,9 @@ public class DockerRule extends ExternalResource {
     public Description description;
     public DefaultDockerClientConfig clientConfig;
     private NettyDockerCmdExecFactory dockerCmdExecFactory;
+
+    public DockerRule() {
+    }
 
     public DockerRule(boolean cleanup) {
         this.cleanup = cleanup;
@@ -196,7 +196,7 @@ public class DockerRule extends ExternalResource {
      * Docker data container with unique name based on docker data-image (also unique).
      * If we are refreshing container, then it makes sense rebuild data-image.
      */
-    public String getDataContainerId(boolean forceRefresh) throws AetherException, SettingsBuildingException,
+    public String getDataContainerId(boolean forceRefresh) throws SettingsBuildingException,
             InterruptedException, IOException {
         final Map<String, File> pluginFiles = getPluginFiles();
         String dataContainerId = null;
@@ -260,7 +260,7 @@ public class DockerRule extends ExternalResource {
      * @param forceUpdate rebuild data image.
      */
     public String getDataImage(boolean forceUpdate, final Map<String, File> pluginFiles, String imageName)
-            throws IOException, AetherException, SettingsBuildingException, InterruptedException {
+            throws IOException, SettingsBuildingException, InterruptedException {
         String existedDataImage = null;
 
         final List<Image> images = getDockerCli().listImagesCmd()
@@ -418,7 +418,7 @@ public class DockerRule extends ExternalResource {
      * @param forceRefresh enforce data container and data image refresh
      */
     public String runFreshJenkinsContainer(DockerImagePullStrategy pullStrategy, boolean forceRefresh)
-            throws IOException, AetherException, SettingsBuildingException, InterruptedException {
+            throws IOException, SettingsBuildingException, InterruptedException {
         pullImage(pullStrategy, JENKINS_DEFAULT.getDockerImageName());
 
         // labels attached to container allows cleanup container if it wasn't removed
@@ -584,7 +584,7 @@ public class DockerRule extends ExternalResource {
     public DockerServerCredentials getDockerServerCredentials() throws IOException {
         final LocalDirectorySSLConfig sslContext = (LocalDirectorySSLConfig) clientConfig.getSSLConfig();
 
-        String certPath =  sslContext.getDockerCertPath();
+        String certPath = sslContext.getDockerCertPath();
 
         final String keypem = FileUtils.readFileToString(new File(certPath + "/" + "key.pem"));
         final String certpem = FileUtils.readFileToString(new File(certPath + "/" + "cert.pem"));

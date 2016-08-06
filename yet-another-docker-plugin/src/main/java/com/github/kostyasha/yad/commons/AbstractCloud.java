@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * (Very) Pure abstraction to clean up docker specific implementation.
- * Normally it should be in {@see hudson.slaves.AbstractCloudImpl}, but it doesn't provide templates
+ * Normally it should be in {@link hudson.slaves.AbstractCloudImpl}, but it doesn't provide templates
  * and has bad counter type.
  *
  * @author Kanstantsin Shautsou
