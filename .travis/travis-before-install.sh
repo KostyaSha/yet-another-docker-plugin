@@ -48,7 +48,7 @@ set +u
 
 cat <<EOF > "${HOME}/.docker-java.properties"
 DOCKER_TLS_VERIFY=""
-DOCKER_HOST=tcp://localhost:2375
+DOCKER_HOST=tcp://$(ip r | grep default | awk '{ print $3 }'):2375
 #registry.username=${registry_username}
 #registry.password=${registry_password}
 #registry.email=${registry_email}
