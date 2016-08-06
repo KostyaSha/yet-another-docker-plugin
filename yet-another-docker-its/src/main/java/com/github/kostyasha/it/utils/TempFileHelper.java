@@ -41,4 +41,10 @@ public class TempFileHelper {
         }
         return dir.resolve(name);
     }
+
+    public static void checkPathIT(File checkFile){
+        if (!checkFile.getAbsoluteFile().getName().equals("yet-another-docker-its")) {
+            throw new IllegalArgumentException("Unexpected path for its " + checkFile.getAbsolutePath());
+        }
+    }
 }

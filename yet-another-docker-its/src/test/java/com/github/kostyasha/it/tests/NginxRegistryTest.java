@@ -37,6 +37,7 @@ import java.io.IOException;
 
 import static com.github.kostyasha.it.rule.DockerRule.getDockerItDir;
 import static com.github.kostyasha.it.utils.DockerUtils.ensureContainerRemoved;
+import static com.github.kostyasha.it.utils.TempFileHelper.checkPathIT;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.io.FileUtils.writeStringToFile;
@@ -132,6 +133,7 @@ public class NginxRegistryTest {
         @Override
         public void before() throws IOException {
             after();
+            checkPathIT(new File(""));
 
             final File buildDir = folder.newFolder(getClass().getName());
 
@@ -227,7 +229,8 @@ public class NginxRegistryTest {
 
     @Test
     public void testCliAuth() throws InterruptedException, IOException {
-        LOG.info("running test");
+        checkPathIT(new File(""));
+
         DockerClientConfig clientConfig = new DefaultDockerClientConfig.Builder()
                 .withDockerTlsVerify(false)
                 .withDockerHost(String.format("tcp://%s:%d", d.getHost(), dindResource.getExposedPort()))
