@@ -116,6 +116,8 @@ public class ShortTLSKeyTest {
                 .exec()
                 .getId();
 
+        d.getDockerCli().startContainerCmd(hostContainerId).exec();
+        
         d.waitDindStarted(hostContainerId);
     }
 
