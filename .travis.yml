@@ -47,7 +47,8 @@ after_success:
 after_script:
   - rm -rf ~/.m2/repository/com/github/kostyasha/yet-another-docker
   - sudo cat /var/log/upstart/docker.log
-
+  - docker ps -a
+  - docker images
 
 #addons:
 #  coverity_scan:
