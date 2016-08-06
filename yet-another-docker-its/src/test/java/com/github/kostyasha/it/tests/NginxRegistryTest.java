@@ -83,7 +83,9 @@ public class NginxRegistryTest {
         protected void before() throws Throwable {
             after();
 
-            d.getDockerCli().pullImageCmd(IMAGE_NAME).exec(new PullImageResultCallback()).awaitSuccess();
+            d.getDockerCli().pullImageCmd(IMAGE_NAME)
+                    .exec(new PullImageResultCallback())
+                    .awaitSuccess();
 
             hostContainerId = d.getDockerCli().createContainerCmd(IMAGE_NAME)
                     .withName(HOST_CONTAINER_NAME)

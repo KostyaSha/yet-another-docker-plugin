@@ -6,6 +6,7 @@ import com.github.kostyasha.it.utils.DockerHPIContainerUtil;
 import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.NotFoundException;
@@ -22,6 +23,7 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.LocalDire
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.codec.digest.DigestUtils;
@@ -32,6 +34,7 @@ import hudson.cli.CLIConnectionFactory;
 import hudson.cli.DockerCLI;
 import org.apache.maven.settings.building.SettingsBuildingException;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
+import org.jenkinsci.plugins.docker.traceability.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -90,7 +93,7 @@ public class DockerRule extends ExternalResource {
     //cache
     public Description description;
     public DefaultDockerClientConfig clientConfig;
-    private NettyDockerCmdExecFactory dockerCmdExecFactory;
+    private DockerCmdExecFactory dockerCmdExecFactory;
 
     public DockerRule() {
     }
@@ -166,7 +169,7 @@ public class DockerRule extends ExternalResource {
         clientConfig = createDefaultConfigBuilder()
                 .build();
 
-        dockerCmdExecFactory = new NettyDockerCmdExecFactory();
+        dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
 
         dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)

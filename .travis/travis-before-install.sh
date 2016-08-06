@@ -40,6 +40,9 @@ sleep 10
 docker version
 docker info
 ip a
+ip r ls
+docker network inspect bridge
+docker network inspect --format='{{(index .IPAM.Config 0).Gateway }}' bridge
 
 set +u
 
