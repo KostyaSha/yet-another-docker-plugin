@@ -8,6 +8,7 @@
 )&
 
 set -ex
+set -o pipefail
 
 IS_COVERITY_SCAN_BRANCH=`ruby -e "puts '${TRAVIS_BRANCH}' =~ /\\A$COVERITY_SCAN_BRANCH_PATTERN\\z/ ? 1 : 0"`
 
