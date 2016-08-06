@@ -2,6 +2,7 @@ package com.github.kostyasha.it.rule;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.github.kostyasha.it.other.JenkinsDockerImage;
+import com.github.kostyasha.it.other.WaitMessageResultCallback;
 import com.github.kostyasha.it.utils.DockerHPIContainerUtil;
 import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
@@ -24,7 +25,6 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.NameParse
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.codec.digest.DigestUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
@@ -33,8 +33,8 @@ import hudson.cli.CLI;
 import hudson.cli.CLIConnectionFactory;
 import hudson.cli.DockerCLI;
 import org.apache.maven.settings.building.SettingsBuildingException;
+import org.hamcrest.MatcherAssert;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
-import org.jenkinsci.plugins.docker.traceability.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -53,13 +53,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static com.github.kostyasha.it.other.JenkinsDockerImage.JENKINS_DEFAULT;
 import static com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig.createDefaultConfigBuilder;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.codehaus.plexus.util.FileUtils.copyFile;
+import static org.hamcrest.core.Is.is;
 
 /**
  * Connects to remote Docker Host and provides client
@@ -601,5 +604,24 @@ public class DockerRule extends ExternalResource {
                 certpem,
                 capem
         );
+    }
+
+    public void waitDindStarted(String hostContainerId) throws InterruptedException, IOException {
+        waitLogMsg(hostContainerId, "API listen on");
+    }
+
+    public void waitLogMsg(String containerId, String msg) throws InterruptedException, IOException {
+        final WaitMessageResultCallback callback = new WaitMessageResultCallback(msg);
+
+        getDockerCli().logContainerCmd(containerId)
+                .withTailAll()
+                .withStdOut(true)
+                .withStdErr(true)
+                .withFollowStream(true)
+                .exec(callback)
+                .awaitCompletion(60, SECONDS);
+
+        MatcherAssert.assertThat("Didn't found msg '" + msg + "' in log.", callback.getFound(), is(true));
+        callback.close();
     }
 }

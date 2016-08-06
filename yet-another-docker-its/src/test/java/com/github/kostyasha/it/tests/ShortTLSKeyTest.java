@@ -1,5 +1,6 @@
 package com.github.kostyasha.it.tests;
 
+import com.github.kostyasha.it.other.WaitMessageResultCallback;
 import com.github.kostyasha.it.rule.DockerRule;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
@@ -21,6 +22,7 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.NettyDoc
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import com.github.kostyasha.yad.other.VariableSSLConfig;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -68,7 +70,7 @@ public class ShortTLSKeyTest {
     public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
 
     @Before
-    public void before() throws IOException {
+    public void before() throws IOException, InterruptedException {
         after();
 
         final File buildDir = folder.newFolder(getClass().getName());
@@ -114,7 +116,7 @@ public class ShortTLSKeyTest {
                 .exec()
                 .getId();
 
-        d.getDockerCli().startContainerCmd(hostContainerId).exec();
+        d.waitDindStarted(hostContainerId);
     }
 
     @After

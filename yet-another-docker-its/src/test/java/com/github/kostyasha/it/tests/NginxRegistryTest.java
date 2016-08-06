@@ -2,6 +2,7 @@ package com.github.kostyasha.it.tests;
 
 import com.github.kostyasha.it.rule.DockerResource;
 import com.github.kostyasha.it.rule.DockerRule;
+import com.github.kostyasha.it.other.WaitMessageResultCallback;
 import com.github.kostyasha.it.utils.DockerUtils;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
@@ -19,8 +20,6 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.B
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PushImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -40,7 +39,10 @@ import static com.github.kostyasha.it.utils.DockerUtils.ensureContainerRemoved;
 import static com.github.kostyasha.it.utils.TempFileHelper.checkPathIT;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.io.FileUtils.writeStringToFile;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 /**
  * client -> (DinD:44447) -> (nginx-proxy) -> (docker-registry:44446)
@@ -102,6 +104,8 @@ public class NginxRegistryTest {
                     .getId();
 
             d.getDockerCli().startContainerCmd(hostContainerId).exec();
+
+            d.waitDindStarted(hostContainerId);
         }
 
         @Override

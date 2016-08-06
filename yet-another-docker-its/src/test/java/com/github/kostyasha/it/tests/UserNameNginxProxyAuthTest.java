@@ -67,7 +67,7 @@ public class UserNameNginxProxyAuthTest {
         public String hostContainerId;
 
         @Override
-        public void before() throws IOException {
+        public void before() throws IOException, InterruptedException {
             // remove host container
             try {
                 d.getDockerCli().removeContainerCmd(HOST_CONTAINER_NAME)
@@ -118,6 +118,8 @@ public class UserNameNginxProxyAuthTest {
                     .getId();
 
             d.getDockerCli().startContainerCmd(hostContainerId).exec();
+
+            d.waitDindStarted(hostContainerId);
         }
     }
 
