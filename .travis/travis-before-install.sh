@@ -30,10 +30,6 @@ sudo -E apt-cache policy docker-engine
 #popd
 #rm -f "src/test/resources/logback.xml"
 
-pushd "yet-another-docker-its"
-    mv "src/test/resources/travis-logback.xml" "src/test/resources/logback.xml"
-popd
-
 export HOST_IP="$(ip r | grep default | awk '{ print $3 }')"
 export HOST_PORT=2376
 export KEY_PATH="$(pwd)/keys"
@@ -122,7 +118,6 @@ DOCKER_OPTS="\
 -D \
 -H=unix:///var/run/docker.sock \
 -H=tcp://0.0.0.0:${HOST_PORT}  \
---tls=true \
 --tlsverify \
 --tlscacert=${KEY_PATH}/ca.pem \
 --tlscert=${KEY_PATH}/server-cert.pem \
@@ -136,6 +131,11 @@ sudo -E restart docker
 sleep 15
 
 sudo ss -antpl
+
+curl https://${HOST_IP}:${HOST_PORT}/images/json \
+  --cert ${KEY_PATH}/cert.pem \
+  --key ${KEY_PATH}/key.pem \
+  --cacert ${KEY_PATH}/ca.pem
 
 docker version || sudo cat /var/log/upstart/docker.log
 docker info
