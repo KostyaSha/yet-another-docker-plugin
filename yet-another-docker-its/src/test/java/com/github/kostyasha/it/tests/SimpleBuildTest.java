@@ -79,7 +79,7 @@ public class SimpleBuildTest implements Serializable {
         protected void before() throws Throwable {
             jenkinsId = d.runFreshJenkinsContainer(PULL_LATEST, false);
             cli = d.createCliForContainer(jenkinsId);
-
+            LOG.trace("CLI prepared, preparing cloud");
             caller(cli, new PrepareCloudCallable(
                     cli.jenkins.getPort(),
                     d.getDockerServerCredentials(),
@@ -91,6 +91,7 @@ public class SimpleBuildTest implements Serializable {
         @Override
         protected void after() {
             try {
+                LOG.trace("Closing CLI.");
                 cli.close();
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
@@ -191,7 +192,7 @@ public class SimpleBuildTest implements Serializable {
             project.setAssignedLabel(new LabelAtom(DOCKER_CLOUD_LABEL));
             project.save();
 
-            // test
+            LOG.trace("trace test.");
             project.scheduleBuild(new TestCause());
 
             // image pull may take time

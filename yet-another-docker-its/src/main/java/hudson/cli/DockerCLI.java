@@ -50,6 +50,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.security.Signature;
 import java.util.ArrayList;
@@ -60,6 +61,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static hudson.remoting.RemoteInputStream.Flag.NOT_GREEDY;
+import static java.nio.charset.Charset.defaultCharset;
 
 /**
  * !!Copy-paste from {@link CLI} !!!
@@ -249,8 +251,11 @@ public class DockerCLI {
     public void upgrade() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         if (execute(Arrays.asList("groovy", "="),
-                new ByteArrayInputStream("hudson.remoting.Channel.current().setRestricted(false)".getBytes()),
-                out, out) != 0)
+                new ByteArrayInputStream(
+                        "hudson.remoting.Channel.current().setRestricted(false)"
+                                .getBytes(defaultCharset())),
+                out, out) != 0) {
             throw new SecurityException(out.toString()); // failed to upgrade
+        }
     }
 }

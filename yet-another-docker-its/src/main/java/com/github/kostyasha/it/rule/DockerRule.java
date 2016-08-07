@@ -536,6 +536,7 @@ public class DockerRule extends ExternalResource {
         }
         LOG.trace("Creating URL {}", bindings);
         final URL url = new URL("http://" + getHost() + ":" + httpPort.toString());
+        LOG.trace("Created URL {}", url.toExternalForm());
 
         if (isNull(jnlpAgentPort)) {
             throw new IOException("Can't get jnlpPort." + bindings.toString());
