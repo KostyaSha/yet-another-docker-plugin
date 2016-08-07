@@ -23,10 +23,10 @@ if [ "${FAST_BUILD}" == "true" ]; then
     fi
 else
     if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$COVERITY" == "true" ] && [ "$IS_COVERITY_SCAN_BRANCH" = "1" ]; then
-        export COVERITY_SCAN_BUILD_COMMAND="./mvnw verify -Pyad-its,!rerunFailingTests | grep -v Downloading"
+        export COVERITY_SCAN_BUILD_COMMAND="./mvnw verify -Pyad-its,!rerunFailingTests -q"
         #curl -s "https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh" | bash
         ./.travis/travisci_build_coverity_scan.sh
     else
-        ./mvnw verify -Pyad-its,!rerunFailingTests | grep -v Downloading
+        ./mvnw verify -Pyad-its,!rerunFailingTests -q
     fi
 fi
