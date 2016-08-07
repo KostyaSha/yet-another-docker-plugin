@@ -67,8 +67,10 @@ after_script:
 #    branch_pattern: master
 addons:
   artifacts: true
-  paths:
-    - /home/travis/build/KostyaSha/yet-another-docker-plugin/yet-another-docker-its/target/surefire-reports
+    s3_region: "us-west-2"
+    debug: true
+    paths:
+      - /home/travis/build/KostyaSha/yet-another-docker-plugin/yet-another-docker-its/target/surefire-reports
 
 #deploy:
 #  provider: s3
