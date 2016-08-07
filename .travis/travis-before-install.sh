@@ -119,8 +119,10 @@ generateKeys
 
 cat << EOF | sudo tee /etc/default/docker
 DOCKER_OPTS="\
+-D \
 -H=unix:///var/run/docker.sock \
 -H=tcp://0.0.0.0:${HOST_PORT}  \
+--tls=true \
 --tlsverify \
 --tlscacert=${KEY_PATH}/ca.pem \
 --tlscert=${KEY_PATH}/server-cert.pem \
