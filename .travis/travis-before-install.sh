@@ -33,7 +33,8 @@ sudo -E apt-cache policy docker-engine
 #popd
 #rm -f "src/test/resources/logback.xml"
 
-export HOST_IP="$(ip r | grep default | awk '{ print $3 }')"
+#export HOST_IP="$(ip r | grep default | awk '{ print $3 }')"
+export HOST_IP="$(ip a show dev eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)"
 export HOST_PORT=2376
 export KEY_PATH="$(pwd)/keys"
 
