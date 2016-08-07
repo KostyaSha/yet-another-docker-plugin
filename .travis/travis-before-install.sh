@@ -117,7 +117,7 @@ function generateKeys() {
 
 generateKeys
 
-sudo  bash -c 'cat > /etc/default/docker' <<EOF
+cat << EOF | sudo tee /etc/default/docker
 DOCKER_OPTS="\
 -H=unix:///var/run/docker.sock \
 -H=0.0.0.0:${HOST_PORT}  \
