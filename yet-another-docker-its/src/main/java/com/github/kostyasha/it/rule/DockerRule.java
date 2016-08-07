@@ -62,7 +62,9 @@ import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.codehaus.plexus.util.FileUtils.copyFile;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
 
 /**
  * Connects to remote Docker Host and provides client
@@ -585,7 +587,7 @@ public class DockerRule extends ExternalResource {
     @Override
     protected void after() {
         if (cleanup) {
-            provisioned.stream().forEach(id ->
+            provisioned.forEach(id ->
                     getDockerCli().removeContainerCmd(id)
                             .withForce(true)
                             .withRemoveVolumes(true)
@@ -596,6 +598,8 @@ public class DockerRule extends ExternalResource {
 
     public DockerServerCredentials getDockerServerCredentials() throws IOException {
         final LocalDirectorySSLConfig sslContext = (LocalDirectorySSLConfig) clientConfig.getSSLConfig();
+
+        assertThat("DockerCli must be connected via SSL", sslContext, notNullValue());
 
         String certPath = sslContext.getDockerCertPath();
 
@@ -628,7 +632,7 @@ public class DockerRule extends ExternalResource {
                 .exec(callback)
                 .awaitCompletion(60, SECONDS);
 
-        MatcherAssert.assertThat("Didn't found msg '" + msg + "' in log.", callback.getFound(), is(true));
+        assertThat("Didn't found msg '" + msg + "' in log.", callback.getFound(), is(true));
         callback.close();
     }
 }

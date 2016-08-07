@@ -34,9 +34,109 @@ pushd "yet-another-docker-its"
     mv "src/test/resources/travis-logback.xml" "src/test/resources/logback.xml"
 popd
 
-echo 'DOCKER_OPTS="-H=unix:///var/run/docker.sock -H=tcp://0.0.0.0:2375"' | sudo tee -a /etc/default/docker
+export HOST_IP="$(ip r | grep default | awk '{ print $3 }')"
+export HOST_PORT=2376
+export KEY_PATH="$(pwd)/keys"
+
+function generateKeys() {
+    mkdir "keys" || :
+    pushd "keys"
+
+        ## CA
+        openssl genrsa \
+            -aes256 \
+            -passout pass:foobar \
+            -out ca-key.pem 4096
+
+        openssl req \
+            -new \
+            -x509 \
+            -passin pass:foobar \
+            -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.example.com" \
+            -days 365 \
+            -key ca-key.pem \
+            -sha256 \
+            -out ca.pem
+
+        ## server
+        openssl genrsa \
+            -out server-key.pem 4096
+
+        openssl req \
+            -new \
+            -sha256 \
+            -subj "/CN=${HOST_IP}" \
+            -key server-key.pem \
+            -out server.csr
+
+        echo "subjectAltName = IP:192.168.99.100,IP:192.168.99.101,IP:127.0.0.1,IP:${HOST_IP}" > extfile.cnf
+
+        openssl x509 \
+            -req \
+            -passin pass:foobar \
+            -days 365 \
+            -sha256 \
+            -in server.csr \
+            -CA ca.pem \
+            -CAkey ca-key.pem \
+            -CAcreateserial \
+            -extfile extfile.cnf \
+            -out server-cert.pem
+
+        ## client
+        openssl genrsa \
+            -out key.pem 4096
+
+        openssl req \
+            -subj '/CN=client' \
+            -new \
+            -key key.pem \
+            -out client.csr
+
+        echo "extendedKeyUsage = clientAuth" > extfile-client.cnf
+
+        openssl x509 \
+            -req \
+            -passin pass:foobar \
+            -days 365 \
+            -sha256 \
+            -in client.csr \
+            -CA ca.pem \
+            -CAkey ca-key.pem \
+            -CAcreateserial \
+            -extfile extfile-client.cnf \
+            -out cert.pem
+
+        rm -rfv client.csr server.csr
+
+        chmod -v 0400 ca-key.pem key.pem server-key.pem
+        chmod -v 0444 ca.pem server-cert.pem cert.pem
+    popd
+
+}
+
+generateKeys
+
+cat <<EOF > /etc/default/docker
+DOCKER_OPTS="\
+-H=unix:///var/run/docker.sock \
+-H=0.0.0.0:${HOST_PORT}  \
+--tlsverify \
+--tlscacert=${KEY_PATH}/ca.pem \
+--tlscert=${KEY_PATH}/server-cert.pem \
+--tlskey=${KEY_PATH}/server-key.pem \
+"
+EOF
+
+cat /etc/default/docker
+
 sudo -E restart docker
 sleep 10
+
+export DOCKER_TLS_VERIFY=1
+export DOCKER_CERT_PATH=$(pwd)/keys
+export DOCKER_HOST=tcp://${HOST_IP}:${HOST_PORT}
+
 docker version
 docker info
 ip a
@@ -46,9 +146,9 @@ docker network inspect --format='{{(index .IPAM.Config 0).Gateway }}' bridge
 
 
 cat <<EOF > "${HOME}/.docker-java.properties"
-DOCKER_TLS_VERIFY=""
-DOCKER_HOST=tcp://$(ip r | grep default | awk '{ print $3 }'):2375
-
+DOCKER_TLS_VERIFY=1
+DOCKER_HOST=tcp://${HOST_IP}:${HOST_PORT}
+DOCKER_CERT_PATH=${KEY_PATH}
 EOF
 
 set +u

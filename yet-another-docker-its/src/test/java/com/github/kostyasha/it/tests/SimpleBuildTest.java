@@ -100,6 +100,7 @@ public class SimpleBuildTest implements Serializable {
                 LOG.error("HOW NPE HAPPENS HERE?!", ex);
                 LOG.trace("cli {}", cli);
                 LOG.trace("d.clientConfig {}", d.clientConfig);
+                throw ex;
             }
         }
 
