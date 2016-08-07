@@ -74,7 +74,7 @@ addons:
     paths:
       - yet-another-docker-its/target/surefire-reports/
       - site/
-      - ~/docker-logs/
+      - /home/travis/docker-logs/
     target_paths: yet-another-docker-plugin/$TRAVIS_BRANCH/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID
 
 #deploy:

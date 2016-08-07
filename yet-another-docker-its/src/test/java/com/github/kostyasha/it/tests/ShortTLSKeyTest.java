@@ -64,7 +64,7 @@ public class ShortTLSKeyTest {
     private String hostContainerId;
 
     @ClassRule
-    public static DockerRule d = new DockerRule(true);
+    public static DockerRule d = new DockerRule(false);
 
     @ClassRule
     public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));

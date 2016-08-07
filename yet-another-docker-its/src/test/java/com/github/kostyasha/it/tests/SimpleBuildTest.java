@@ -87,14 +87,20 @@ public class SimpleBuildTest implements Serializable {
             assertThat(d.clientConfig, notNullValue());
 
             LOG.trace("Creating  PrepareCloudCallable object");
-            final PrepareCloudCallable prepareCloudCallable = new PrepareCloudCallable(
-                    cli.jenkins.getPort(),
-                    d.getDockerServerCredentials(),
-                    d.clientConfig.getDockerHost(),
-                    DockerRule.SLAVE_IMAGE_JNLP
-            );
-            LOG.trace("Calling caller.");
-            caller(cli, prepareCloudCallable);
+            try {
+                final PrepareCloudCallable prepareCloudCallable = new PrepareCloudCallable(
+                        cli.jenkins.getPort(),
+                        d.getDockerServerCredentials(),
+                        d.clientConfig.getDockerHost(),
+                        DockerRule.SLAVE_IMAGE_JNLP
+                );
+                LOG.trace("Calling caller.");
+                caller(cli, prepareCloudCallable);
+            } catch (NullPointerException ex) {
+                LOG.error("HOW NPE HAPPENS HERE?!", ex);
+                LOG.trace("cli {}", cli);
+                LOG.trace("d.clientConfig {}", d.clientConfig);
+            }
         }
 
         @Override
@@ -114,11 +120,12 @@ public class SimpleBuildTest implements Serializable {
         private final URI dockerUri;
         private final String slaveImage;
 
-        public PrepareCloudCallable(int jenkinsPort, DockerServerCredentials credentials, URI dockerUri, String slaveImage) {
-            assertThat(jenkinsPort, notNullValue());
-            assertThat(credentials, notNullValue());
-            assertThat(dockerUri, notNullValue());
-            assertThat(slaveImage, notNullValue());
+        public PrepareCloudCallable(int jenkinsPort, DockerServerCredentials credentials,
+                                    URI dockerUri, String slaveImage) {
+            assertThat("jenkinsPort", jenkinsPort, notNullValue());
+            assertThat("credentials", credentials, notNullValue());
+            assertThat("dockerUri", dockerUri, notNullValue());
+            assertThat("slaveImage", slaveImage, notNullValue());
 
             this.jenkinsPort = jenkinsPort;
             this.dockerServerCredentials = credentials;

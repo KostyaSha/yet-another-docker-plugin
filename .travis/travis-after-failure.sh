@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 mkdir ~/docker-logs || :
 for i in $(docker  ps -a -q); do

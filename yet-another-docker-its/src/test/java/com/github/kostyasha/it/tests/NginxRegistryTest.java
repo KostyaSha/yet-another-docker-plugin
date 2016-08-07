@@ -54,7 +54,7 @@ public class NginxRegistryTest {
     private static final Logger LOG = LoggerFactory.getLogger(NginxRegistryTest.class);
 
     @ClassRule
-    public static DockerRule d = new DockerRule(true);
+    public static DockerRule d = new DockerRule(false);
 
     @ClassRule
     transient public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
