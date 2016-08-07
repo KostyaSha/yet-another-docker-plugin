@@ -131,10 +131,11 @@ EOF
 sudo cat /etc/default/docker
 
 sudo -E restart docker
-sleep 10
+sleep 15
 
+sudo ss -antpl
 
-docker version
+docker version || sudo cat /var/log/upstart/docker.log
 docker info
 
 export DOCKER_TLS_VERIFY=1
