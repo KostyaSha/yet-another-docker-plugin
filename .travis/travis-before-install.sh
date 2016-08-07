@@ -120,9 +120,9 @@ generateKeys
 
 TEST_KEYS="yet-another-docker-its/src/test/resources/com/github/kostyasha/it/tests/ShortTLSKeyTest/data_container/keys"
 
-rm -rf "${TEST_KEYS}/*"
+rm -rf "${TEST_KEYS}"/*
 
-cp -ar "${KEY_PATH}/*" "${TEST_KEYS}/"
+cp -ar "${KEY_PATH}"/* "${TEST_KEYS}/"
 
 cat << EOF | sudo tee /etc/default/docker
 DOCKER_OPTS="\
