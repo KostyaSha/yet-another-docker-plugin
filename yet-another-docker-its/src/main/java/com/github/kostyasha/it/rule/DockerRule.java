@@ -139,7 +139,7 @@ public class DockerRule extends ExternalResource {
      * Pull docker image on this docker host.
      */
     public void pullImage(DockerImagePullStrategy pullStrategy, String imageName) throws InterruptedException {
-        LOG.info("Pulling image {} with {}...", imageName, pullStrategy);
+        LOG.info("Pulling image {} with {} strategy...", imageName, pullStrategy);
         final List<Image> images = getDockerCli().listImagesCmd().withShowAll(true).exec();
 
         NameParser.ReposTag repostag = NameParser.parseRepositoryTag(imageName);
@@ -413,6 +413,7 @@ public class DockerRule extends ExternalResource {
      * return {@link CLI} for specified jenkins container ID
      */
     public DockerCLI createCliForContainer(String containerId) throws IOException, InterruptedException {
+        LOG.trace("Creating cli for container {}.", containerId);
         final InspectContainerResponse inspect = getDockerCli().inspectContainerCmd(containerId).exec();
         return createCliForInspect(inspect);
     }
@@ -425,17 +426,19 @@ public class DockerRule extends ExternalResource {
      */
     public String runFreshJenkinsContainer(DockerImagePullStrategy pullStrategy, boolean forceRefresh)
             throws IOException, SettingsBuildingException, InterruptedException {
+        LOG.debug("Entering run fresh jenkins container.");
         pullImage(pullStrategy, JENKINS_DEFAULT.getDockerImageName());
 
         // labels attached to container allows cleanup container if it wasn't removed
         final Map<String, String> labels = new HashMap<>();
         labels.put("test.displayName", description.getDisplayName());
 
-        //remove existed before
+        LOG.debug("Removing existed container before");
         try {
             final List<Container> containers = getDockerCli().listContainersCmd().withShowAll(true).exec();
             for (Container c : containers) {
                 if (c.getLabels().equals(labels)) { // equals? container labels vs image labels?
+                    LOG.debug("Removing {}, for labels: '{}'", c, labels);
                     getDockerCli().removeContainerCmd(c.getId())
                             .withForce(true)
                             .exec();
@@ -443,10 +446,10 @@ public class DockerRule extends ExternalResource {
                 }
             }
         } catch (NotFoundException ex) {
-            // that's ok;
+            LOG.debug("Container wasn't found, that's ok");
         }
 
-        // recreating data container without data-image doesn't make sense, so reuse boolean
+        LOG.debug("Recreating data container without data-image doesn't make sense, so reuse boolean.");
         String dataContainerId = getDataContainerId(forceRefresh);
         final String id = getDockerCli().createContainerCmd(JENKINS_DEFAULT.getDockerImageName())
                 .withEnv(CONTAINER_JAVA_OPTS)
@@ -461,6 +464,7 @@ public class DockerRule extends ExternalResource {
                 .getId();
         provisioned.add(id);
 
+        LOG.debug("Starting container");
         getDockerCli().startContainerCmd(id).exec();
         return id;
     }
@@ -510,12 +514,14 @@ public class DockerRule extends ExternalResource {
      */
     public DockerCLI createCliForInspect(InspectContainerResponse inspect)
             throws IOException, InterruptedException {
+        LOG.debug("Creating CLI for {}", inspect);
         Integer httpPort = null;
         // CLI mess around ports
         Integer cliPort = null; // should be this
         Integer jnlpAgentPort = null; // but in reality used this
 
         final Map<ExposedPort, Ports.Binding[]> bindings = inspect.getNetworkSettings().getPorts().getBindings();
+        LOG.trace("Bindings: {}", bindings);
         for (Map.Entry<ExposedPort, Ports.Binding[]> entry : bindings.entrySet()) {
             if (entry.getKey().getPort() == JENKINS_DEFAULT.httpPort) {
                 httpPort = Integer.valueOf(entry.getValue()[0].getHostPortSpec());
@@ -528,7 +534,7 @@ public class DockerRule extends ExternalResource {
                 cliPort = Integer.valueOf(entry.getValue()[0].getHostPortSpec());
             }
         }
-
+        LOG.trace("Creating URL {}", bindings);
         final URL url = new URL("http://" + getHost() + ":" + httpPort.toString());
 
         if (isNull(jnlpAgentPort)) {
