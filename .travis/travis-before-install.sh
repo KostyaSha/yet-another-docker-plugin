@@ -16,6 +16,9 @@ set -exu
 #docker info
 #docker version
 
+ip a
+ip r ls
+
 sudo -E apt-get update
 sudo -E apt-get install -q -y wget
 sudo -E apt-get -q -y --purge remove docker-engine || :
@@ -148,8 +151,7 @@ ls -la $DOCKER_CERT_PATH
 
 docker version || sudo cat /var/log/upstart/docker.log
 docker info
-ip a
-ip r ls
+
 docker network inspect bridge
 docker network inspect --format='{{(index .IPAM.Config 0).Gateway }}' bridge
 
