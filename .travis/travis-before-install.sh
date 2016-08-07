@@ -133,6 +133,10 @@ sudo cat /etc/default/docker
 sudo -E restart docker
 sleep 10
 
+
+docker version
+docker info
+
 export DOCKER_TLS_VERIFY=1
 export DOCKER_CERT_PATH=$(pwd)/keys
 export DOCKER_HOST=tcp://${HOST_IP}:${HOST_PORT}
