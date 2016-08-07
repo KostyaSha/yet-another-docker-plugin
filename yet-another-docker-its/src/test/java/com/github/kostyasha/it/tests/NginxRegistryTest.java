@@ -264,6 +264,8 @@ public class NginxRegistryTest {
         authConfig.withEmail("sdf@sdf.com");
         authConfig.withRegistryAddress(String.format("%s:%d", d.getHost(), nginxContainer.getExposedPort()));
 
+        LOG.trace("Authconfig for push {}", authConfig);
+
         dockerClient.pushImageCmd(imageName)
                 .withTag("tag")
                 .withAuthConfig(authConfig)

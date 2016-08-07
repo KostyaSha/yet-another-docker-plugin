@@ -46,6 +46,7 @@ import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.waitUntilNoActivi
 import static com.github.kostyasha.yad.commons.DockerImagePullStrategy.PULL_LATEST;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.jvnet.hudson.test.JenkinsRule.getLog;
 import static org.mockito.Matchers.isNull;
@@ -80,6 +81,9 @@ public class SimpleBuildTest implements Serializable {
             jenkinsId = d.runFreshJenkinsContainer(PULL_LATEST, false);
             cli = d.createCliForContainer(jenkinsId);
             LOG.trace("CLI prepared, preparing cloud");
+            assertThat(cli.jenkins, notNullValue());
+            assertThat(d.clientConfig, notNullValue());
+
             caller(cli, new PrepareCloudCallable(
                     cli.jenkins.getPort(),
                     d.getDockerServerCredentials(),
