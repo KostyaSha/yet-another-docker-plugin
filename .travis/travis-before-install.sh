@@ -18,6 +18,7 @@ set -exu
 
 ip a
 ip r ls
+hostname -I
 
 sudo -E apt-get update
 sudo -E apt-get install -q -y wget
