@@ -71,7 +71,8 @@ addons:
     bucket: "travis-kostyasha"
     debug: true
     paths:
-      - /home/travis/build/KostyaSha/yet-another-docker-plugin/yet-another-docker-its/target/surefire-reports
+      - yet-another-docker-its/target/surefire-reports/
+      - site/
     target_paths: yet-another-docker-plugin/$TRAVIS_BRANCH/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID
 
 #deploy:
