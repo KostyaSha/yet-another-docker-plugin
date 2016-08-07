@@ -85,12 +85,14 @@ public class SimpleBuildTest implements Serializable {
             assertThat(cli.jenkins, notNullValue());
             assertThat(d.clientConfig, notNullValue());
 
-            caller(cli, new PrepareCloudCallable(
+            final PrepareCloudCallable prepareCloudCallable = new PrepareCloudCallable(
                     cli.jenkins.getPort(),
                     d.getDockerServerCredentials(),
                     d.clientConfig.getDockerHost(),
                     DockerRule.SLAVE_IMAGE_JNLP
-            ));
+            );
+            LOG.trace("Calling caller.");
+            caller(cli, prepareCloudCallable);
         }
 
         @Override
