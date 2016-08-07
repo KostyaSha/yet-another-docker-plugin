@@ -137,7 +137,7 @@ export DOCKER_TLS_VERIFY=1
 export DOCKER_CERT_PATH=$(pwd)/keys
 export DOCKER_HOST=tcp://${HOST_IP}:${HOST_PORT}
 
-docker version
+docker version || sudo cat /var/log/upstart/docker.log
 docker info
 ip a
 ip r ls
