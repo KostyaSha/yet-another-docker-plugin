@@ -109,7 +109,7 @@ function generateKeys() {
 
         rm -rfv client.csr server.csr
 
-        chmod -v 0400 ca-key.pem key.pem server-key.pem
+        chmod -v 0440 ca-key.pem key.pem server-key.pem
         chmod -v 0444 ca.pem server-cert.pem cert.pem
     popd
 
@@ -136,6 +136,8 @@ sleep 10
 export DOCKER_TLS_VERIFY=1
 export DOCKER_CERT_PATH=$(pwd)/keys
 export DOCKER_HOST=tcp://${HOST_IP}:${HOST_PORT}
+
+ls -la $DOCKER_CERT_PATH
 
 docker version || sudo cat /var/log/upstart/docker.log
 docker info
