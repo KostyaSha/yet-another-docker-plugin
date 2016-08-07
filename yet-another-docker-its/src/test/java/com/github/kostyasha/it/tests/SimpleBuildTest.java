@@ -115,6 +115,11 @@ public class SimpleBuildTest implements Serializable {
         private final String slaveImage;
 
         public PrepareCloudCallable(int jenkinsPort, DockerServerCredentials credentials, URI dockerUri, String slaveImage) {
+            assertThat(jenkinsPort, notNullValue());
+            assertThat(credentials, notNullValue());
+            assertThat(dockerUri, notNullValue());
+            assertThat(slaveImage, notNullValue());
+
             this.jenkinsPort = jenkinsPort;
             this.dockerServerCredentials = credentials;
             this.dockerUri = dockerUri;
