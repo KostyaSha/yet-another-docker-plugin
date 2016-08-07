@@ -14,7 +14,7 @@ install: true
 
 env:
   global:
-    - DOCKER_TLS_VERIFY=""
+#    - DOCKER_TLS_VERIFY=""
     # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
     #   via the "travis encrypt" command using the project repo's public key
     - secure: "jC6k+HD0W1CmVj6+q1DAtXN8azeAWp+8BKCwqhBgjCDJOk00ZaFWy14rkNUWGPq7bqHZG0hdd/aZWz8+KqnO9rBTVijyC4WyL+Oxg5Y9OsM2+x8+M6p34Uw5XDFt4q0jMomP4EWqunr2gmytGSrQqRQDxuvksxSVmCMhJTBF9psZjWjQQoMsC0A8jTFM6sWIqFTisLZWl0oxf4A4XPgl3oaXKyxEK1zONWwbQ/iqT+yXUD/43gU+u57+StEjE+HNvGqxglOLZqJsjnFRQo+T9+JV0JR6Mc+n/QHscnQNlJJopI8atCYWskKUkj443ocsaO4MlxTAOJhwiOuvoVREmpJAsZ2V052fijiFi7G250Q/wQ6bmqZuovO2JSFdkmp2HHXfJtbRhRhZeZ22CAh8JHvJ3iB40yI9dFY/P6KmPfk3g6IlHDIJqcDLxue2/xtbfibVwBptZYVXZjLcYmjHsk7mhyS3EGqjyYTKOO5e8X5+Isfcr/PkEZIJvup+WmlfjjfZwV35TEr+TCLRMRU9BJZohCamR6FhMAC9CvhCde8OoB1zAeegAKepZARwegpcLLrJXVCiARvs+WU52s/pCEaDnPO/OpKE343MSjV3g+uKn2YPfNoLno9aOJMKUwTtJc72ppCPxRBxwdZiPZ35SEtWNqe+D+pGDBcg+CDACl0="
@@ -24,7 +24,7 @@ env:
   matrix:
 #    - repo="main" DOCKER_HOST="tcp://127.0.0.1:2375" DOCKER_VERSION="1.12.0-0~trusty"
 #    - repo="main" DOCKER_HOST="unix:///var/run/docker.sock" DOCKER_VERSION="1.12.0-0~trusty"
-    - repo="main" DOCKER_HOST="tcp://127.0.0.1:2375" DOCKER_VERSION="1.11.2-0~trusty" CODECOV=true
+    - repo="main" DOCKER_VERSION="1.11.2-0~trusty" CODECOV=true
 
 
 cache:
@@ -43,6 +43,7 @@ script:
 
 after_success:
   - ./.travis/travis-after-success.sh
+  - MAVEN_OPTS=-Xmx512m ./mvnw site site:stage
   - rm -rf ~/.m2/repository/com/github/kostyasha/yet-another-docker
 
 after_failure:
