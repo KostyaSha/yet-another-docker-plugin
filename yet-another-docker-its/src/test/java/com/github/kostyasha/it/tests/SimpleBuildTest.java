@@ -81,6 +81,7 @@ public class SimpleBuildTest implements Serializable {
             jenkinsId = d.runFreshJenkinsContainer(PULL_LATEST, false);
             cli = d.createCliForContainer(jenkinsId);
             LOG.trace("CLI prepared, preparing cloud");
+            assertThat(cli, notNullValue());
             assertThat(cli.jenkins, notNullValue());
             assertThat(d.clientConfig, notNullValue());
 
