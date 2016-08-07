@@ -120,7 +120,7 @@ generateKeys
 cat << EOF | sudo tee /etc/default/docker
 DOCKER_OPTS="\
 -H=unix:///var/run/docker.sock \
--H=0.0.0.0:${HOST_PORT}  \
+-H=tcp://0.0.0.0:${HOST_PORT}  \
 --tlsverify \
 --tlscacert=${KEY_PATH}/ca.pem \
 --tlscert=${KEY_PATH}/server-cert.pem \
