@@ -82,11 +82,14 @@ public class DockerCLI {
 
 
     public DockerCLI(CLIConnectionFactory factory, int exposedPort) throws IOException, InterruptedException {
+        LOG.debug("Initializing jenkins CLI");
         jenkins = factory.jenkins;
         this.exposedPort = exposedPort;
 
         String url = jenkins.toExternalForm();
         if (!url.endsWith("/")) url += '/';
+
+        LOG.trace("Jenkins {}, URL {}", jenkins, url);
 
         ownsPool = true;
         pool = Executors.newCachedThreadPool();
@@ -146,12 +149,16 @@ public class DockerCLI {
             throw (IOException) new IOException("Failed to negotiate transport security").initCause(e);
         }
 
-        return new ChannelBuilder("CLI connection to " + jenkins, pool)
+        final Channel channel = new ChannelBuilder("CLI connection to " + jenkins, pool)
                 .withMode(Channel.Mode.BINARY)
                 .withBaseLoader(null)
                 .withArbitraryCallableAllowed(true)
                 .withRemoteClassLoadingAllowed(true)
                 .build(new BufferedInputStream(c.in), new BufferedOutputStream(c.out));
+
+        LOG.trace("Returning channel: {}.", channel);
+
+        return channel;
 
 //        return new Channel(
 //                "CLI connection to " + jenkins,  // name
