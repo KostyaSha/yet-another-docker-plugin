@@ -117,7 +117,7 @@ function generateKeys() {
 
 generateKeys
 
-cat <<EOF > /etc/default/docker
+sudo cat <<EOF > /etc/default/docker
 DOCKER_OPTS="\
 -H=unix:///var/run/docker.sock \
 -H=0.0.0.0:${HOST_PORT}  \
@@ -128,7 +128,7 @@ DOCKER_OPTS="\
 "
 EOF
 
-cat /etc/default/docker
+sudo cat /etc/default/docker
 
 sudo -E restart docker
 sleep 10
