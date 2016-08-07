@@ -63,7 +63,7 @@ public class SimpleBuildTest implements Serializable {
 
     //TODO redesign rule internals
     @ClassRule
-    public static DockerRule d = new DockerRule(true);
+    public static DockerRule d = new DockerRule(false);
 
     @Rule
     public MyResource dJenkins = new MyResource();
@@ -83,8 +83,10 @@ public class SimpleBuildTest implements Serializable {
             LOG.trace("CLI prepared, preparing cloud");
             assertThat(cli, notNullValue());
             assertThat(cli.jenkins, notNullValue());
+            assertThat(d, notNullValue());
             assertThat(d.clientConfig, notNullValue());
 
+            LOG.trace("Creating  PrepareCloudCallable object");
             final PrepareCloudCallable prepareCloudCallable = new PrepareCloudCallable(
                     cli.jenkins.getPort(),
                     d.getDockerServerCredentials(),
