@@ -75,7 +75,7 @@ addons:
     paths:
       - yet-another-docker-its/target/surefire-reports/
       - site/
-      - /home/travis/docker-logs/
+      - docker-logs/
       - mvn.log
     target_paths: yet-another-docker-plugin/$TRAVIS_BRANCH/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID
 
