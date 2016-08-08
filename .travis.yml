@@ -1,5 +1,5 @@
 sudo: required
-
+dist: trusty
 language: java
 
 jdk: oraclejdk8
@@ -12,20 +12,77 @@ after_success:
 
 install: true
 
-script: if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./travis.sh ; fi
-
 env:
   global:
-   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-   #   via the "travis encrypt" command using the project repo's public key
-   - secure: "jC6k+HD0W1CmVj6+q1DAtXN8azeAWp+8BKCwqhBgjCDJOk00ZaFWy14rkNUWGPq7bqHZG0hdd/aZWz8+KqnO9rBTVijyC4WyL+Oxg5Y9OsM2+x8+M6p34Uw5XDFt4q0jMomP4EWqunr2gmytGSrQqRQDxuvksxSVmCMhJTBF9psZjWjQQoMsC0A8jTFM6sWIqFTisLZWl0oxf4A4XPgl3oaXKyxEK1zONWwbQ/iqT+yXUD/43gU+u57+StEjE+HNvGqxglOLZqJsjnFRQo+T9+JV0JR6Mc+n/QHscnQNlJJopI8atCYWskKUkj443ocsaO4MlxTAOJhwiOuvoVREmpJAsZ2V052fijiFi7G250Q/wQ6bmqZuovO2JSFdkmp2HHXfJtbRhRhZeZ22CAh8JHvJ3iB40yI9dFY/P6KmPfk3g6IlHDIJqcDLxue2/xtbfibVwBptZYVXZjLcYmjHsk7mhyS3EGqjyYTKOO5e8X5+Isfcr/PkEZIJvup+WmlfjjfZwV35TEr+TCLRMRU9BJZohCamR6FhMAC9CvhCde8OoB1zAeegAKepZARwegpcLLrJXVCiARvs+WU52s/pCEaDnPO/OpKE343MSjV3g+uKn2YPfNoLno9aOJMKUwTtJc72ppCPxRBxwdZiPZ35SEtWNqe+D+pGDBcg+CDACl0="
+#    - DOCKER_TLS_VERIFY=""
+    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+    #   via the "travis encrypt" command using the project repo's public key
+    - secure: "jC6k+HD0W1CmVj6+q1DAtXN8azeAWp+8BKCwqhBgjCDJOk00ZaFWy14rkNUWGPq7bqHZG0hdd/aZWz8+KqnO9rBTVijyC4WyL+Oxg5Y9OsM2+x8+M6p34Uw5XDFt4q0jMomP4EWqunr2gmytGSrQqRQDxuvksxSVmCMhJTBF9psZjWjQQoMsC0A8jTFM6sWIqFTisLZWl0oxf4A4XPgl3oaXKyxEK1zONWwbQ/iqT+yXUD/43gU+u57+StEjE+HNvGqxglOLZqJsjnFRQo+T9+JV0JR6Mc+n/QHscnQNlJJopI8atCYWskKUkj443ocsaO4MlxTAOJhwiOuvoVREmpJAsZ2V052fijiFi7G250Q/wQ6bmqZuovO2JSFdkmp2HHXfJtbRhRhZeZ22CAh8JHvJ3iB40yI9dFY/P6KmPfk3g6IlHDIJqcDLxue2/xtbfibVwBptZYVXZjLcYmjHsk7mhyS3EGqjyYTKOO5e8X5+Isfcr/PkEZIJvup+WmlfjjfZwV35TEr+TCLRMRU9BJZohCamR6FhMAC9CvhCde8OoB1zAeegAKepZARwegpcLLrJXVCiARvs+WU52s/pCEaDnPO/OpKE343MSjV3g+uKn2YPfNoLno9aOJMKUwTtJc72ppCPxRBxwdZiPZ35SEtWNqe+D+pGDBcg+CDACl0="
+    - COVERITY_SCAN_PROJECT_NAME="KostyaSha/yet-another-docker-plugin"
+    - COVERITY_SCAN_BRANCH_PATTERN="master"
+    - COVERITY_SCAN_NOTIFICATION_EMAIL="kanstantsin.sha@gmail.com"
+  matrix:
+#    - repo="main" DOCKER_HOST="tcp://127.0.0.1:2375" DOCKER_VERSION="1.12.0-0~trusty"
+#    - repo="main" DOCKER_HOST="unix:///var/run/docker.sock" DOCKER_VERSION="1.12.0-0~trusty"
+    - repo="main" DOCKER_VERSION="1.11.2-0~trusty" CODECOV=true
 
+
+cache:
+  directories:
+  - $HOME/.travis_cache
+  - /tmp/coverity-cache
+  - $HOME/.m2 # install will pollute it
+
+before_install:
+  - pip install --user codecov
+  - ./.travis/travis-before-install.sh
+
+script:
+  - ./.travis/travis-script.sh
+#script: if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./travis.sh ; fi
+
+after_success:
+  - ./.travis/travis-after-success.sh
+#  - MAVEN_OPTS=-Xmx512m ./mvnw site site:stage
+  - rm -rf ~/.m2/repository/com/github/kostyasha/yet-another-docker
+
+after_failure:
+  - rm -rf ~/.m2/repository/com/github/kostyasha/yet-another-docker
+  - ./.travis/travis-after-failure.sh
+
+before_deploy:
+  - rm -rf ~/.m2/repository/com/github/kostyasha/yet-another-docker || :
+
+after_script:
+  - sudo cat /var/log/upstart/docker.log
+  - docker ps -a
+  - docker images
+
+#addons:
+#  coverity_scan:
+#    project:
+#      name: "KostyaSha/yet-another-docker-plugin"
+#      description: "Build submitted via Travis CI"
+#    notification_email: "kanstantsin.sha@gmail.com"
+#    build_command_prepend: "./mvnw clean"
+#    build_command: "./travis.sh"
+#    branch_pattern: master
 addons:
-  coverity_scan:
-    project:
-      name: "KostyaSha/yet-another-docker-plugin"
-      description: "Build submitted via Travis CI"
-    notification_email: "kanstantsin.sha@gmail.com"
-    build_command_prepend: "./mvnw clean"
-    build_command: "./travis.sh"
-    branch_pattern: master
+  artifacts:
+    s3_region: us-east-1
+    bucket: "travis-kostyasha"
+    debug: true
+    paths:
+      - yet-another-docker-its/target/surefire-reports/
+      - site/
+      - docker-logs/
+      - mvn.log
+    target_paths: yet-another-docker-plugin/$TRAVIS_BRANCH/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID
+
+#deploy:
+#  provider: s3
+#  access_key_id:
+#  bucket: "travis-kostyasha"
+#  s3_region: "us-west-2"
+#  local_dir:  /home/travis/build/KostyaSha/yet-another-docker-plugin/yet-another-docker-its/target/surefire-reports
+#  upload-dir:

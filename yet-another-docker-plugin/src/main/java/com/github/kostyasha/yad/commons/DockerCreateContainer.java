@@ -53,8 +53,9 @@ import static org.apache.commons.lang.StringUtils.trimToNull;
 import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 /**
- * Contains docker container create related settings
- * {@see com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.CreateContainerCmdImpl}
+ * Contains docker container create related settings.
+ *
+ * @see com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.CreateContainerCmdImpl
  */
 public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateContainer> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerCreateContainer.class);

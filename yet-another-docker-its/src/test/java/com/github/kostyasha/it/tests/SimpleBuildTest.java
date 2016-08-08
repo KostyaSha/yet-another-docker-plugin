@@ -46,6 +46,7 @@ import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.waitUntilNoActivi
 import static com.github.kostyasha.yad.commons.DockerImagePullStrategy.PULL_LATEST;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.jvnet.hudson.test.JenkinsRule.getLog;
 import static org.mockito.Matchers.isNull;
@@ -62,7 +63,7 @@ public class SimpleBuildTest implements Serializable {
 
     //TODO redesign rule internals
     @ClassRule
-    public static DockerRule d = new DockerRule(true);
+    public static DockerRule d = new DockerRule(false);
 
     @Rule
     public MyResource dJenkins = new MyResource();
@@ -79,18 +80,34 @@ public class SimpleBuildTest implements Serializable {
         protected void before() throws Throwable {
             jenkinsId = d.runFreshJenkinsContainer(PULL_LATEST, false);
             cli = d.createCliForContainer(jenkinsId);
+            LOG.trace("CLI prepared, preparing cloud");
+            assertThat(cli, notNullValue());
+            assertThat(cli.jenkins, notNullValue());
+            assertThat(d, notNullValue());
+            assertThat(d.clientConfig, notNullValue());
 
-            caller(cli, new PrepareCloudCallable(
-                    cli.jenkins.getPort(),
-                    d.getDockerServerCredentials(),
-                    d.clientConfig.getDockerHost(),
-                    DockerRule.SLAVE_IMAGE_JNLP
-            ));
+            LOG.trace("Creating  PrepareCloudCallable object");
+            try {
+                final PrepareCloudCallable prepareCloudCallable = new PrepareCloudCallable(
+                        cli.jenkins.getPort(),
+                        d.getDockerServerCredentials(),
+                        d.clientConfig.getDockerHost(),
+                        DockerRule.SLAVE_IMAGE_JNLP
+                );
+                LOG.trace("Calling caller.");
+                caller(cli, prepareCloudCallable);
+            } catch (NullPointerException ex) {
+                LOG.error("HOW NPE HAPPENS HERE?!", ex);
+                LOG.trace("cli {}", cli);
+                LOG.trace("d.clientConfig {}", d.clientConfig);
+                throw ex;
+            }
         }
 
         @Override
         protected void after() {
             try {
+                LOG.trace("Closing CLI.");
                 cli.close();
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
@@ -104,7 +121,13 @@ public class SimpleBuildTest implements Serializable {
         private final URI dockerUri;
         private final String slaveImage;
 
-        public PrepareCloudCallable(int jenkinsPort, DockerServerCredentials credentials, URI dockerUri, String slaveImage) {
+        public PrepareCloudCallable(int jenkinsPort, DockerServerCredentials credentials,
+                                    URI dockerUri, String slaveImage) {
+            assertThat("jenkinsPort", jenkinsPort, notNullValue());
+            assertThat("credentials", credentials, notNullValue());
+            assertThat("dockerUri", dockerUri, notNullValue());
+            assertThat("slaveImage", slaveImage, notNullValue());
+
             this.jenkinsPort = jenkinsPort;
             this.dockerServerCredentials = credentials;
             this.dockerUri = dockerUri;
@@ -191,7 +214,7 @@ public class SimpleBuildTest implements Serializable {
             project.setAssignedLabel(new LabelAtom(DOCKER_CLOUD_LABEL));
             project.save();
 
-            // test
+            LOG.trace("trace test.");
             project.scheduleBuild(new TestCause());
 
             // image pull may take time

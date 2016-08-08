@@ -1,7 +1,9 @@
 package com.github.kostyasha.it.tests;
 
+import com.github.kostyasha.it.other.WaitMessageResultCallback;
 import com.github.kostyasha.it.rule.DockerRule;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.BuildResponseItem;
@@ -14,10 +16,13 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerCli
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import com.github.kostyasha.yad.other.VariableSSLConfig;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -59,13 +64,13 @@ public class ShortTLSKeyTest {
     private String hostContainerId;
 
     @ClassRule
-    public static DockerRule d = new DockerRule(true);
+    public static DockerRule d = new DockerRule(false);
 
     @ClassRule
     public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
 
     @Before
-    public void before() throws IOException {
+    public void before() throws IOException, InterruptedException {
         after();
 
         final File buildDir = folder.newFolder(getClass().getName());
@@ -112,6 +117,8 @@ public class ShortTLSKeyTest {
                 .getId();
 
         d.getDockerCli().startContainerCmd(hostContainerId).exec();
+        
+        d.waitDindStarted(hostContainerId);
     }
 
     @After
@@ -168,7 +175,8 @@ public class ShortTLSKeyTest {
                 .withCustomSslConfig(sslConfig)
                 .build();
 
-        DockerCmdExecFactoryImpl dockerCmdExecFactory = new DockerCmdExecFactoryImpl();
+//        DockerCmdExecFactory dockerCmdExecFactory = new NettyDockerCmdExecFactory();
+        DockerCmdExecFactory dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
 
         DockerClient dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)

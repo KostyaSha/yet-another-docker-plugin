@@ -2,10 +2,12 @@ package com.github.kostyasha.it.rule;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.github.kostyasha.it.other.JenkinsDockerImage;
+import com.github.kostyasha.it.other.WaitMessageResultCallback;
 import com.github.kostyasha.it.utils.DockerHPIContainerUtil;
 import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.NotFoundException;
@@ -18,12 +20,11 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Port
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.VolumesFrom;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientBuilder;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.LocalDirectorySSLConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.codec.digest.DigestUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
@@ -32,17 +33,16 @@ import hudson.cli.CLI;
 import hudson.cli.CLIConnectionFactory;
 import hudson.cli.DockerCLI;
 import org.apache.maven.settings.building.SettingsBuildingException;
+import org.hamcrest.MatcherAssert;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.qatools.clay.aether.AetherException;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -53,13 +53,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static com.github.kostyasha.it.other.JenkinsDockerImage.JENKINS_DEFAULT;
 import static com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig.createDefaultConfigBuilder;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.codehaus.plexus.util.FileUtils.copyFile;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
 
 /**
  * Connects to remote Docker Host and provides client
@@ -88,47 +93,29 @@ public class DockerRule extends ExternalResource {
     @CheckForNull
     private DockerClient dockerClient;
 
-    // default for docker-machine images
-    private String sshUser = "docker";
-    private String sshPass = "tcuser";
-
-    // todo extract from dockerClient that has env resolver?
-    private int dockerPort = 2376;
-    private String host = "192.168.99.101";
-    private boolean useTls = true;
-
     boolean cleanup = true;
     private Set<String> provisioned = new HashSet<>();
     //cache
     public Description description;
     public DefaultDockerClientConfig clientConfig;
-    private DockerCmdExecFactoryImpl dockerCmdExecFactory;
+    private DockerCmdExecFactory dockerCmdExecFactory;
+
+    public DockerRule() {
+    }
 
     public DockerRule(boolean cleanup) {
         this.cleanup = cleanup;
     }
 
-    public DockerRule(String host) {
-        this.host = host;
-    }
-
-    public String getDockerUri() {
-        return new StringBuilder()
-                .append("tcp://")
-                .append(host).append(":").append(dockerPort)
-                .toString();
-    }
+//    public String getDockerUri() {
+//        return new StringBuilder()
+//                .append("tcp://")
+//                .append(host).append(":").append(dockerPort)
+//                .toString();
+//    }
 
     public String getHost() {
-        return host;
-    }
-
-    public String getSshUser() {
-        return sshUser;
-    }
-
-    public String getSshPass() {
-        return sshPass;
+        return clientConfig.getDockerHost().getHost();
     }
 
     public DockerClient getDockerCli() {
@@ -154,7 +141,7 @@ public class DockerRule extends ExternalResource {
      * Pull docker image on this docker host.
      */
     public void pullImage(DockerImagePullStrategy pullStrategy, String imageName) throws InterruptedException {
-        LOG.info("Pulling image {} with {}...", imageName, pullStrategy);
+        LOG.info("Pulling image {} with {} strategy...", imageName, pullStrategy);
         final List<Image> images = getDockerCli().listImagesCmd().withShowAll(true).exec();
 
         NameParser.ReposTag repostag = NameParser.parseRepositoryTag(imageName);
@@ -180,15 +167,14 @@ public class DockerRule extends ExternalResource {
     }
 
     /**
-     * Prepare cached DockerClient `dockerClient`
+     * Prepare cached DockerClient `dockerClient`.
+     * Pick system/file connection settings.
      */
     private void prepareDockerCli() {
         clientConfig = createDefaultConfigBuilder()
-                .withDockerHost(getDockerUri())
-                .withDockerTlsVerify(useTls)
                 .build();
 
-        dockerCmdExecFactory = new DockerCmdExecFactoryImpl();
+        dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
 
         dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)
@@ -218,7 +204,7 @@ public class DockerRule extends ExternalResource {
      * Docker data container with unique name based on docker data-image (also unique).
      * If we are refreshing container, then it makes sense rebuild data-image.
      */
-    public String getDataContainerId(boolean forceRefresh) throws AetherException, SettingsBuildingException,
+    public String getDataContainerId(boolean forceRefresh) throws SettingsBuildingException,
             InterruptedException, IOException {
         final Map<String, File> pluginFiles = getPluginFiles();
         String dataContainerId = null;
@@ -282,7 +268,7 @@ public class DockerRule extends ExternalResource {
      * @param forceUpdate rebuild data image.
      */
     public String getDataImage(boolean forceUpdate, final Map<String, File> pluginFiles, String imageName)
-            throws IOException, AetherException, SettingsBuildingException, InterruptedException {
+            throws IOException, SettingsBuildingException, InterruptedException {
         String existedDataImage = null;
 
         final List<Image> images = getDockerCli().listImagesCmd()
@@ -429,6 +415,7 @@ public class DockerRule extends ExternalResource {
      * return {@link CLI} for specified jenkins container ID
      */
     public DockerCLI createCliForContainer(String containerId) throws IOException, InterruptedException {
+        LOG.trace("Creating cli for container {}.", containerId);
         final InspectContainerResponse inspect = getDockerCli().inspectContainerCmd(containerId).exec();
         return createCliForInspect(inspect);
     }
@@ -440,18 +427,20 @@ public class DockerRule extends ExternalResource {
      * @param forceRefresh enforce data container and data image refresh
      */
     public String runFreshJenkinsContainer(DockerImagePullStrategy pullStrategy, boolean forceRefresh)
-            throws IOException, AetherException, SettingsBuildingException, InterruptedException {
+            throws IOException, SettingsBuildingException, InterruptedException {
+        LOG.debug("Entering run fresh jenkins container.");
         pullImage(pullStrategy, JENKINS_DEFAULT.getDockerImageName());
 
         // labels attached to container allows cleanup container if it wasn't removed
         final Map<String, String> labels = new HashMap<>();
         labels.put("test.displayName", description.getDisplayName());
 
-        //remove existed before
+        LOG.debug("Removing existed container before");
         try {
             final List<Container> containers = getDockerCli().listContainersCmd().withShowAll(true).exec();
             for (Container c : containers) {
                 if (c.getLabels().equals(labels)) { // equals? container labels vs image labels?
+                    LOG.debug("Removing {}, for labels: '{}'", c, labels);
                     getDockerCli().removeContainerCmd(c.getId())
                             .withForce(true)
                             .exec();
@@ -459,10 +448,10 @@ public class DockerRule extends ExternalResource {
                 }
             }
         } catch (NotFoundException ex) {
-            // that's ok;
+            LOG.debug("Container wasn't found, that's ok");
         }
 
-        // recreating data container without data-image doesn't make sense, so reuse boolean
+        LOG.debug("Recreating data container without data-image doesn't make sense, so reuse boolean.");
         String dataContainerId = getDataContainerId(forceRefresh);
         final String id = getDockerCli().createContainerCmd(JENKINS_DEFAULT.getDockerImageName())
                 .withEnv(CONTAINER_JAVA_OPTS)
@@ -477,6 +466,7 @@ public class DockerRule extends ExternalResource {
                 .getId();
         provisioned.add(id);
 
+        LOG.debug("Starting container");
         getDockerCli().startContainerCmd(id).exec();
         return id;
     }
@@ -526,12 +516,14 @@ public class DockerRule extends ExternalResource {
      */
     public DockerCLI createCliForInspect(InspectContainerResponse inspect)
             throws IOException, InterruptedException {
+        LOG.debug("Creating CLI for {}", inspect);
         Integer httpPort = null;
         // CLI mess around ports
         Integer cliPort = null; // should be this
         Integer jnlpAgentPort = null; // but in reality used this
 
         final Map<ExposedPort, Ports.Binding[]> bindings = inspect.getNetworkSettings().getPorts().getBindings();
+        LOG.trace("Bindings: {}", bindings);
         for (Map.Entry<ExposedPort, Ports.Binding[]> entry : bindings.entrySet()) {
             if (entry.getKey().getPort() == JENKINS_DEFAULT.httpPort) {
                 httpPort = Integer.valueOf(entry.getValue()[0].getHostPortSpec());
@@ -544,8 +536,9 @@ public class DockerRule extends ExternalResource {
                 cliPort = Integer.valueOf(entry.getValue()[0].getHostPortSpec());
             }
         }
-
+        LOG.trace("Creating URL {}", bindings);
         final URL url = new URL("http://" + getHost() + ":" + httpPort.toString());
+        LOG.trace("Created URL {}", url.toExternalForm());
 
         if (isNull(jnlpAgentPort)) {
             throw new IOException("Can't get jnlpPort." + bindings.toString());
@@ -594,7 +587,7 @@ public class DockerRule extends ExternalResource {
     @Override
     protected void after() {
         if (cleanup) {
-            provisioned.stream().forEach(id ->
+            provisioned.forEach(id ->
                     getDockerCli().removeContainerCmd(id)
                             .withForce(true)
                             .withRemoveVolumes(true)
@@ -606,7 +599,9 @@ public class DockerRule extends ExternalResource {
     public DockerServerCredentials getDockerServerCredentials() throws IOException {
         final LocalDirectorySSLConfig sslContext = (LocalDirectorySSLConfig) clientConfig.getSSLConfig();
 
-        String certPath =  sslContext.getDockerCertPath();
+        assertThat("DockerCli must be connected via SSL", sslContext, notNullValue());
+
+        String certPath = sslContext.getDockerCertPath();
 
         final String keypem = FileUtils.readFileToString(new File(certPath + "/" + "key.pem"));
         final String certpem = FileUtils.readFileToString(new File(certPath + "/" + "cert.pem"));
@@ -620,5 +615,24 @@ public class DockerRule extends ExternalResource {
                 certpem,
                 capem
         );
+    }
+
+    public void waitDindStarted(String hostContainerId) throws InterruptedException, IOException {
+        waitLogMsg(hostContainerId, "API listen on");
+    }
+
+    public void waitLogMsg(String containerId, String msg) throws InterruptedException, IOException {
+        final WaitMessageResultCallback callback = new WaitMessageResultCallback(msg);
+
+        getDockerCli().logContainerCmd(containerId)
+                .withTailAll()
+                .withStdOut(true)
+                .withStdErr(true)
+                .withFollowStream(true)
+                .exec(callback)
+                .awaitCompletion(60, SECONDS);
+
+        assertThat("Didn't found msg '" + msg + "' in log.", callback.getFound(), is(true));
+        callback.close();
     }
 }

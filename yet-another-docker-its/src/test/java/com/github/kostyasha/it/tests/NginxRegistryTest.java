@@ -2,8 +2,10 @@ package com.github.kostyasha.it.tests;
 
 import com.github.kostyasha.it.rule.DockerResource;
 import com.github.kostyasha.it.rule.DockerRule;
+import com.github.kostyasha.it.other.WaitMessageResultCallback;
 import com.github.kostyasha.it.utils.DockerUtils;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.AuthConfig;
@@ -17,7 +19,7 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerCli
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.PushImageResultCallback;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -34,9 +36,13 @@ import java.io.IOException;
 
 import static com.github.kostyasha.it.rule.DockerRule.getDockerItDir;
 import static com.github.kostyasha.it.utils.DockerUtils.ensureContainerRemoved;
+import static com.github.kostyasha.it.utils.TempFileHelper.checkPathIT;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.io.FileUtils.writeStringToFile;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 /**
  * client -> (DinD:44447) -> (nginx-proxy) -> (docker-registry:44446)
@@ -48,7 +54,7 @@ public class NginxRegistryTest {
     private static final Logger LOG = LoggerFactory.getLogger(NginxRegistryTest.class);
 
     @ClassRule
-    public static DockerRule d = new DockerRule(true);
+    public static DockerRule d = new DockerRule(false);
 
     @ClassRule
     transient public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
@@ -80,7 +86,9 @@ public class NginxRegistryTest {
         protected void before() throws Throwable {
             after();
 
-            d.getDockerCli().pullImageCmd(IMAGE_NAME).exec(new PullImageResultCallback()).awaitSuccess();
+            d.getDockerCli().pullImageCmd(IMAGE_NAME)
+                    .exec(new PullImageResultCallback())
+                    .awaitSuccess();
 
             hostContainerId = d.getDockerCli().createContainerCmd(IMAGE_NAME)
                     .withName(HOST_CONTAINER_NAME)
@@ -96,6 +104,8 @@ public class NginxRegistryTest {
                     .getId();
 
             d.getDockerCli().startContainerCmd(hostContainerId).exec();
+
+            d.waitDindStarted(hostContainerId);
         }
 
         @Override
@@ -127,6 +137,7 @@ public class NginxRegistryTest {
         @Override
         public void before() throws IOException {
             after();
+            checkPathIT(new File(""));
 
             final File buildDir = folder.newFolder(getClass().getName());
 
@@ -222,12 +233,14 @@ public class NginxRegistryTest {
 
     @Test
     public void testCliAuth() throws InterruptedException, IOException {
+        checkPathIT(new File(""));
+
         DockerClientConfig clientConfig = new DefaultDockerClientConfig.Builder()
                 .withDockerTlsVerify(false)
                 .withDockerHost(String.format("tcp://%s:%d", d.getHost(), dindResource.getExposedPort()))
                 .build();
 
-        DockerCmdExecFactoryImpl dockerCmdExecFactory = new DockerCmdExecFactoryImpl();
+        DockerCmdExecFactory dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
 
         DockerClient dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)
@@ -250,6 +263,8 @@ public class NginxRegistryTest {
         authConfig.withUsername("docker-registry-login");
         authConfig.withEmail("sdf@sdf.com");
         authConfig.withRegistryAddress(String.format("%s:%d", d.getHost(), nginxContainer.getExposedPort()));
+
+        LOG.trace("Authconfig for push {}", authConfig);
 
         dockerClient.pushImageCmd(imageName)
                 .withTag("tag")

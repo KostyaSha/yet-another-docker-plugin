@@ -93,7 +93,7 @@
             <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
-                <version>${hpi.plugin.version}</version>
+                <version>${hpi-plugin.version}</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.kohsuke.stapler</groupId>

@@ -8,6 +8,8 @@ import hudson.model.Queue;
 import hudson.remoting.Callable;
 import hudson.remoting.Channel;
 import jenkins.model.Jenkins;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.lang.management.ThreadInfo;
@@ -16,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -23,6 +26,7 @@ import static org.junit.Assert.assertThat;
  */
 public final class JenkinsRuleHelpers implements Serializable {
     private static final long serialVersionUID = 1L;
+    public static final Logger LOG = LoggerFactory.getLogger(JenkinsRuleHelpers.class);
 
     private JenkinsRuleHelpers() {
     }
@@ -87,6 +91,8 @@ public final class JenkinsRuleHelpers implements Serializable {
     }
 
     public static void caller(DockerCLI cli, Callable<Boolean, Throwable> callable) throws Throwable {
+        LOG.trace("Calling callable '{}'.", callable);
+        assertThat(cli.getChannel(), notNullValue());
         assertThat(
                 cli.getChannel().call(callable),
                 equalTo(true)

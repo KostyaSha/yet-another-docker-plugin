@@ -50,6 +50,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.security.Signature;
 import java.util.ArrayList;
@@ -60,6 +61,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static hudson.remoting.RemoteInputStream.Flag.NOT_GREEDY;
+import static java.nio.charset.Charset.defaultCharset;
 
 /**
  * !!Copy-paste from {@link CLI} !!!
@@ -80,11 +82,14 @@ public class DockerCLI {
 
 
     public DockerCLI(CLIConnectionFactory factory, int exposedPort) throws IOException, InterruptedException {
+        LOG.debug("Initializing jenkins CLI");
         jenkins = factory.jenkins;
         this.exposedPort = exposedPort;
 
         String url = jenkins.toExternalForm();
         if (!url.endsWith("/")) url += '/';
+
+        LOG.trace("Jenkins {}, URL {}", jenkins, url);
 
         ownsPool = true;
         pool = Executors.newCachedThreadPool();
@@ -144,12 +149,16 @@ public class DockerCLI {
             throw (IOException) new IOException("Failed to negotiate transport security").initCause(e);
         }
 
-        return new ChannelBuilder("CLI connection to " + jenkins, pool)
+        final Channel channel = new ChannelBuilder("CLI connection to " + jenkins, pool)
                 .withMode(Channel.Mode.BINARY)
                 .withBaseLoader(null)
                 .withArbitraryCallableAllowed(true)
                 .withRemoteClassLoadingAllowed(true)
                 .build(new BufferedInputStream(c.in), new BufferedOutputStream(c.out));
+
+        LOG.trace("Returning channel: {}.", channel);
+
+        return channel;
 
 //        return new Channel(
 //                "CLI connection to " + jenkins,  // name
@@ -249,8 +258,11 @@ public class DockerCLI {
     public void upgrade() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         if (execute(Arrays.asList("groovy", "="),
-                new ByteArrayInputStream("hudson.remoting.Channel.current().setRestricted(false)".getBytes()),
-                out, out) != 0)
+                new ByteArrayInputStream(
+                        "hudson.remoting.Channel.current().setRestricted(false)"
+                                .getBytes(defaultCharset())),
+                out, out) != 0) {
             throw new SecurityException(out.toString()); // failed to upgrade
+        }
     }
 }
