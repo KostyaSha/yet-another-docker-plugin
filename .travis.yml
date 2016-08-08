@@ -43,7 +43,7 @@ script:
 
 after_success:
   - ./.travis/travis-after-success.sh
-  - MAVEN_OPTS=-Xmx512m ./mvnw site site:stage
+#  - MAVEN_OPTS=-Xmx512m ./mvnw site site:stage
   - rm -rf ~/.m2/repository/com/github/kostyasha/yet-another-docker
 
 after_failure:
