@@ -12,6 +12,8 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerCli
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientImpl;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.KeystoreSSLConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.SSLConfig;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad.other.VariableSSLConfig;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -162,9 +164,9 @@ public class ClientBuilderForConnector {
 
         if (isNull(dockerCmdExecFactory)) {
             if (connectorType == ConnectorType.JERSEY) {
-                dockerCmdExecFactory = new com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl();
+                dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
             } else {
-                dockerCmdExecFactory = new com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl();
+                dockerCmdExecFactory = new NettyDockerCmdExecFactory();
             }
         }
 
