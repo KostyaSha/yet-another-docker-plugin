@@ -2,6 +2,8 @@ package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.commons.AbstractCloud;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
+import com.github.kostyasha.yad.connector.DockerJavaConnector;
+import com.github.kostyasha.yad.connector.NettyDockerJavaConnector;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
@@ -37,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 /**
  * Docker Jenkins Cloud configuration. Contains connection configuration,
@@ -51,27 +54,32 @@ public class DockerCloud extends AbstractCloud implements Serializable {
     private static final String DOCKER_CLOUD_LABEL = DockerCloud.class.getName();
     private static final String DOCKER_TEMPLATE_LABEL = DockerSlave.class.getName();
 
+    @Deprecated
     private DockerConnector connector;
+
+    private DockerJavaConnector dockerJavaConnector;
 
     @DataBoundConstructor
     public DockerCloud(String name,
                        List<DockerSlaveTemplate> templates,
                        int containerCap,
-                       @Nonnull DockerConnector connector) {
+                       @Nonnull DockerJavaConnector connector) {
         super(name);
-        setConnector(connector);
+        setDockerJavaConnector(connector);
         setTemplates(templates);
         setContainerCap(containerCap);
     }
 
-    //    @CheckForNull
-    public DockerConnector getConnector() {
-        return connector;
+    /**
+     * @see #dockerJavaConnector
+     */
+    @CheckForNull
+    public DockerJavaConnector getDockerJavaConnector() {
+        return dockerJavaConnector;
     }
 
-    public DockerCloud setConnector(DockerConnector connector) {
-        this.connector = connector;
-        return this;
+    public void setDockerJavaConnector(DockerJavaConnector dockerJavaConnector) {
+        this.dockerJavaConnector = dockerJavaConnector;
     }
 
     /**
@@ -80,7 +88,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
      * @return Docker client.
      */
     public synchronized DockerClient getClient() {
-        return getConnector().getClient();
+        return getDockerJavaConnector().getClient();
     }
 
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "docker-java uses runtime exceptions")
@@ -309,6 +317,11 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         if (isNull(templates)) {
             templates = Collections.emptyList();
         }
+
+        if (nonNull(connector)) {
+            dockerJavaConnector = (NettyDockerJavaConnector) connector;
+        }
+
         //Xstream is not calling readResolve() for nested Describable's
         for (DockerSlaveTemplate template : getTemplates()) {
             template.readResolve();

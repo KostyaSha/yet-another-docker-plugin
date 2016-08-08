@@ -5,6 +5,7 @@ import com.cloudbees.plugins.credentials.common.CertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.kostyasha.yad.DockerConnector;
+import com.github.kostyasha.yad.connector.DockerJavaConnector;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
@@ -12,6 +13,8 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerCli
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DockerClientImpl;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.KeystoreSSLConfig;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.SSLConfig;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad.other.VariableSSLConfig;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -45,19 +48,13 @@ import static org.apache.commons.lang.StringUtils.isNotBlank;
 public class ClientBuilderForConnector {
     private static final Logger LOG = LoggerFactory.getLogger(ClientBuilderForConnector.class);
 
-    private DockerCmdExecFactory dockerCmdExecFactory = null;
+    private final DockerCmdExecFactory dockerCmdExecFactory;
     private DockerClientConfig clientConfig = null;
     // fallback to builder
     private Builder configBuilder = new Builder();
 
-    private ConnectorType connectorType = null;
-
-    private ClientBuilderForConnector() {
-    }
-
-    public ClientBuilderForConnector withDockerCmdExecFactory(DockerCmdExecFactory dockerCmdExecFactory) {
+    private ClientBuilderForConnector(DockerCmdExecFactory dockerCmdExecFactory) {
         this.dockerCmdExecFactory = dockerCmdExecFactory;
-        return this;
     }
 
     public ClientBuilderForConnector withSslConfig(SSLConfig sslConfig)
@@ -72,21 +69,15 @@ public class ClientBuilderForConnector {
      * @param connector docker connector with info about url, version, creds and timeout
      * @return docker-java client
      */
-    public ClientBuilderForConnector forConnector(DockerConnector connector)
+    public ClientBuilderForConnector forConnector(DockerJavaConnector connector)
             throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         LOG.debug("Building connection to docker host '{}'", connector.getServerUrl());
         withCredentials(connector.getCredentialsId());
-        withConnectorType(connector.getConnectorType());
         if (nonNull(connector.getTlsVerify())) {
             configBuilder.withDockerTlsVerify(connector.getTlsVerify());
         } // either it fallback to docker-java default
 
         return forServer(connector.getServerUrl(), connector.getApiVersion());
-    }
-
-    public ClientBuilderForConnector withConnectorType(ConnectorType connectorType) {
-        this.connectorType = connectorType;
-        return this;
     }
 
     /**
@@ -110,15 +101,16 @@ public class ClientBuilderForConnector {
      */
     public ClientBuilderForConnector withCredentials(String credentialsId)
             throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        SSLConfig sslConfig = null;
         if (isNotBlank(credentialsId)) {
             Credentials credentials = lookupSystemCredentials(credentialsId);
 
             if (credentials instanceof CertificateCredentials) {
                 CertificateCredentials certificateCredentials = (CertificateCredentials) credentials;
-                withSslConfig(new KeystoreSSLConfig(
+                sslConfig = new KeystoreSSLConfig(
                         certificateCredentials.getKeyStore(),
                         certificateCredentials.getPassword().getPlainText()
-                ));
+                );
 //            } else if (credentials instanceof StandardUsernamePasswordCredentials) {
 //                StandardUsernamePasswordCredentials usernamePasswordCredentials =
 //                        ((StandardUsernamePasswordCredentials) credentials);
@@ -129,13 +121,15 @@ public class ClientBuilderForConnector {
             } else if (credentials instanceof DockerServerCredentials) {
                 final DockerServerCredentials dockerCreds = (DockerServerCredentials) credentials;
 
-                withSslConfig(new VariableSSLConfig(
+                sslConfig = new VariableSSLConfig(
                         dockerCreds.getClientKey(),
                         dockerCreds.getClientCertificate(),
                         dockerCreds.getServerCaCertificate()
-                ));
+                );
             }
         }
+
+        withSslConfig(sslConfig);
 
         return this;
     }
@@ -150,7 +144,7 @@ public class ClientBuilderForConnector {
         return this;
     }
 
-    public ClientBuilderForConnector withDockerConnector(DockerConnector connector)
+    public ClientBuilderForConnector withDockerConnector(DockerJavaConnector connector)
             throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         forConnector(connector);
 
@@ -160,13 +154,7 @@ public class ClientBuilderForConnector {
     public DockerClient build() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException,
             KeyManagementException {
 
-        if (isNull(dockerCmdExecFactory)) {
-            if (connectorType == ConnectorType.JERSEY) {
-                dockerCmdExecFactory = new com.github.kostyasha.yad.docker_java.com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl();
-            } else {
-                dockerCmdExecFactory = new com.github.kostyasha.yad.docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl();
-            }
-        }
+        Validate.notNull(dockerCmdExecFactory, "DockerCmdExecFactory must be set firstly");
 
         if (isNull(clientConfig)) {
             Validate.notNull(configBuilder, "configBuilder must be set");
@@ -192,7 +180,7 @@ public class ClientBuilderForConnector {
                         Credentials.class,
                         Jenkins.getActiveInstance(),
                         ACL.SYSTEM,
-                        Collections.<DomainRequirement>emptyList()
+                        Collections.emptyList()
                 ),
                 withId(credentialsId)
         );
@@ -201,7 +189,7 @@ public class ClientBuilderForConnector {
     /**
      * helper class
      */
-    public static ClientBuilderForConnector newClientBuilderForConnector() {
-        return new ClientBuilderForConnector();
+    public static ClientBuilderForConnector newClientBuilderForConnector(DockerCmdExecFactory execFactory) {
+        return new ClientBuilderForConnector(execFactory);
     }
 }
