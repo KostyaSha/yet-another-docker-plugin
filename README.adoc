@@ -15,7 +15,7 @@ and left to this fork.
 
 ## Docs
 
-Will be in https://github.com/KostyaSha/yet-another-docker-plugin/wiki[GitHub wiki] because i wants to use GitHub with adoc
+Under link:/docs[docs directory]
 
 ## Goals
 
@@ -33,7 +33,7 @@ If you don't want to change your Update Center, you can download `.hpi` from the
 
 ## Disclaimer 
 
-- Backward compatibility may be broken in any time
+- Kept when it possible. Backward compatibility may be broken in any time.
 
 ## Questions
 
