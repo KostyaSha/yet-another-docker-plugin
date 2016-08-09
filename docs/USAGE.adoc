@@ -1,0 +1,30 @@
+== Cloud Configuration
+ - Go to `Manage Jenkins` -> `Configure System`
+ - Scroll down to `Cloud` section
+ - Add cloud and follow help buttons
+ - Cloud contains connector and templates for spawning containers.
+ - In template settings set label. This label should be used in jobs that you want to run in associated templates.
+ Better use `EXCLUSIVE` slave mode and tie jobs to labels.
+
+== Freestyle Job
+ - Set checkbox for `Restrict where this project can be run` and specify label that you configured in `Cloud Configuration`
+
+== Matrix-project
+
+=== Nuances
+  - Has nuances because consists of 2 types for project during execution:
+  -- Parent (flyweight that doesn't consume `Executor`). Must be tied to some long living slave (longer that all childs,
+  either other child builds will be killed).
+  -- Child (normal build that consumes `Executor`s). Should be tied to docker slaves for `one shot` builds.
+
+=== Solutions
+* If there is only 1 label for building all childs.
+** Tie `parent` to master label or keep empty (will search automatically slave for assigning) label in `Advanced` ->
+`Restrict where this project can be run`.
+** Tie `child` with label axis configuration to this single docker label.
+* Install https://wiki.jenkins-ci.org/display/JENKINS/Groovy+Label+Assignment+plugin[Groovy Label Assignment plugin].
+In matrix project configuration set `Groovy script to restrict where this project can be run` to docker label with
+the next code: `return currentJob.getClass().getName().equals("hudson.matrix.MatrixProject") ? "master" : "jnlp-docker";`
+where `docker` is the label from `Cloud Configuration`. This will result to:
+** `parent` tied to `master` (empty `""` label allowed - auto search of slave for flyweight)
+** `child` tied to `docker` label (slaves)
