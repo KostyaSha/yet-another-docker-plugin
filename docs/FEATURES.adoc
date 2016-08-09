@@ -1,0 +1,16 @@
+== Jenkins Cloud Slaves provisioning
+
+* TLS (RSA,ECDSA) based credentials connection to docker daemon.
+* Slave image pulling strategies.
+* Exact configuration for container lifecycle:
+** pull
+** create
+** start
+** stop
+** remove
+* Jenkins slaves connection:
+** JNLP (requires working access from slave to master)
+** SSH (requires working access from master to slave)
+* Docker fingerprints badges
+* Full shading of docker-java library (doesn't conflict with docker-traceability-plugin or any other plugin using docker-java)
+* Faster node provisioning without delay
