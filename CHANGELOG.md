@@ -2,6 +2,10 @@
 
 ## Next
 
+## 0.1.0-rc16
+ - Fix `Test Connection` in configuration.
+ - Allow set connector type `Netty` or `Jersey`.
+
 ## 0.1.0-rc15
  - Fix image.getRepoTags() NPE.
  - Fix http -> tcp UI help.
