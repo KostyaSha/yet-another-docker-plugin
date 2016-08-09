@@ -67,17 +67,17 @@ after_script:
 #    build_command_prepend: "./mvnw clean"
 #    build_command: "./travis.sh"
 #    branch_pattern: master
-addons:
-  artifacts:
-    s3_region: us-east-1
-    bucket: "travis-kostyasha"
-    debug: true
-    paths:
-      - yet-another-docker-its/target/surefire-reports/
-      - site/
-      - docker-logs/
-      - mvn.log
-    target_paths: yet-another-docker-plugin/$TRAVIS_BRANCH/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID
+#addons:
+#  artifacts:
+#    s3_region: us-east-1
+#    bucket: "travis-kostyasha"
+#    debug: true
+#    paths:
+#      - yet-another-docker-its/target/surefire-reports/
+#      - site/
+#      - docker-logs/
+#      - mvn.log
+#    target_paths: yet-another-docker-plugin/$TRAVIS_BRANCH/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID
 
 #deploy:
 #  provider: s3

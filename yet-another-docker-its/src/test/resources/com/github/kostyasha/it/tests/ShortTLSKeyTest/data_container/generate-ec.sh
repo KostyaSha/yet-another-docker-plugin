@@ -31,7 +31,7 @@ openssl req \
     -key server-key.pem \
     -out server.csr
 
-echo subjectAltName = IP:192.168.99.100,IP:127.0.0.1 > extfile.cnf
+echo subjectAltName = IP:192.168.99.100,IP:192.168.99.101,IP:127.0.0.1 > extfile.cnf
 
 openssl x509 \
     -req \
