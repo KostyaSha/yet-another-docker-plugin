@@ -2,9 +2,9 @@ package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.docker_java.org.apache.http.client.utils.URIBuilder;
 import hudson.Extension;
-import hudson.model.AbstractBuild;
 import hudson.model.BuildVariableContributor;
 import hudson.model.Executor;
+import hudson.model.Run;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
