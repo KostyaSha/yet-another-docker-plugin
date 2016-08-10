@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
 
-sudo -E stop docker
-
 sudo apt-get install -y -q ca-certificates
 
 echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
@@ -28,6 +26,9 @@ sudo -E apt-get -q -y --purge remove docker-engine || :
 sudo -E apt-cache policy docker-engine
 
 ./.travis/get-docker-com.sh
+
+sudo -E stop docker
+
 #mkdir "${HOME}/.cache" || :
 #pushd "${HOME}/.cache"
 # wget -N "https://apt.dockerproject.org/repo/pool/main/d/docker-engine/docker-engine_${DOCKER_VERSION}_amd64.deb"
