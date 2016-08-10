@@ -144,7 +144,7 @@ tries=100
 for i in $(seq 1 $tries); do
     if grep "API listen on" /var/log/upstart/docker.log ; then
         echo "Docker started"
-    elif [[ $i -ge $tries ]]; then
+    elif [[ $i -le $tries ]]; then
         echo "Docker didn't start. Exiting!"
         cat /var/log/upstart/docker.log
         exit 1
