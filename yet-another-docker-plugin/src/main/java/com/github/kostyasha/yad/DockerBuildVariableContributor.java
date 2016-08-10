@@ -23,7 +23,7 @@ public class DockerBuildVariableContributor extends BuildVariableContributor {
     private static final Logger LOG = LoggerFactory.getLogger(DockerBuildVariableContributor.class);
 
     @Override
-    public void buildVariablesFor(AbstractBuild build, Map<String, String> variables) {
+    public void buildVariablesFor(Job build, Map<String, String> variables) {
         final Executor executor = build.getExecutor();
         if (executor != null && executor.getOwner() instanceof DockerComputer) {
             final DockerComputer dockerComputer = (DockerComputer) executor.getOwner();
