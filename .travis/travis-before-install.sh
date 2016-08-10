@@ -139,7 +139,21 @@ EOF
 sudo cat /etc/default/docker
 
 sudo -E restart docker
-sleep 15
+
+tries=100
+for i in $(seq 1 $tries); do
+    if grep "API listen on" /var/log/upstart/docker.log ; then
+        echo "Docker started"
+    elif [[ $i -ge $tries ]]; then
+        echo "Docker didn't start. Exiting!"
+        cat /var/log/upstart/docker.log
+        exit 1
+    else
+        "Docker didn't start, sleeping for 5 secs..."
+        sleep 5
+    fi
+done
+
 
 sudo ss -antpl
 
