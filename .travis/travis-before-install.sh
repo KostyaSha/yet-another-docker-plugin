@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 
+sudo -E stop docker
+
 sudo apt-get install -y -q ca-certificates
 
 echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
@@ -124,7 +126,7 @@ rm -rf "${TEST_KEYS}"/*
 
 cp -ar "${KEY_PATH}"/* "${TEST_KEYS}/"
 
-sudo -E stop docker
+sudo cat /etc/default/docker
 
 cat << EOF | sudo tee /etc/default/docker
 DOCKER_OPTS="\
@@ -143,7 +145,7 @@ sudo bash -c ":> /var/log/upstart/docker.log"
 
 sudo -E start docker
 
-tries=100
+tries=20
 for i in $(seq 1 $tries); do
     if sudo grep "API listen on" /var/log/upstart/docker.log ; then
         echo "Docker started"
