@@ -153,7 +153,7 @@ for i in $(seq 1 $tries); do
         sudo cat /var/log/upstart/docker.log
         exit 1
     else
-        "Docker didn't start, sleeping for 5 secs..."
+        echo "Docker didn't start, sleeping for 5 secs..."
         sleep 5
     fi
 done
