@@ -146,9 +146,10 @@ sudo bash -c ":> /var/log/upstart/docker.log"
 sudo -E start docker
 
 tries=20
+sleep=5
 for i in $(seq 1 $tries); do
     if sudo grep "API listen on" /var/log/upstart/docker.log ; then
-        echo "Docker started"
+        echo "Docker started. Delay $(($i * $sleep))"
         break
     elif [[ $i -ge $tries ]]; then
         echo "Docker didn't start. Exiting!"
@@ -156,7 +157,7 @@ for i in $(seq 1 $tries); do
         exit 1
     else
         echo "Docker didn't start, sleeping for 5 secs..."
-        sleep 5
+        sleep $sleep
     fi
 done
 
