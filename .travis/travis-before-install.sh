@@ -141,8 +141,9 @@ DOCKER_OPTS="\
 EOF
 
 sudo cat /etc/default/docker
-sudo bash -c ":> /var/log/upstart/docker.log"
+sudo bash -c ':> /var/log/upstart/docker.log'
 
+date
 sudo -E start docker
 
 tries=20
