@@ -130,6 +130,8 @@ sudo cat /etc/default/docker
 
 cat << EOF | sudo tee /etc/default/docker
 DOCKER_OPTS="\
+--dns 8.8.8.8 \
+--dns 8.8.4.4 \
 -D \
 -H=unix:///var/run/docker.sock \
 -H=tcp://0.0.0.0:${HOST_PORT}  \
