@@ -124,6 +124,8 @@ rm -rf "${TEST_KEYS}"/*
 
 cp -ar "${KEY_PATH}"/* "${TEST_KEYS}/"
 
+sudo -E stop docker
+
 cat << EOF | sudo tee /etc/default/docker
 DOCKER_OPTS="\
 -D \
@@ -137,8 +139,9 @@ DOCKER_OPTS="\
 EOF
 
 sudo cat /etc/default/docker
+sudo bash -c ":> /var/log/upstart/docker.log"
 
-sudo -E restart docker
+sudo -E start docker
 
 tries=100
 for i in $(seq 1 $tries); do
