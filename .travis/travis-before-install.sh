@@ -163,7 +163,8 @@ done
 
 sudo ss -antpl
 
-curl https://${HOST_IP}:${HOST_PORT}/images/json \
+curl -V
+curl -v https://${HOST_IP}:${HOST_PORT}/images/json \
   --cert ${KEY_PATH}/cert.pem \
   --key ${KEY_PATH}/key.pem \
   --cacert ${KEY_PATH}/ca.pem
