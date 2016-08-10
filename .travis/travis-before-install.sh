@@ -26,6 +26,9 @@ sudo -E apt-get -q -y --purge remove docker-engine || :
 sudo -E apt-cache policy docker-engine
 
 ./.travis/get-docker-com.sh
+
+sudo -E stop docker
+
 #mkdir "${HOME}/.cache" || :
 #pushd "${HOME}/.cache"
 # wget -N "https://apt.dockerproject.org/repo/pool/main/d/docker-engine/docker-engine_${DOCKER_VERSION}_amd64.deb"
@@ -124,8 +127,12 @@ rm -rf "${TEST_KEYS}"/*
 
 cp -ar "${KEY_PATH}"/* "${TEST_KEYS}/"
 
+sudo cat /etc/default/docker
+
 cat << EOF | sudo tee /etc/default/docker
 DOCKER_OPTS="\
+--dns 8.8.8.8 \
+--dns 8.8.4.4 \
 -D \
 -H=unix:///var/run/docker.sock \
 -H=tcp://0.0.0.0:${HOST_PORT}  \
@@ -137,13 +144,32 @@ DOCKER_OPTS="\
 EOF
 
 sudo cat /etc/default/docker
+sudo bash -c ':> /var/log/upstart/docker.log'
 
-sudo -E restart docker
-sleep 15
+date
+sudo -E start docker
+
+tries=20
+sleep=5
+for i in $(seq 1 $tries); do
+    if sudo grep "API listen on" /var/log/upstart/docker.log ; then
+        echo "Docker started. Delay $(($i * $sleep))"
+        break
+    elif [[ $i -ge $tries ]]; then
+        echo "Docker didn't start. Exiting!"
+        sudo cat /var/log/upstart/docker.log
+        exit 1
+    else
+        echo "Docker didn't start, sleeping for 5 secs..."
+        sleep $sleep
+    fi
+done
+
 
 sudo ss -antpl
 
-curl https://${HOST_IP}:${HOST_PORT}/images/json \
+curl -V
+curl -v https://${HOST_IP}:${HOST_PORT}/images/json \
   --cert ${KEY_PATH}/cert.pem \
   --key ${KEY_PATH}/key.pem \
   --cacert ${KEY_PATH}/ca.pem
