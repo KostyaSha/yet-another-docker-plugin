@@ -148,7 +148,7 @@ for i in $(seq 1 $tries); do
     if sudo grep "API listen on" /var/log/upstart/docker.log ; then
         echo "Docker started"
         break
-    elif [[ $i -le $tries ]]; then
+    elif [[ $i -ge $tries ]]; then
         echo "Docker didn't start. Exiting!"
         sudo cat /var/log/upstart/docker.log
         exit 1
