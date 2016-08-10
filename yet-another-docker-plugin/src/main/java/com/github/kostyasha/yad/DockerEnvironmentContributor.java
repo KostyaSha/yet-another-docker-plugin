@@ -22,11 +22,12 @@ import java.net.URISyntaxException;
  * @author Kanstantsin Shautsou
  */
 @Extension
-public class DockerBuildVariableContributor extends EnvironmentContributor {
-    private static final Logger LOG = LoggerFactory.getLogger(DockerBuildVariableContributor.class);
+public class DockerEnvironmentContributor extends EnvironmentContributor {
+    private static final Logger LOG = LoggerFactory.getLogger(DockerEnvironmentContributor.class);
 
     @Override
-    public void buildEnvironmentFor(@Nonnull Run run, @Nonnull EnvVars envs, @Nonnull TaskListener listener) throws IOException, InterruptedException {
+    public void buildEnvironmentFor(@Nonnull Run run, @Nonnull EnvVars envs, @Nonnull TaskListener listener)
+            throws IOException, InterruptedException {
         final Executor executor = run.getExecutor();
         if (executor != null && executor.getOwner() instanceof DockerComputer) {
             final DockerComputer dockerComputer = (DockerComputer) executor.getOwner();
