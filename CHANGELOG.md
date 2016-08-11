@@ -2,6 +2,9 @@
 
 ## Next
 
+## 0.1.0-rc17
+ - Inject env vars for workflow-plugin.
+
 ## 0.1.0-rc16
  - Fix `Test Connection` in configuration.
  - Allow set connector type `Netty` or `Jersey`.
