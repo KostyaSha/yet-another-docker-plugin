@@ -11,6 +11,7 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Container;
 import com.github.kostyasha.yad.docker_java.com.google.common.base.Throwables;
 import com.github.kostyasha.yad.docker_java.javax.ws.rs.ProcessingException;
+import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.builder.ToStringBuilder;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
@@ -20,8 +21,10 @@ import hudson.model.Label;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProvisioner.PlannedNode;
+import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -345,6 +348,15 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
     @Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
+
+        public FormValidation doCheckName(@QueryParameter String name) {
+            if (StringUtils.isEmpty(name)) {
+                return FormValidation.error("Provide a name for this Cloud.");
+            }
+
+            return FormValidation.ok();
+        }
+
         @Override
         public String getDisplayName() {
             return "Yet Another Docker";

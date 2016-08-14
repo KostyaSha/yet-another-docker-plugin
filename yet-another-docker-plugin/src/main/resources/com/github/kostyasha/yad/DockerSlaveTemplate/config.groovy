@@ -1,6 +1,5 @@
 package com.github.kostyasha.yad.DockerSlaveTemplate
 
-import com.github.kostyasha.yad.DockerSlave
 import com.github.kostyasha.yad.DockerSlaveTemplate
 import com.github.kostyasha.yad.utils.DockerFunctions
 import hudson.model.Slave
@@ -8,7 +7,7 @@ import lib.FormTagLib
 
 def f = namespace(FormTagLib)
 def st = namespace("jelly:stapler")
-def descriptorPath = "/descriptor/" + DockerSlave.getClass().getName()
+def descriptorPath = "/descriptor/" + DockerSlaveTemplate.class.getName()
 
 // when added to heteroList
 if (instance == null) {
@@ -75,7 +74,8 @@ f.section(title: _("Jenkins Slave Config")) {
             help: descriptor.getHelpFile('launcher')) {
         DockerFunctions.dockerComputerLauncherDescriptors.each { ld ->
             if (ld != null) {
-                f.dropdownListBlock(value: ld.clazz.name, name: ld.displayName,
+                f.dropdownListBlock(value: ld.clazz.name,
+                        name: ld.displayName,
                         selected: instance.launcher == null ? false : instance.launcher.descriptor.equals(ld),
                         title: ld.displayName) {
                     descriptor = ld

@@ -36,7 +36,6 @@ import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 /**
@@ -64,7 +63,13 @@ public class ClientBuilderForConnector {
 
     public ClientBuilderForConnector withSslConfig(SSLConfig sslConfig)
             throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        configBuilder.withCustomSslConfig(sslConfig);
+        if (sslConfig == null) {
+            configBuilder.withDockerTlsVerify(false);
+        } else {
+            configBuilder.withCustomSslConfig(sslConfig);
+            configBuilder.withDockerTlsVerify(true);
+        }
+
         return this;
     }
 
@@ -79,9 +84,6 @@ public class ClientBuilderForConnector {
         LOG.debug("Building connection to docker host '{}'", connector.getServerUrl());
         withCredentials(connector.getCredentialsId());
         withConnectorType(connector.getConnectorType());
-        if (nonNull(connector.getTlsVerify())) {
-            configBuilder.withDockerTlsVerify(connector.getTlsVerify());
-        } // either it fallback to docker-java default
 
         return forServer(connector.getServerUrl(), connector.getApiVersion());
     }
@@ -137,6 +139,8 @@ public class ClientBuilderForConnector {
                         dockerCreds.getServerCaCertificate()
                 ));
             }
+        } else {
+            withSslConfig(null);
         }
 
         return this;

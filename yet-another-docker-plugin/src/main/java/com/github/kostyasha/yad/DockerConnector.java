@@ -7,6 +7,7 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClie
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.DockerException;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Version;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.RemoteApiVersion;
 import com.github.kostyasha.yad.docker_java.com.google.common.base.Preconditions;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
 import com.github.kostyasha.yad.other.ConnectorType;
@@ -23,7 +24,6 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -37,7 +37,12 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.github.kostyasha.yad.client.ClientBuilderForConnector.newClientBuilderForConnector;
+import static com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.RemoteApiVersion.VERSION_1_24;
+import static com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.RemoteApiVersion.parseConfig;
 import static com.github.kostyasha.yad.other.ConnectorType.NETTY;
+import static hudson.util.FormValidation.ok;
+import static hudson.util.FormValidation.warning;
+import static org.apache.commons.lang.builder.ToStringBuilder.reflectionToString;
 import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
 
 /**
@@ -46,14 +51,15 @@ import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
  * @author Kanstantsin Shautsou
  */
 public class DockerConnector implements Describable<DockerConnector> {
+    public static final String DEFAULT_API_VERSION = "1.23";
 
     @CheckForNull
     private String serverUrl;
 
     @CheckForNull
-    private String apiVersion = null;
+    private String apiVersion = DEFAULT_API_VERSION;
 
-    private Boolean tlsVerify = true;
+    private transient Boolean tlsVerify;
 
     @CheckForNull
     private String credentialsId = null;
@@ -85,15 +91,6 @@ public class DockerConnector implements Describable<DockerConnector> {
     @DataBoundSetter
     public void setApiVersion(String apiVersion) {
         this.apiVersion = StringUtils.trimToNull(apiVersion);
-    }
-
-    public Boolean getTlsVerify() {
-        return tlsVerify;
-    }
-
-    @DataBoundSetter
-    public void setTlsVerify(Boolean tlsVerify) {
-        this.tlsVerify = tlsVerify;
     }
 
     public String getCredentialsId() {
@@ -201,15 +198,13 @@ public class DockerConnector implements Describable<DockerConnector> {
         public FormValidation doTestConnection(
                 @QueryParameter String serverUrl,
                 @QueryParameter String apiVersion,
-                @QueryParameter Boolean tlsVerify,
                 @QueryParameter String credentialsId,
                 @QueryParameter ConnectorType connectorType
         ) throws IOException, ServletException, DockerException {
             try {
                 DefaultDockerClientConfig.Builder configBuilder = new DefaultDockerClientConfig.Builder()
                         .withApiVersion(apiVersion)
-                        .withDockerHost(serverUrl)
-                        .withDockerTlsVerify(tlsVerify);
+                        .withDockerHost(serverUrl);
 
                 final DockerClient testClient = newClientBuilderForConnector()
                         .withConfigBuilder(configBuilder)
@@ -219,10 +214,28 @@ public class DockerConnector implements Describable<DockerConnector> {
 
                 Version verResult = testClient.versionCmd().exec();
 
-                return FormValidation.ok(ToStringBuilder.reflectionToString(verResult, MULTI_LINE_STYLE));
+                return ok(reflectionToString(verResult, MULTI_LINE_STYLE));
             } catch (Exception e) {
                 return FormValidation.error(e, e.getMessage());
             }
+        }
+
+        public FormValidation doCheckApiVersion(@QueryParameter String apiVersion) {
+            if (StringUtils.isEmpty(apiVersion)) {
+                return ok();
+            }
+            try {
+                final RemoteApiVersion rav = parseConfig(apiVersion);
+                if (rav.isGreaterOrEqual(VERSION_1_24)) {
+                    return warning("Latest tested version 1.23. Current configuration may not work correctly");
+                } else if (!rav.isGreaterOrEqual(RemoteApiVersion.VERSION_1_19)) {
+                    return warning("Unknown API version, may not work with plugin!");
+                }
+            } catch (Exception ex) {
+                return FormValidation.error("Can't parse api version.", ex);
+            }
+
+            return ok();
         }
 
         @Override

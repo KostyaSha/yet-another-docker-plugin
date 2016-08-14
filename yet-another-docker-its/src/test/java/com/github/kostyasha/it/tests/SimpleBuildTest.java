@@ -26,6 +26,7 @@ import hudson.slaves.EnvironmentVariablesNodeProperty.Entry;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.tasks.Shell;
+import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import jenkins.model.JenkinsLocationConfiguration;
 import org.hamcrest.Matchers;
@@ -34,6 +35,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
+import org.jvnet.hudson.test.For;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +47,7 @@ import java.util.List;
 
 import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.caller;
 import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.waitUntilNoActivityUpTo;
+import static com.github.kostyasha.yad.DockerConnector.DEFAULT_API_VERSION;
 import static com.github.kostyasha.yad.commons.DockerImagePullStrategy.PULL_LATEST;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -147,13 +150,14 @@ public class SimpleBuildTest implements Serializable {
 
             //verify doTestConnection
             final DescriptorImpl descriptor = (DescriptorImpl) jenkins.getDescriptor(DockerConnector.class);
-            descriptor.doTestConnection(dockerUri.getHost(), "", true, dockerServerCredentials.getId(), ConnectorType.NETTY);
-            descriptor.doTestConnection(dockerUri.getHost(), "", true, dockerServerCredentials.getId(), ConnectorType.JERSEY);
+            checkFormValidation(descriptor.doTestConnection(dockerUri.getHost(), DEFAULT_API_VERSION,
+                    dockerServerCredentials.getId(), ConnectorType.NETTY));
+            checkFormValidation(descriptor.doTestConnection(dockerUri.getHost(), DEFAULT_API_VERSION,
+                    dockerServerCredentials.getId(), ConnectorType.JERSEY));
 
             // prepare Docker Cloud
             final DockerConnector dockerConnector = new DockerConnector(
                     String.format("tcp://%s:%d", dockerUri.getHost(), dockerUri.getPort()));
-            dockerConnector.setTlsVerify(true);
             dockerConnector.setCredentialsId(dockerServerCredentials.getId());
             dockerConnector.testConnection();
 
@@ -201,6 +205,12 @@ public class SimpleBuildTest implements Serializable {
             jenkins.save(); // either xmls a half broken
 
             return true;
+        }
+
+        private static void checkFormValidation(FormValidation formValidation) throws FormValidation {
+            if (formValidation.kind != FormValidation.Kind.OK) {
+                throw formValidation;
+            }
         }
     }
 
