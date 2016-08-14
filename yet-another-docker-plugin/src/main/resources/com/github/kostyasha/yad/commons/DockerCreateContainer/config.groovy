@@ -82,4 +82,5 @@ f.advanced(title: _("Container settings"), align: "left") {
         f.textbox()
     }
 
+    f.property(field: "logConfig")
 }

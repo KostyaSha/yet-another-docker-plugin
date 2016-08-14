@@ -10,8 +10,11 @@ import com.github.kostyasha.yad.DockerConnector;
 import com.github.kostyasha.yad.DockerConnector.DescriptorImpl;
 import com.github.kostyasha.yad.DockerContainerLifecycle;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
+import com.github.kostyasha.yad.commons.DockerCreateContainer;
+import com.github.kostyasha.yad.commons.DockerLogConfig;
 import com.github.kostyasha.yad.commons.DockerPullImage;
 import com.github.kostyasha.yad.commons.DockerRemoveContainer;
+import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.LogConfig;
 import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
@@ -49,6 +52,7 @@ import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.caller;
 import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.waitUntilNoActivityUpTo;
 import static com.github.kostyasha.yad.DockerConnector.DEFAULT_API_VERSION;
 import static com.github.kostyasha.yad.commons.DockerImagePullStrategy.PULL_LATEST;
+import static com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.LogConfig.LoggingType.JSON_FILE;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -165,6 +169,12 @@ public class SimpleBuildTest implements Serializable {
             final DockerPullImage pullImage = new DockerPullImage();
             pullImage.setPullStrategy(PULL_LATEST);
 
+            // create
+            final DockerCreateContainer createContainer = new DockerCreateContainer();
+            final DockerLogConfig logConfig = new DockerLogConfig();
+            logConfig.setLoggingType(JSON_FILE);
+            createContainer.setLogConfig(logConfig);
+
             //remove
             final DockerRemoveContainer removeContainer = new DockerRemoveContainer();
             removeContainer.setRemoveVolumes(true);
@@ -172,6 +182,7 @@ public class SimpleBuildTest implements Serializable {
 
             //lifecycle
             final DockerContainerLifecycle containerLifecycle = new DockerContainerLifecycle();
+            containerLifecycle.setCreateContainer(createContainer);
             containerLifecycle.setImage(slaveImage);
             containerLifecycle.setPullImage(pullImage);
             containerLifecycle.setRemoveContainer(removeContainer);

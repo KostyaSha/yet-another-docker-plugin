@@ -49,6 +49,7 @@ import java.util.stream.Collectors;
 import static com.github.kostyasha.yad.utils.BindUtils.joinToStr;
 import static com.github.kostyasha.yad.utils.BindUtils.splitAndFilterEmpty;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
@@ -122,6 +123,9 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
     @CheckForNull
     private String cpusetMems;
+
+    @CheckForNull
+    private DockerLogConfig logConfig;
 
     @DataBoundConstructor
     public DockerCreateContainer() {
@@ -406,6 +410,16 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         this.cpusetMems = cpusetMems;
     }
 
+    @CheckForNull
+    public DockerLogConfig getLogConfig() {
+        return logConfig;
+    }
+
+    @DataBoundSetter
+    public void setLogConfig(DockerLogConfig logConfig) {
+        this.logConfig = logConfig;
+    }
+
     /**
      * Fills user specified values
      *
@@ -511,6 +525,10 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
         if (StringUtils.isNotBlank(getCpusetMems())) {
             containerConfig.withCpusetMems(getCpusetMems());
+        }
+
+        if (nonNull(getLogConfig())) {
+            containerConfig.withLogConfig(getLogConfig().getLogConfig());
         }
 
         return containerConfig;
