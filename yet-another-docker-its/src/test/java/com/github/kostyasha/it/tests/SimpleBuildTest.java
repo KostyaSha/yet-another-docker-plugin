@@ -153,7 +153,6 @@ public class SimpleBuildTest implements Serializable {
             // prepare Docker Cloud
             final DockerConnector dockerConnector = new DockerConnector(
                     String.format("tcp://%s:%d", dockerUri.getHost(), dockerUri.getPort()));
-            dockerConnector.setTlsVerify(true);
             dockerConnector.setCredentialsId(dockerServerCredentials.getId());
             dockerConnector.testConnection();
 

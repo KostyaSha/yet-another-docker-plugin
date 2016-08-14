@@ -51,13 +51,15 @@ import static java.util.Objects.isNull;
 public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     private static final Logger LOG = LoggerFactory.getLogger(DockerComputerJNLPLauncher.class);
     private static final String NL = "\"\n";
+    public static final long DEFAULT_TIMEOUT = 120L;
+    public static final String DEFAULT_USER = "jenkins";
 
     /**
      * Configured from UI
      */
     protected JNLPLauncher jnlpLauncher = new JNLPLauncher();
 
-    protected long launchTimeout = 120; //seconds
+    protected long launchTimeout = DEFAULT_TIMEOUT; //seconds
 
     protected String user = "jenkins";
 

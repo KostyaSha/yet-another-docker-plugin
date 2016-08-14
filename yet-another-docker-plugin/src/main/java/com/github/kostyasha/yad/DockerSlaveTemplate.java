@@ -3,6 +3,7 @@ package com.github.kostyasha.yad;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
 import com.github.kostyasha.yad.docker_java.com.google.common.base.MoreObjects;
 import com.github.kostyasha.yad.docker_java.com.google.common.base.Strings;
+import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.launcher.DockerComputerLauncher;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import hudson.Extension;
@@ -39,6 +40,7 @@ import java.util.UUID;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 /**
@@ -55,20 +57,17 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     @Nonnull
     private final String id;
 
-    private String labelString = "";
+    private String labelString = "docker";
 
-    private DockerComputerLauncher launcher;
+    private transient String remoteFsMapping;
 
-    /**
-     * Field remoteFSMapping.
-     */
-    private String remoteFsMapping = "";
+    private DockerComputerLauncher launcher = new DockerComputerJNLPLauncher();
 
     private String remoteFs = "/home/jenkins";
 
     private int maxCapacity = 10;
 
-    private Node.Mode mode = Node.Mode.NORMAL;
+    private Node.Mode mode = Node.Mode.EXCLUSIVE;
 
     private RetentionStrategy retentionStrategy = new DockerOnceRetentionStrategy(10);
 
@@ -202,15 +201,6 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
         this.maxCapacity = maxCapacity;
     }
 
-    public String getRemoteFsMapping() {
-        return remoteFsMapping;
-    }
-
-    @DataBoundSetter
-    public void setRemoteFsMapping(String remoteFsMapping) {
-        this.remoteFsMapping = remoteFsMapping;
-    }
-
     @Nonnull
     public Set<LabelAtom> getLabelSet() {
         return labelSet != null ? labelSet : Collections.<LabelAtom>emptySet();
@@ -284,7 +274,6 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
                 .append(id, that.id)
                 .append(labelString, that.labelString)
                 .append(launcher, that.launcher)
-                .append(remoteFsMapping, that.remoteFsMapping)
                 .append(remoteFs, that.remoteFs)
                 .append(mode, that.mode)
                 .append(retentionStrategy, that.retentionStrategy)
@@ -310,6 +299,14 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
 
     @Extension
     public static final class DescriptorImpl extends Descriptor<DockerSlaveTemplate> {
+        public FormValidation doCheckLabelString(@QueryParameter String labelString) {
+            if (isNull(labelString)) {
+                return FormValidation.warning("Please specify some label");
+            }
+
+            return FormValidation.ok();
+        }
+
         public FormValidation doCheckNumExecutors(@QueryParameter int numExecutors) {
             if (numExecutors > 1) {
                 return FormValidation.warning("Experimental, see help");
