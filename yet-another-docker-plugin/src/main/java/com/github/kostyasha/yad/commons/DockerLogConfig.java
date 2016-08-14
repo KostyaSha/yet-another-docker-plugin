@@ -24,7 +24,7 @@ public class DockerLogConfig extends AbstractDescribableImpl<DockerLogConfig> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerLogConfig.class);
 
     @CheckForNull
-    private LoggingType loggingType = null;
+    private LoggingType loggingType = LoggingType.DEFAULT;
 
     @CheckForNull
     private Map<String, String> config = null;
