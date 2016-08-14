@@ -150,14 +150,13 @@ public class SimpleBuildTest implements Serializable {
 
             //verify doTestConnection
             final DescriptorImpl descriptor = (DescriptorImpl) jenkins.getDescriptor(DockerConnector.class);
-            checkFormValidation(descriptor.doTestConnection(dockerUri.getHost(), DEFAULT_API_VERSION,
+            checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), DEFAULT_API_VERSION,
                     dockerServerCredentials.getId(), ConnectorType.NETTY));
-            checkFormValidation(descriptor.doTestConnection(dockerUri.getHost(), DEFAULT_API_VERSION,
+            checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), DEFAULT_API_VERSION,
                     dockerServerCredentials.getId(), ConnectorType.JERSEY));
 
             // prepare Docker Cloud
-            final DockerConnector dockerConnector = new DockerConnector(
-                    String.format("tcp://%s:%d", dockerUri.getHost(), dockerUri.getPort()));
+            final DockerConnector dockerConnector = new DockerConnector(dockerUri.toString());
             dockerConnector.setCredentialsId(dockerServerCredentials.getId());
             dockerConnector.testConnection();
 
