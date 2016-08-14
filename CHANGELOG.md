@@ -2,6 +2,13 @@
 
 ## Next
 
+## 0.1.0-rc19 (next)
+
+## 0.1.0-rc18
+ - Enhance usability: more help files, UI input validations.
+ - Added NPE debug code.
+ - Codecoverage is back.
+
 ## 0.1.0-rc17
  - Inject env vars for workflow-plugin.
 
