@@ -37,7 +37,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.github.kostyasha.yad.client.ClientBuilderForConnector.newClientBuilderForConnector;
-import static com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.RemoteApiVersion.VERSION_1_24;
 import static com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.RemoteApiVersion.parseConfig;
 import static com.github.kostyasha.yad.other.ConnectorType.NETTY;
 import static hudson.util.FormValidation.ok;
