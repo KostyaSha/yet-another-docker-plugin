@@ -6,6 +6,8 @@ import com.github.kostyasha.yad.docker_java.org.bouncycastle.jce.provider.Bouncy
 import com.github.kostyasha.yad.docker_java.org.glassfish.jersey.SslConfigurator;
 import com.github.kostyasha.yad.utils.CertUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
 import java.io.Serializable;
@@ -23,6 +25,7 @@ import static org.apache.commons.lang.StringUtils.isNotBlank;
  */
 public class VariableSSLConfig implements SSLConfig, Serializable {
     private static final long serialVersionUID = 1L;
+    private static final Logger LOG = LoggerFactory.getLogger(VariableSSLConfig.class);
 
     private String keypem;
     private String certpem;
@@ -38,6 +41,7 @@ public class VariableSSLConfig implements SSLConfig, Serializable {
     @Override
     public SSLContext getSSLContext() throws KeyManagementException, UnrecoverableKeyException,
             NoSuchAlgorithmException, KeyStoreException {
+        LOG.debug("Getting SSLContext");
         try {
             Security.addProvider(new BouncyCastleProvider());
 
@@ -49,7 +53,7 @@ public class VariableSSLConfig implements SSLConfig, Serializable {
                 System.setProperty("https.protocols", httpProtocols);
             }
 
-            // add keystore
+            LOG.trace("add keystore");
             sslConfig.keyStore(CertUtils.createKeyStore(keypem, certpem));
             sslConfig.keyStorePassword("docker"); // ??
 
