@@ -2,6 +2,9 @@
 
 ## Next
 
+## 0.1.0-rc20
+ - Fix load private key generated with linux openssl.
+
 ## 0.1.0-rc19
  - Update docker-java dependency.
  - Don't warn about 1.24 API.
