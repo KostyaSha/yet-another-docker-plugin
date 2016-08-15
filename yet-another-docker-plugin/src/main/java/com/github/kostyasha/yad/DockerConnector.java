@@ -37,7 +37,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.github.kostyasha.yad.client.ClientBuilderForConnector.newClientBuilderForConnector;
-import static com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.RemoteApiVersion.VERSION_1_24;
 import static com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.RemoteApiVersion.parseConfig;
 import static com.github.kostyasha.yad.other.ConnectorType.NETTY;
 import static hudson.util.FormValidation.ok;
@@ -51,13 +50,12 @@ import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
  * @author Kanstantsin Shautsou
  */
 public class DockerConnector implements Describable<DockerConnector> {
-    public static final String DEFAULT_API_VERSION = "1.23";
 
     @CheckForNull
     private String serverUrl;
 
     @CheckForNull
-    private String apiVersion = DEFAULT_API_VERSION;
+    private String apiVersion;
 
     private transient Boolean tlsVerify;
 
@@ -226,9 +224,10 @@ public class DockerConnector implements Describable<DockerConnector> {
             }
             try {
                 final RemoteApiVersion rav = parseConfig(apiVersion);
-                if (rav.isGreaterOrEqual(VERSION_1_24)) {
-                    return warning("Latest tested version 1.23. Current configuration may not work correctly");
-                } else if (!rav.isGreaterOrEqual(RemoteApiVersion.VERSION_1_19)) {
+//                if (rav.isGreaterOrEqual(VERSION_1_24)) {
+//                    return warning("Latest tested version 1.24. Current configuration may not work correctly");
+//                } else
+                if (!rav.isGreaterOrEqual(RemoteApiVersion.VERSION_1_19)) {
                     return warning("Unknown API version, may not work with plugin!");
                 }
             } catch (Exception ex) {
