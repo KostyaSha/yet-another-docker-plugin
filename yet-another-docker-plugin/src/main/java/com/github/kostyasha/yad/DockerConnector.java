@@ -225,9 +225,10 @@ public class DockerConnector implements Describable<DockerConnector> {
             }
             try {
                 final RemoteApiVersion rav = parseConfig(apiVersion);
-                if (rav.isGreaterOrEqual(VERSION_1_24)) {
-                    return warning("Latest tested version 1.23. Current configuration may not work correctly");
-                } else if (!rav.isGreaterOrEqual(RemoteApiVersion.VERSION_1_19)) {
+//                if (rav.isGreaterOrEqual(VERSION_1_24)) {
+//                    return warning("Latest tested version 1.24. Current configuration may not work correctly");
+//                } else
+                if (!rav.isGreaterOrEqual(RemoteApiVersion.VERSION_1_19)) {
                     return warning("Unknown API version, may not work with plugin!");
                 }
             } catch (Exception ex) {
