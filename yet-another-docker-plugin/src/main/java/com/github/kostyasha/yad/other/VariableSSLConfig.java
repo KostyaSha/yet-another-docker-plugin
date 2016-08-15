@@ -4,7 +4,6 @@ import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.SSLConfig;
 import com.github.kostyasha.yad.docker_java.org.bouncycastle.jce.provider.BouncyCastleProvider;
 import com.github.kostyasha.yad.docker_java.org.glassfish.jersey.SslConfigurator;
-import com.github.kostyasha.yad.utils.CertUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import javax.net.ssl.SSLContext;
@@ -15,6 +14,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.security.UnrecoverableKeyException;
 
+import static com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.util.CertificateUtils.createKeyStore;
+import static com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.util.CertificateUtils.createTrustStore;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
@@ -50,11 +51,11 @@ public class VariableSSLConfig implements SSLConfig, Serializable {
             }
 
             // add keystore
-            sslConfig.keyStore(CertUtils.createKeyStore(keypem, certpem));
+            sslConfig.keyStore(createKeyStore(keypem, certpem));
             sslConfig.keyStorePassword("docker"); // ??
 
             if (isNotBlank(capem)) {
-                sslConfig.trustStore(CertUtils.createTrustStore(capem));
+                sslConfig.trustStore(createTrustStore(capem));
             }
 
             return sslConfig.createSSLContext();
