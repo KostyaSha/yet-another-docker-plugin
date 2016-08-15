@@ -29,6 +29,10 @@
             <url>https://repo.jenkins-ci.org/public/</url>
         </repository>
         <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+        <repository>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>

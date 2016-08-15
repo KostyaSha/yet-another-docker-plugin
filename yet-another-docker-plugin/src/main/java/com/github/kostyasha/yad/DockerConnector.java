@@ -51,13 +51,12 @@ import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
  * @author Kanstantsin Shautsou
  */
 public class DockerConnector implements Describable<DockerConnector> {
-    public static final String DEFAULT_API_VERSION = "1.23";
 
     @CheckForNull
     private String serverUrl;
 
     @CheckForNull
-    private String apiVersion = DEFAULT_API_VERSION;
+    private String apiVersion;
 
     private transient Boolean tlsVerify;
 

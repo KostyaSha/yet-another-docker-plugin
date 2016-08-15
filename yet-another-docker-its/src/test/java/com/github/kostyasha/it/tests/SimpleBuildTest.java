@@ -47,7 +47,6 @@ import java.util.List;
 
 import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.caller;
 import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.waitUntilNoActivityUpTo;
-import static com.github.kostyasha.yad.DockerConnector.DEFAULT_API_VERSION;
 import static com.github.kostyasha.yad.commons.DockerImagePullStrategy.PULL_LATEST;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -150,9 +149,9 @@ public class SimpleBuildTest implements Serializable {
 
             //verify doTestConnection
             final DescriptorImpl descriptor = (DescriptorImpl) jenkins.getDescriptor(DockerConnector.class);
-            checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), DEFAULT_API_VERSION,
+            checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), "",
                     dockerServerCredentials.getId(), ConnectorType.NETTY));
-            checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), DEFAULT_API_VERSION,
+            checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), "",
                     dockerServerCredentials.getId(), ConnectorType.JERSEY));
 
             // prepare Docker Cloud
