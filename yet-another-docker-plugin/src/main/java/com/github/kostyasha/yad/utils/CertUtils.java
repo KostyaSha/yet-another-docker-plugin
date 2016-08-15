@@ -99,9 +99,11 @@ public class CertUtils {
     @CheckForNull
     private static KeyPair loadPrivateKey(final Reader reader) throws IOException, NoSuchAlgorithmException,
             InvalidKeySpecException {
+        LOG.trace("Before permarser try");
         try (PEMParser pemParser = new PEMParser(reader)) {
             Object readObject = pemParser.readObject();
             while (readObject != null) {
+                LOG.trace("Read non null object: '{}'", readObject);
                 if (readObject instanceof PEMKeyPair) {
                     PEMKeyPair pemKeyPair = (PEMKeyPair) readObject;
 
@@ -110,17 +112,18 @@ public class CertUtils {
 
                     for (String guessFactory : new String[]{"RSA", "ECDSA"}) {
                         try {
+                            LOG.debug("Trying factory: {}", guessFactory);
                             KeyFactory factory = KeyFactory.getInstance(guessFactory);
-//                            KeyFactory factory = KeyFactory.getInstance("ECDSA");
 
                             X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(pemPublicKeyEncoded);
                             PublicKey publicKey = factory.generatePublic(publicKeySpec);
 
                             PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(pemPrivateKeyEncoded);
                             PrivateKey privateKey = factory.generatePrivate(privateKeySpec);
-
+                            LOG.debug("return KeyPair. PublicKey: {}. Private key: {}", publicKey, privateKey);
                             return new KeyPair(publicKey, privateKey);
                         } catch (InvalidKeySpecException ex) {
+                            LOG.trace("Guess wrong factory, not a bug.", ex);
                         }
                     }
                 } else if (readObject instanceof ASN1ObjectIdentifier) {
@@ -134,7 +137,7 @@ public class CertUtils {
                 readObject = pemParser.readObject();
             }
         }
-
+        LOG.debug("Returning null KeyPair");
         return null;
     }
 
@@ -144,6 +147,7 @@ public class CertUtils {
     @CheckForNull
     private static KeyPair loadPrivateKey(final String keypem) throws IOException, NoSuchAlgorithmException,
             InvalidKeySpecException {
+        LOG.trace("loadPrivateKey for '{}'", keypem);
         try (StringReader certReader = new StringReader(keypem);
              BufferedReader reader = new BufferedReader(certReader)) {
             return loadPrivateKey(reader);

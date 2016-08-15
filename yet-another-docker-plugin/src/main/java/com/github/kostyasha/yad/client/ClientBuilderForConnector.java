@@ -64,8 +64,10 @@ public class ClientBuilderForConnector {
     public ClientBuilderForConnector withSslConfig(SSLConfig sslConfig)
             throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         if (sslConfig == null) {
+            LOG.debug("with dockertlsverify false");
             configBuilder.withDockerTlsVerify(false);
         } else {
+            LOG.debug("With custom ssl config {}", sslConfig);
             configBuilder.withCustomSslConfig(sslConfig);
             configBuilder.withDockerTlsVerify(true);
         }
@@ -119,6 +121,7 @@ public class ClientBuilderForConnector {
 
             if (credentials instanceof CertificateCredentials) {
                 CertificateCredentials certificateCredentials = (CertificateCredentials) credentials;
+                LOG.debug("Creds type: CertificateCredentials");
                 withSslConfig(new KeystoreSSLConfig(
                         certificateCredentials.getKeyStore(),
                         certificateCredentials.getPassword().getPlainText()
@@ -132,7 +135,8 @@ public class ClientBuilderForConnector {
 //
             } else if (credentials instanceof DockerServerCredentials) {
                 final DockerServerCredentials dockerCreds = (DockerServerCredentials) credentials;
-
+                LOG.debug("Docker creds: type DockerServerCredentials");
+                LOG.debug("Private key: {}", dockerCreds.getClientKey());
                 withSslConfig(new VariableSSLConfig(
                         dockerCreds.getClientKey(),
                         dockerCreds.getClientCertificate(),
@@ -140,6 +144,7 @@ public class ClientBuilderForConnector {
                 ));
             }
         } else {
+            LOG.debug("No keys, nullifiying ssl.");
             withSslConfig(null);
         }
 
