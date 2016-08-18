@@ -1,3 +1,4 @@
+## How to run integration tests
 
  - `mvn install` `yet-another-docker-java-shaded` module
  - `mvn install` `yet-another-docker-plugin` module (produces hpi)
