@@ -13,7 +13,7 @@
     <artifactId>yet-another-docker-its</artifactId>
 
     <name>Yet Another Docker Plugin ITs</name>
-    <description>Yet Another Docker plugin. Provides docker Cloud provisioning</description>
+    <description>Yet Another Docker Plugin Integration Tests</description>
 
     <properties>
         <logback.version>1.1.7</logback.version>
