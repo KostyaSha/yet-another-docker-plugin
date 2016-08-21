@@ -216,7 +216,11 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
         String slaveName = String.format("%s-%s", getDisplayName(), containerId.substring(0, 12));
 
-        template.getLauncher().waitUp(getDisplayName(), template, ir);
+        if (template.getLauncher().waitUp(getDisplayName(), template, ir)) {
+            LOG.debug("Container {} is ready for ssh slave connection", containerId);
+        } else {
+            LOG.error("Container {} is not ready for ssh slave connection.", containerId);
+        }
 
         final ComputerLauncher launcher = template.getLauncher().getPreparedLauncher(getDisplayName(), template, ir);
 
