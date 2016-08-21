@@ -84,12 +84,13 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         final HostAndPort hostAndPort = getHostAndPort(cloudId, containerInspect);
         HostAndPortChecker hostAndPortChecker = HostAndPortChecker.create(hostAndPort);
         if (!hostAndPortChecker.withRetries(60).withEveryRetryWaitFor(2, TimeUnit.SECONDS)) {
+            LOG.debug("TCP connection attempt failed 60 retries with 2 second interval for {}", hostAndPort);
             return false;
         }
         try {
             hostAndPortChecker.bySshWithEveryRetryWaitFor(2, TimeUnit.SECONDS);
         } catch (IOException ex) {
-            LOG.warn("Can't connect to ssh", ex);
+            LOG.warn("Can't connect to ssh for {}", hostAndPort, ex);
             return false;
         }
 
@@ -107,7 +108,8 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
                     sshConnector.jvmOptions, sshConnector.javaPath, sshConnector.prefixStartSlaveCmd,
                     sshConnector.suffixStartSlaveCmd, sshConnector.launchTimeoutSeconds);
         } catch (NullPointerException ex) {
-            throw new RuntimeException("No mapped port 22 in host for SSL. Config=" + inspect, ex);
+            throw new RuntimeException("Error happened. Probably there is no mapped port 22 in host for SSL. Config="
+                    + inspect, ex);
         }
     }
 
