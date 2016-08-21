@@ -108,8 +108,8 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
                     sshConnector.jvmOptions, sshConnector.javaPath, sshConnector.prefixStartSlaveCmd,
                     sshConnector.suffixStartSlaveCmd, sshConnector.launchTimeoutSeconds);
         } catch (NullPointerException ex) {
-            throw new RuntimeException("Error happened. Probably there is no mapped port 22 in host for SSL. Config="
-                    + inspect, ex);
+            throw new RuntimeException("Error happened. Probably there is no mapped port 22 in host for SSL. Config=" +
+                    inspect, ex);
         }
     }
 
