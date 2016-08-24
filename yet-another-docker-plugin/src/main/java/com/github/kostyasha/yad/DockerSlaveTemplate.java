@@ -1,8 +1,8 @@
 package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
-import com.github.kostyasha.yad.docker_java.com.google.common.base.MoreObjects;
-import com.github.kostyasha.yad.docker_java.com.google.common.base.Strings;
+import com.github.kostyasha.yad_docker_java.com.google.common.base.MoreObjects;
+import com.github.kostyasha.yad_docker_java.com.google.common.base.Strings;
 import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.launcher.DockerComputerLauncher;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;

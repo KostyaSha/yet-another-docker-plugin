@@ -4,16 +4,16 @@ import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Bind;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Device;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.PortBinding;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Volume;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.VolumesFrom;
-import com.github.kostyasha.yad.docker_java.com.google.common.base.Function;
-import com.github.kostyasha.yad.docker_java.com.google.common.base.Splitter;
-import com.github.kostyasha.yad.docker_java.com.google.common.base.Strings;
-import com.github.kostyasha.yad.docker_java.com.google.common.collect.Iterables;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Bind;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Device;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PortBinding;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Volume;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.VolumesFrom;
+import com.github.kostyasha.yad_docker_java.com.google.common.base.Function;
+import com.github.kostyasha.yad_docker_java.com.google.common.base.Splitter;
+import com.github.kostyasha.yad_docker_java.com.google.common.base.Strings;
+import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
 import com.trilead.ssh2.Connection;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
@@ -55,7 +55,7 @@ import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 /**
  * Contains docker container create related settings.
  *
- * @see com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.CreateContainerCmdImpl
+ * @see com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.CreateContainerCmdImpl
  */
 public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateContainer> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerCreateContainer.class);

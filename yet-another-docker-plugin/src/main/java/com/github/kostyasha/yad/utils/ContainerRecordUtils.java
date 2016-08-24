@@ -2,9 +2,9 @@ package com.github.kostyasha.yad.utils;
 
 import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.DockerComputer;
-import com.github.kostyasha.yad.docker_java.com.fasterxml.jackson.databind.util.StdDateFormat;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.kostyasha.yad_docker_java.com.fasterxml.jackson.databind.util.StdDateFormat;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import org.jenkinsci.plugins.docker.commons.fingerprint.ContainerRecord;
 
 import java.io.IOException;

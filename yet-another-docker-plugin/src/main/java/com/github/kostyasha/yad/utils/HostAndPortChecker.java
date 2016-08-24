@@ -1,6 +1,6 @@
 package com.github.kostyasha.yad.utils;
 
-import com.github.kostyasha.yad.docker_java.com.google.common.net.HostAndPort;
+import com.github.kostyasha.yad_docker_java.com.google.common.net.HostAndPort;
 import com.trilead.ssh2.Connection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
-import static com.github.kostyasha.yad.docker_java.com.google.common.base.Preconditions.checkState;
+import static com.github.kostyasha.yad_docker_java.com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class HostAndPortChecker {

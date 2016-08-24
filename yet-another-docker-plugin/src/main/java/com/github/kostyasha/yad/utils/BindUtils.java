@@ -1,7 +1,7 @@
 package com.github.kostyasha.yad.utils;
 
-import com.github.kostyasha.yad.docker_java.com.google.common.base.Joiner;
-import com.github.kostyasha.yad.docker_java.com.google.common.base.Splitter;
+import com.github.kostyasha.yad_docker_java.com.google.common.base.Joiner;
+import com.github.kostyasha.yad_docker_java.com.google.common.base.Splitter;
 import org.apache.commons.collections.CollectionUtils;
 
 import javax.annotation.Nonnull;

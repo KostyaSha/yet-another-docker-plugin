@@ -1,6 +1,6 @@
 package com.github.kostyasha.yad;
 
-import com.github.kostyasha.yad.docker_java.org.apache.http.client.utils.URIBuilder;
+import com.github.kostyasha.yad_docker_java.org.apache.http.client.utils.URIBuilder;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.EnvironmentContributor;

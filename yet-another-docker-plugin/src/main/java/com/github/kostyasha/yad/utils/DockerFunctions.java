@@ -1,7 +1,7 @@
 package com.github.kostyasha.yad.utils;
 
 import com.github.kostyasha.yad.DockerCloud;
-import com.github.kostyasha.yad.docker_java.com.google.common.collect.Iterables;
+import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.launcher.DockerComputerSSHLauncher;
 import com.github.kostyasha.yad.strategy.DockerCloudRetentionStrategy;

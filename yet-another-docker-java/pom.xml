@@ -19,7 +19,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <shade-prefix>com.github.kostyasha.yad.docker_java</shade-prefix>
+        <shade-prefix>com.github.kostyasha.yad_docker_java</shade-prefix>
         <maven-shade-plugin.version>3.0-kostyasha</maven-shade-plugin.version>
     </properties>
 
@@ -163,7 +163,7 @@
                             <shadedPattern>${shade-prefix}.org.apache.commons</shadedPattern>
                         </relocation>
 
-                        <!-- com.github.kostyasha.yad.docker_java.org.glassfish.jersey.internal.RuntimeDelegateImpl could not be instantiated:
+                        <!-- com.github.kostyasha.yad_docker_java.org.glassfish.jersey.internal.RuntimeDelegateImpl could not be instantiated:
                          java.lang.IllegalStateException: No generator was provided and there is no default
                          generator registered -->
                         <relocation>

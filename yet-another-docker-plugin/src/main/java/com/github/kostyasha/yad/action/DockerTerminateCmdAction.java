@@ -1,7 +1,7 @@
 package com.github.kostyasha.yad.action;
 
 import hudson.model.Action;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 
 /**
  * @author Kanstantsin Shautsou

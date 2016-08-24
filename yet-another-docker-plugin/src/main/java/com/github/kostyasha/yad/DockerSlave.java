@@ -1,9 +1,9 @@
 package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.action.DockerTerminateCmdAction;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.exception.NotModifiedException;
-import com.github.kostyasha.yad.docker_java.com.google.common.base.MoreObjects;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotModifiedException;
+import com.github.kostyasha.yad_docker_java.com.google.common.base.MoreObjects;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Computer;

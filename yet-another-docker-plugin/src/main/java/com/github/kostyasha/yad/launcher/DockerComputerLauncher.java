@@ -2,9 +2,9 @@ package com.github.kostyasha.yad.launcher;
 
 
 import com.github.kostyasha.yad.DockerSlaveTemplate;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.kostyasha.yad.docker_java.com.google.common.annotations.Beta;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
@@ -12,7 +12,7 @@ import hudson.slaves.SlaveComputer;
 
 import java.io.IOException;
 
-import static com.github.kostyasha.yad.docker_java.org.apache.commons.lang.BooleanUtils.isFalse;
+import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.BooleanUtils.isFalse;
 
 
 /**

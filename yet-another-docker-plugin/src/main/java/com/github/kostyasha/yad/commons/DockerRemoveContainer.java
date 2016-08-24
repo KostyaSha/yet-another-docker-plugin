@@ -1,7 +1,7 @@
 package com.github.kostyasha.yad.commons;
 
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.RemoveContainerCmdImpl;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.RemoveContainerCmdImpl;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
