@@ -59,9 +59,9 @@ public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
         for (DockerCloud dockerCloud : getDockerClouds()) {
             for (DockerSlaveTemplate template : dockerCloud.getTemplates(label)) {
                 // exclude unknown mix of configuration
-                if (template != null &&
-                        template.getRetentionStrategy() instanceof DockerOnceRetentionStrategy &&
-                        template.getNumExecutors() == 1) {
+                if (template == null ||
+                        !(template.getRetentionStrategy() instanceof DockerOnceRetentionStrategy) ||
+                        template.getNumExecutors() != 1) {
                     LOG.info("Skipping unknown mix of YAD configuration for {}", template);
                     continue;
                 }
