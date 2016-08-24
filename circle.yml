@@ -1,0 +1,15 @@
+machine:
+  java:
+    version: oraclejdk8
+
+dependencies:
+  override:
+    - echo true
+
+test:
+  override:
+    - ./mvnw package -B -DskipTests -P!yad-plugin-analysis
+
+general:
+  artifacts:
+    - yet-another-docker-plugin/target/yet-another-docker-plugin.hpi
