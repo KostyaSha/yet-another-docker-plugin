@@ -92,7 +92,7 @@ public abstract class AbstractCloud extends Cloud {
      */
     @Nonnull
     public List<DockerSlaveTemplate> getTemplates(Label label) {
-        ArrayList<DockerSlaveTemplate> dockerSlaveTemplates = new ArrayList<>();
+        List<DockerSlaveTemplate> dockerSlaveTemplates = new ArrayList<>();
 
         for (DockerSlaveTemplate t : templates) {
             if (label == null && t.getMode() == Node.Mode.NORMAL) {

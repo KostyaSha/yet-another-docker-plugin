@@ -57,41 +57,43 @@ public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
         LoadStatisticsSnapshot snapshot = strategyState.getSnapshot();
 
         for (DockerCloud dockerCloud : getDockerClouds()) {
-            DockerSlaveTemplate template = dockerCloud.getTemplate(label);
-            // exclude unknown mix of configuration
-            if (template != null &&
-                    template.getRetentionStrategy() instanceof DockerOnceRetentionStrategy &&
-                    template.getNumExecutors() == 1) {
-                LOG.info("Skipping unknown mix of YAD configuration for {}", template);
-                return NodeProvisioner.StrategyDecision.CONSULT_REMAINING_STRATEGIES;
+            for (DockerSlaveTemplate template : dockerCloud.getTemplates(label)) {
+                // exclude unknown mix of configuration
+                if (template != null &&
+                        template.getRetentionStrategy() instanceof DockerOnceRetentionStrategy &&
+                        template.getNumExecutors() == 1) {
+                    LOG.info("Skipping unknown mix of YAD configuration for {}", template);
+                    continue;
+                }
+
+                int availableCapacity = snapshot.getAvailableExecutors() +
+                        snapshot.getConnectingExecutors() +
+                        strategyState.getAdditionalPlannedCapacity();
+
+                int currentDemand = snapshot.getQueueLength();
+
+                LOG.debug("Available capacity={}, currentDemand={}", availableCapacity, currentDemand);
+
+                if (availableCapacity < currentDemand) {
+                    // may happen that would be provisioned with other template
+                    Collection<PlannedNode> plannedNodes = dockerCloud.provision(label, currentDemand - availableCapacity);
+                    LOG.debug("Planned {} new nodes", plannedNodes.size());
+
+                    strategyState.recordPendingLaunches(plannedNodes);
+                    availableCapacity += plannedNodes.size();
+                    LOG.debug("After '{}' provisioning, available capacity={}, currentDemand={}",
+                            dockerCloud, availableCapacity, currentDemand);
+                }
+
+                if (availableCapacity >= currentDemand) {
+                    LOG.debug("Provisioning completed");
+                    return NodeProvisioner.StrategyDecision.PROVISIONING_COMPLETED;
+                } else {
+                    LOG.debug("Provisioning not complete, trying next template");
+                }
             }
 
-            int availableCapacity = snapshot.getAvailableExecutors() +
-                    snapshot.getConnectingExecutors() +
-                    strategyState.getAdditionalPlannedCapacity();
-
-            int currentDemand = snapshot.getQueueLength();
-
-            LOG.debug("Available capacity={}, currentDemand={}", availableCapacity, currentDemand);
-
-            if (availableCapacity < currentDemand) {
-                // may happen that would be provisioned with other template
-                Collection<PlannedNode> plannedNodes = dockerCloud.provision(label, currentDemand - availableCapacity);
-                LOG.debug("Planned {} new nodes", plannedNodes.size());
-
-                strategyState.recordPendingLaunches(plannedNodes);
-                availableCapacity += plannedNodes.size();
-                LOG.debug("After '{}' provisioning, available capacity={}, currentDemand={}",
-                        dockerCloud, availableCapacity, currentDemand);
-            }
-
-            if (availableCapacity >= currentDemand) {
-                LOG.debug("Provisioning completed");
-                return NodeProvisioner.StrategyDecision.PROVISIONING_COMPLETED;
-            } else {
-                LOG.debug("Provisioning not complete, consulting remaining strategies");
-                return NodeProvisioner.StrategyDecision.CONSULT_REMAINING_STRATEGIES;
-            }
+            LOG.debug("Provisioning not complete, trying next YAD Cloud");
         }
 
         LOG.debug("Provisioning not complete, consulting remaining strategies");
