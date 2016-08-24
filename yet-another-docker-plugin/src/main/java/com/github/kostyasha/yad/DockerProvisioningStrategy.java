@@ -2,6 +2,7 @@ package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.model.Label;
 import hudson.model.LoadStatistics.LoadStatisticsSnapshot;
 import hudson.slaves.NodeProvisioner;
@@ -13,15 +14,36 @@ import javax.annotation.Nonnull;
 import java.util.Collection;
 
 import static com.github.kostyasha.yad.utils.DockerFunctions.getDockerClouds;
+import static hudson.ExtensionList.lookup;
+import static java.util.Objects.isNull;
 
 /**
  * Idea picked from mansion-cloud @stephenc
  *
  * @author Kanstantsin Shautsou
  */
-@Extension
+@Extension(ordinal = 10)
 public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
     private static final Logger LOG = LoggerFactory.getLogger(DockerProvisioningStrategy.class);
+
+    /**
+     * For groovy.
+     */
+    public void setEnabled(boolean enabled) {
+        final ExtensionList<NodeProvisioner.Strategy> strategies = lookup(NodeProvisioner.Strategy.class);
+        DockerProvisioningStrategy strategy = strategies.get(DockerProvisioningStrategy.class);
+
+        if (isNull(strategy)) {
+            LOG.debug("YAD strategy was null, creating new.");
+            strategy = new DockerProvisioningStrategy();
+        } else {
+            LOG.debug("Removing YAD strategy.");
+            strategies.remove(strategy);
+        }
+
+        LOG.debug("Inserting YAD strategy at position 0");
+        strategies.add(0, strategy);
+    }
 
     /**
      * Do asap provisioning for OnceRetention with one executor.
@@ -39,6 +61,7 @@ public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
             if (template != null &&
                     template.getRetentionStrategy() instanceof DockerOnceRetentionStrategy &&
                     template.getNumExecutors() == 1) {
+                LOG.info("Skipping unknown mix of YAD configuration for {}", template);
                 return NodeProvisioner.StrategyDecision.CONSULT_REMAINING_STRATEGIES;
             }
 
