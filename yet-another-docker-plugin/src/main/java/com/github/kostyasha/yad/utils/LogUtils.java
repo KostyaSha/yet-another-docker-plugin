@@ -1,6 +1,6 @@
 package com.github.kostyasha.yad.utils;
 
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.ResponseItem;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.ResponseItem;
 import hudson.model.TaskListener;
 
 /**

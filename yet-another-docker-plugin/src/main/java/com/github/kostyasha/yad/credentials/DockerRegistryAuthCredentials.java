@@ -2,7 +2,7 @@ package com.github.kostyasha.yad.credentials;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.AuthConfig;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfig;
 import hudson.Extension;
 import hudson.Util;
 import org.kohsuke.stapler.DataBoundConstructor;

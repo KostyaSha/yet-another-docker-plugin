@@ -1,8 +1,8 @@
 package com.github.kostyasha.it.other;
 
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.Frame;
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.core.command.LogContainerResultCallback;
-import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.LogContainerResultCallback;
+import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 
 import static java.nio.charset.Charset.defaultCharset;
 

@@ -1,6 +1,6 @@
 package com.github.kostyasha.yad;
 
-import com.github.kostyasha.yad.docker_java.com.google.common.base.MoreObjects;
+import com.github.kostyasha.yad_docker_java.com.google.common.base.MoreObjects;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.model.Executor;
 import hudson.model.Queue;
