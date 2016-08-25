@@ -2,6 +2,9 @@
 
 ## Next
 
+## 0.1.0-rc22
+ - Fix provisioning strategy.
+
 ## 0.1.0-rc21
  - More logging for ssh launcher.
 
