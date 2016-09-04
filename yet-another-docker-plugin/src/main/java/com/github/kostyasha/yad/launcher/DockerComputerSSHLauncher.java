@@ -3,6 +3,7 @@ package com.github.kostyasha.yad.launcher;
 import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
+import com.github.kostyasha.yad.utils.HostAndPortChecker;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.ExposedPort;
@@ -12,15 +13,13 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Port
 import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Preconditions;
 import com.github.kostyasha.yad_docker_java.com.google.common.net.HostAndPort;
-import com.github.kostyasha.yad.utils.HostAndPortChecker;
+import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHConnector;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.slaves.ComputerLauncher;
 import hudson.util.ListBoxModel;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
@@ -144,14 +143,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         return HostAndPort.fromParts(host, port);
     }
 
-    @Override
-    public Descriptor<ComputerLauncher> getDescriptor() {
-        return DESCRIPTOR;
-    }
-
-    @Restricted(NoExternalUse.class)
-    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-
+    @Extension
     public static final class DescriptorImpl extends Descriptor<ComputerLauncher> {
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {

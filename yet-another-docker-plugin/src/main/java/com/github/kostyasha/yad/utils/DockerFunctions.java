@@ -1,22 +1,23 @@
 package com.github.kostyasha.yad.utils;
 
 import com.github.kostyasha.yad.DockerCloud;
-import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.launcher.DockerComputerSSHLauncher;
 import com.github.kostyasha.yad.strategy.DockerCloudRetentionStrategy;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
+import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
 import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.RetentionStrategy;
-import jenkins.model.Jenkins;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static jenkins.model.Jenkins.getActiveInstance;
 
 /**
  * UI helper class.
@@ -30,8 +31,8 @@ public class DockerFunctions {
     public static List<Descriptor<ComputerLauncher>> getDockerComputerLauncherDescriptors() {
         List<Descriptor<ComputerLauncher>> launchers = new ArrayList<>();
 
-        launchers.add(DockerComputerSSHLauncher.DESCRIPTOR);
-        launchers.add(DockerComputerJNLPLauncher.DESCRIPTOR);
+        launchers.add(getActiveInstance().getDescriptor(DockerComputerSSHLauncher.class));
+        launchers.add(getActiveInstance().getDescriptor(DockerComputerJNLPLauncher.class));
 
         return launchers;
     }
@@ -39,8 +40,8 @@ public class DockerFunctions {
     public static List<Descriptor<RetentionStrategy<?>>> getDockerRetentionStrategyDescriptors() {
         List<Descriptor<RetentionStrategy<?>>> strategies = new ArrayList<>();
 
-        strategies.add(DockerOnceRetentionStrategy.DESCRIPTOR);
-        strategies.add(DockerCloudRetentionStrategy.DESCRIPTOR);
+        strategies.add(getActiveInstance().getDescriptor(DockerOnceRetentionStrategy.class));
+        strategies.add(getActiveInstance().getDescriptor(DockerCloudRetentionStrategy.class));
         strategies.addAll(RetentionStrategy.all());
 
         return strategies;
@@ -54,7 +55,7 @@ public class DockerFunctions {
      */
     @Nonnull
     public static synchronized List<DockerCloud> getDockerClouds() {
-        return Jenkins.getActiveInstance().clouds.stream()
+        return getActiveInstance().clouds.stream()
                 .filter(Objects::nonNull)
                 .filter(DockerCloud.class::isInstance)
                 .map(cloud -> (DockerCloud) cloud)
