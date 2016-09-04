@@ -12,6 +12,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
@@ -23,8 +24,6 @@ import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
@@ -274,14 +273,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                 .toHashCode();
     }
 
-    @Override
-    public Descriptor<ComputerLauncher> getDescriptor() {
-        return DESCRIPTOR;
-    }
-
-    @Restricted(NoExternalUse.class)
-    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-
+    @Extension
     public static class DescriptorImpl extends Descriptor<ComputerLauncher> {
         public Class getJNLPLauncher() {
             return JNLPLauncher.class;
