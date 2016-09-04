@@ -2,6 +2,9 @@
 
 ## Next
 
+## 0.1.0-rc23
+ - Don't print NPE warn in system log. On < 2.12 core will show strategies in global settings.
+
 ## 0.1.0-rc22
  - Fix provisioning strategy.
 
