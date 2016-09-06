@@ -33,7 +33,6 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         cloudId = dockerSlave.getCloudId();
     }
 
-
     @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "no null on getters")
     @CheckForNull
     public DockerCloud getCloud() {

@@ -128,6 +128,15 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
         this.labelSet = Label.parse(labelString);
     }
 
+    public String getRemoteFsMapping() {
+        return remoteFsMapping;
+    }
+
+    @DataBoundSetter
+    public void setRemoteFsMapping(String remoteFsMapping) {
+        this.remoteFsMapping = remoteFsMapping;
+    }
+
     @DataBoundSetter
     public void setMode(Node.Mode mode) {
         this.mode = mode;

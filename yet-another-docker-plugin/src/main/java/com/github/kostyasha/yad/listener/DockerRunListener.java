@@ -1,6 +1,8 @@
 package com.github.kostyasha.yad.listener;
 
+import com.github.kostyasha.yad.DockerAction;
 import com.github.kostyasha.yad.DockerComputer;
+import com.github.kostyasha.yad.DockerSlave;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Executor;
@@ -46,5 +48,12 @@ public class DockerRunListener extends RunListener<Run<?, ?>> {
         } catch (IOException | ParseException e) {
             LOG.error("Can't add fingerprint to run {}", run, e);
         }
+
+        DockerAction dockerAction = new DockerAction();
+        DockerSlave dockerSlave = dockerComputer.getNode();
+        if (dockerSlave != null) {
+            dockerAction.setRemoteFSMapping(dockerSlave.getDockerSlaveTemplate().getRemoteFsMapping());
+        }
+        run.addAction(dockerAction);
     }
 }
