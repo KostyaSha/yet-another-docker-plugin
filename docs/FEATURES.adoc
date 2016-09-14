@@ -1,6 +1,9 @@
 == Jenkins Cloud Slaves provisioning
 
 * TLS (RSA,ECDSA) based credentials connection to docker daemon.
+* Connection to docker daemon:
+** tcp or socket (socket works only for JERSEY impl)
+** JERSEY or NETTY implementations (provided by docker-java)
 * Slave image pulling strategies.
 * Exact configuration for container lifecycle:
 ** pull
