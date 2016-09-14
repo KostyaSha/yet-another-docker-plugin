@@ -6,16 +6,19 @@ import hudson.model.Executor;
 import hudson.model.Queue;
 import hudson.slaves.AbstractCloudComputer;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
+import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Represents remote (running) container
  */
-public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
+public class DockerComputer extends AbstractCloudComputer<DockerSlave> implements TrackedItem {
     private static final Logger LOG = LoggerFactory.getLogger(DockerComputer.class);
 
     /**
@@ -27,12 +30,14 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
 
     protected String displayName;
 
+    protected ProvisioningActivity.Id provisioningId;
+
     public DockerComputer(DockerSlave dockerSlave) {
         super(dockerSlave);
         containerId = dockerSlave.getContainerId();
         cloudId = dockerSlave.getCloudId();
+        provisioningId = dockerSlave.getId();
     }
-
 
     @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "no null on getters")
     @CheckForNull
@@ -89,5 +94,11 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
                 .add("name", super.getName())
                 .add("slave", getNode())
                 .toString();
+    }
+
+    @Nullable
+    @Override
+    public ProvisioningActivity.Id getId() {
+        return provisioningId;
     }
 }
