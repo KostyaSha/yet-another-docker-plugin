@@ -215,10 +215,10 @@
                             <pattern>de.gesellix.socketfactory.unix</pattern>
                             <shadedPattern>${shade-prefix}.de.gesellix.socketfactory.unix</shadedPattern>
                         </relocation>
-                        <relocation>
-                            <pattern>org.newsclub</pattern>
-                            <shadedPattern>${shade-prefix}.org.newsclub</shadedPattern>
-                        </relocation>
+                        <!--<relocation>-->
+                            <!--<pattern>org.newsclub</pattern>-->
+                            <!--<shadedPattern>${shade-prefix}.org.newsclub</shadedPattern>-->
+                        <!--</relocation>-->
                         <relocation>
                             <pattern>socketfactory.spi</pattern>
                             <shadedPattern>${shade-prefix}.socketfactory.spi</shadedPattern>
