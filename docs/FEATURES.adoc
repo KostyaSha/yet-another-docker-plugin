@@ -15,5 +15,6 @@
 ** JNLP (requires working access from slave to master)
 ** SSH (requires working access from master to slave)
 * Docker fingerprints badges
-* Full shading of docker-java library (doesn't conflict with docker-traceability-plugin or any other plugin using docker-java)
+* Full shading of docker-java library (doesn't conflict with docker-traceability-plugin or any other plugin
+using docker-java). (May have issues because of JNI since 0.1.0-rc24.)
 * Faster node provisioning without delay
