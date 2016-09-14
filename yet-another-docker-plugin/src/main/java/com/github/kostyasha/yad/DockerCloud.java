@@ -24,6 +24,7 @@ import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
+import org.jenkinsci.plugins.cloudstats.TrackedPlannedNode;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
@@ -115,27 +116,29 @@ public class DockerCloud extends AbstractCloud implements Serializable {
                 continue;
             }
 
-            final ProvisioningActivity.Id id = new ProvisioningActivity.Id(getDisplayName(), t.getId());
+            final ProvisioningActivity.Id id = new ProvisioningActivity.Id(getDisplayName(),
+                    t.getDockerContainerLifecycle().getImage());
 
-            r.add(new PlannedNode(
-                    t.getDockerContainerLifecycle().getImage(),
-                    Computer.threadPoolForRemoting.submit(() -> {
-                        try {
-                            final DockerSlave dockerSlave = provisionWithWait(t, id);
-                            get().onStarted(id);
-                            return dockerSlave;
-                        } catch (Exception ex) {
-                            LOG.error("Error in provisioning; template='{}' for cloud='{}'",
-                                    t, getDisplayName(), ex);
-                            get().onFailure(id, ex);
-                            throw Throwables.propagate(ex);
-                        } finally {
-                            decrementAmiSlaveProvision(t);
-                        }
-                    }),
-                    t.getNumExecutors())
+            r.add(new TrackedPlannedNode(
+                            id,
+                            t.getNumExecutors(),
+                            Computer.threadPoolForRemoting.submit(() -> {
+                                get().onStarted(id);
+                                try {
+                                    final DockerSlave dockerSlave = provisionWithWait(t, id);
+                                    get().onComplete(id, dockerSlave); //rename
+                                    return dockerSlave;
+                                } catch (Exception ex) {
+                                    LOG.error("Error in provisioning; template='{}' for cloud='{}'",
+                                            t, getDisplayName(), ex);
+                                    get().onFailure(id, ex);
+                                    throw Throwables.propagate(ex);
+                                } finally {
+                                    decrementAmiSlaveProvision(t);
+                                }
+                            })
+                    )
             );
-
             excessWorkload -= t.getNumExecutors();
         }
 
@@ -195,7 +198,6 @@ public class DockerCloud extends AbstractCloud implements Serializable {
      */
     private DockerSlave provisionWithWait(DockerSlaveTemplate template, ProvisioningActivity.Id id)
             throws IOException, Descriptor.FormException {
-        get().onStarted(id);
         final DockerContainerLifecycle dockerContainerLifecycle = template.getDockerContainerLifecycle();
         final String imageId = dockerContainerLifecycle.getImage();
 
