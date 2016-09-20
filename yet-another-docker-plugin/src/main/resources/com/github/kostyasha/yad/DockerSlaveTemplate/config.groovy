@@ -2,6 +2,7 @@ package com.github.kostyasha.yad.DockerSlaveTemplate
 
 import com.github.kostyasha.yad.DockerSlaveTemplate
 import com.github.kostyasha.yad.utils.DockerFunctions
+import hudson.Functions
 import hudson.model.Slave
 import lib.FormTagLib
 
@@ -44,7 +45,9 @@ f.section(title: _("Jenkins Slave Config")) {
     f.advanced(title: _("Experimental Options"), align: "left") {
         f.dropdownList(name: "retentionStrategy", title: _("Availability"),
                 help: "/help/system-config/master-slave/availability.html") {
-            DockerFunctions.dockerRetentionStrategyDescriptors.each { sd ->
+            // all possible descriptors.
+            // TODO switch to hudson.model.Slave.SlaveDescriptor#retentionStrategyDescriptors after 2.12
+            Functions.getRetentionStrategyDescriptors().each { sd ->
                 if (sd != null) {
                     def prefix = sd.displayName.equals("Docker Once Retention Strategy") ? "" : "Experimental: "
 

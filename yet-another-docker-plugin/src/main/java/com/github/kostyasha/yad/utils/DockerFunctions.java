@@ -28,6 +28,9 @@ public class DockerFunctions {
     private DockerFunctions() {
     }
 
+    /**
+     * Only this plugin specific launchers.
+     */
     public static List<Descriptor<ComputerLauncher>> getDockerComputerLauncherDescriptors() {
         List<Descriptor<ComputerLauncher>> launchers = new ArrayList<>();
 
@@ -37,12 +40,14 @@ public class DockerFunctions {
         return launchers;
     }
 
+    /**
+     * Only this plugin specific strategies.
+     */
     public static List<Descriptor<RetentionStrategy<?>>> getDockerRetentionStrategyDescriptors() {
         List<Descriptor<RetentionStrategy<?>>> strategies = new ArrayList<>();
 
         strategies.add(getActiveInstance().getDescriptor(DockerOnceRetentionStrategy.class));
         strategies.add(getActiveInstance().getDescriptor(DockerCloudRetentionStrategy.class));
-        strategies.addAll(RetentionStrategy.all());
 
         return strategies;
     }

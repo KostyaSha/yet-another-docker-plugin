@@ -19,6 +19,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.GuardedBy;
 import java.io.IOException;
 import java.util.concurrent.Future;
 
@@ -53,6 +54,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
     }
 
     @Override
+    @GuardedBy("hudson.model.Queue.lock")
     public long check(final AbstractCloudComputer acc) {
         // When the slave is idle we should disable accepting tasks and check to see if it is already trying to
         // terminate. If it's not already trying to terminate then lets terminate manually.
