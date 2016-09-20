@@ -19,7 +19,7 @@
     <myViewsTabBar class="hudson.views.DefaultMyViewsTabBar"/>
     <clouds>
         <com.github.kostyasha.yad.DockerCloud plugin="yet-another-docker-plugin@0.1.0-SNAPSHOT">
-            <name>dockerCloud</name>
+            <name>ff</name>
             <provisionedImages/>
             <templates>
                 <com.github.kostyasha.yad.DockerSlaveTemplate>
@@ -40,8 +40,7 @@
                     <mode>EXCLUSIVE</mode>
                     <retentionStrategy class="com.github.kostyasha.yad.strategy.DockerCloudRetentionStrategy">
                         <idleMinutes>30</idleMinutes>
-                        <idleMinutes defined-in="com.github.kostyasha.yad.strategy.DockerCloudRetentionStrategy">30
-                        </idleMinutes>
+                        <idleMinutes defined-in="com.github.kostyasha.yad.strategy.DockerCloudRetentionStrategy">30</idleMinutes>
                     </retentionStrategy>
                     <numExecutors>1</numExecutors>
                     <dockerContainerLifecycle>
@@ -53,23 +52,19 @@
                         <createContainer>
                             <command></command>
                             <hostname></hostname>
-                            <dnsHosts class="java.util.Collections$UnmodifiableRandomAccessList"
-                                      resolves-to="java.util.Collections$UnmodifiableList">
+                            <dnsHosts class="java.util.Collections$UnmodifiableRandomAccessList" resolves-to="java.util.Collections$UnmodifiableList">
                                 <c class="list"/>
                                 <list reference="../c"/>
                             </dnsHosts>
-                            <volumes class="java.util.Collections$UnmodifiableRandomAccessList"
-                                     resolves-to="java.util.Collections$UnmodifiableList">
+                            <volumes class="java.util.Collections$UnmodifiableRandomAccessList" resolves-to="java.util.Collections$UnmodifiableList">
                                 <c class="list"/>
                                 <list reference="../c"/>
                             </volumes>
-                            <volumesFrom class="java.util.Collections$UnmodifiableRandomAccessList"
-                                         resolves-to="java.util.Collections$UnmodifiableList">
+                            <volumesFrom class="java.util.Collections$UnmodifiableRandomAccessList" resolves-to="java.util.Collections$UnmodifiableList">
                                 <c class="list"/>
                                 <list reference="../c"/>
                             </volumesFrom>
-                            <environment class="java.util.Collections$UnmodifiableRandomAccessList"
-                                         resolves-to="java.util.Collections$UnmodifiableList">
+                            <environment class="java.util.Collections$UnmodifiableRandomAccessList" resolves-to="java.util.Collections$UnmodifiableList">
                                 <c class="list"/>
                                 <list reference="../c"/>
                             </environment>
@@ -78,13 +73,11 @@
                             <memoryLimit>0</memoryLimit>
                             <privileged>false</privileged>
                             <tty>false</tty>
-                            <extraHosts class="java.util.Collections$UnmodifiableRandomAccessList"
-                                        resolves-to="java.util.Collections$UnmodifiableList">
+                            <extraHosts class="java.util.Collections$UnmodifiableRandomAccessList" resolves-to="java.util.Collections$UnmodifiableList">
                                 <c class="list"/>
                                 <list reference="../c"/>
                             </extraHosts>
-                            <devices class="java.util.Collections$UnmodifiableRandomAccessList"
-                                     resolves-to="java.util.Collections$UnmodifiableList">
+                            <devices class="java.util.Collections$UnmodifiableRandomAccessList" resolves-to="java.util.Collections$UnmodifiableList">
                                 <c class="list"/>
                                 <list reference="../c"/>
                             </devices>

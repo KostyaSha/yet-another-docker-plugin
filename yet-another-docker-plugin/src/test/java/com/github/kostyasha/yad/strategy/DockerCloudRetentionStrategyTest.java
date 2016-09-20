@@ -24,13 +24,16 @@ public class DockerCloudRetentionStrategyTest {
     @LocalData
     @Test
     public void testConfig() {
-        final Cloud cloud = jenkinsRule.getInstance().getCloud("dockerCloud");
+        final Cloud cloud = jenkinsRule.getInstance().getCloud("ff");
         assertThat(cloud, instanceOf(DockerCloud.class));
+
         final DockerCloud dockerCloud = (DockerCloud) cloud;
         final DockerSlaveTemplate template = dockerCloud.getTemplate("image");
         assertThat(template, notNullValue());
+
         final RetentionStrategy retentionStrategy = template.getRetentionStrategy();
         assertThat(retentionStrategy, instanceOf(DockerCloudRetentionStrategy.class));
+
         final DockerCloudRetentionStrategy strategy = (DockerCloudRetentionStrategy) retentionStrategy;
         assertThat(strategy.getIdleMinutes(), is(30));
     }
