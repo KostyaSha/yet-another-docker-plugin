@@ -1,5 +1,6 @@
 package com.github.kostyasha.yad;
 
+import com.github.kostyasha.yad.strategy.DockerCloudRetentionStrategy;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import hudson.Extension;
 import hudson.ExtensionList;
@@ -7,6 +8,7 @@ import hudson.model.Label;
 import hudson.model.LoadStatistics.LoadStatisticsSnapshot;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.NodeProvisioner.PlannedNode;
+import hudson.slaves.RetentionStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,11 +60,7 @@ public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
 
         for (DockerCloud dockerCloud : getDockerClouds()) {
             for (DockerSlaveTemplate template : dockerCloud.getTemplates(label)) {
-                // exclude unknown mix of configuration
-                if (template == null ||
-                        !(template.getRetentionStrategy() instanceof DockerOnceRetentionStrategy) ||
-                        template.getNumExecutors() != 1) {
-                    LOG.info("Skipping unknown mix of YAD configuration for {}", template);
+                if (notAllowedStrategy(template)) {
                     continue;
                 }
 
@@ -80,6 +78,7 @@ public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
                     LOG.debug("Planned {} new nodes", plannedNodes.size());
 
                     strategyState.recordPendingLaunches(plannedNodes);
+                    // FIXME calculate executors number?
                     availableCapacity += plannedNodes.size();
                     LOG.debug("After '{}' provisioning, available capacity={}, currentDemand={}",
                             dockerCloud, availableCapacity, currentDemand);
@@ -98,5 +97,40 @@ public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
 
         LOG.debug("Provisioning not complete, consulting remaining strategies");
         return NodeProvisioner.StrategyDecision.CONSULT_REMAINING_STRATEGIES;
+    }
+
+    /**
+     * Exclude unknown mix of configuration.
+     */
+    private static boolean notAllowedStrategy(DockerSlaveTemplate template) {
+        if (isNull(template)) {
+            LOG.debug("Skipping DockerProvisioningStrategy because: template is null");
+            return true;
+        }
+
+        final RetentionStrategy retentionStrategy = template.getRetentionStrategy();
+        if (isNull(retentionStrategy)) {
+            LOG.debug("Skipping DockerProvisioningStrategy because: strategy is null for {}", template);
+        }
+
+        if (retentionStrategy instanceof DockerOnceRetentionStrategy) {
+            if (template.getNumExecutors() == 1) {
+                LOG.debug("Applying faster provisioning for single executor template {}", template);
+                return false;
+            } else {
+                LOG.debug("Skipping DockerProvisioningStrategy because: numExecutors is {} for {}",
+                        template.getNumExecutors(), template);
+                return true;
+            }
+        }
+
+        if (retentionStrategy instanceof RetentionStrategy.Demand) {
+            LOG.debug("Applying faster provisioning for Demand strategy for template {}", template);
+            return false;
+        }
+
+        // forbid by default
+        LOG.trace("Skipping YAD provisioning for unknown mix of configuration for {}", template);
+        return true;
     }
 }
