@@ -1,6 +1,5 @@
 package com.github.kostyasha.yad;
 
-import com.github.kostyasha.yad.strategy.DockerCloudRetentionStrategy;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import hudson.Extension;
 import hudson.ExtensionList;
