@@ -9,7 +9,6 @@ import com.github.kostyasha.yad.commons.DockerRemoveContainer;
 import com.github.kostyasha.yad.commons.DockerStopContainer;
 import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Link;
 import hudson.model.Node;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
 import hudson.slaves.JNLPLauncher;
@@ -23,7 +22,6 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import java.util.ArrayList;
 
-import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
