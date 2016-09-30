@@ -82,4 +82,7 @@ f.advanced(title: _("Container settings"), align: "left") {
         f.textbox()
     }
 
+    f.entry(title: _("Links"), field: "linksString") {
+        f.expandableTextbox()
+    }
 }

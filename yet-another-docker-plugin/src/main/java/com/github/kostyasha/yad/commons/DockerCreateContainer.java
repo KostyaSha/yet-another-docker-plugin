@@ -7,6 +7,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Bind;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Device;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Link;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Volume;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.VolumesFrom;
@@ -122,6 +123,9 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
     @CheckForNull
     private String cpusetMems;
+
+    @CheckForNull
+    private List<String> links;
 
     @DataBoundConstructor
     public DockerCreateContainer() {
@@ -406,6 +410,25 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         this.cpusetMems = cpusetMems;
     }
 
+    // links
+    @Nonnull
+    public List<String> getLinks() {
+        return isNull(links) ? Collections.EMPTY_LIST : links;
+    }
+
+    public void setLinks(List<String> links) {
+        this.links = links;
+    }
+
+    public String getLinksString() {
+        return joinToStr(getLinks());
+    }
+
+    @DataBoundSetter
+    public void setLinksString(String devicesString) {
+        setLinks(splitAndFilterEmpty(devicesString));
+    }
+
     /**
      * Fills user specified values
      *
@@ -511,6 +534,12 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
         if (StringUtils.isNotBlank(getCpusetMems())) {
             containerConfig.withCpusetMems(getCpusetMems());
+        }
+
+        if (!getLinks().isEmpty()) {
+            containerConfig.withLinks(
+                    getLinks().stream().map(Link::parse).collect(Collectors.toList())
+            );
         }
 
         return containerConfig;
