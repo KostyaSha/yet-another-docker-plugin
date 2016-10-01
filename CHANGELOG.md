@@ -2,9 +2,11 @@
 
 ## Next
 
+## 0.1.0-rc26
+ - Add links to create options
+
 ## 0.1.0-rc25
  - jucies is optional dep.
- - Add links to create options
  - Fix idle timeout persistence.
 
 ## 0.1.0-rc24
