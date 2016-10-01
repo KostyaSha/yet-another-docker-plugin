@@ -2,6 +2,11 @@
 
 ## Next
 
+## 0.1.0-rc25
+ - jucies is optional dep.
+ - Add links to create options
+ - Fix idle timeout persistence.
+
 ## 0.1.0-rc24
  - Update to docker-java 3.0.6. (Support unix socket for JERSEY impl).
 
