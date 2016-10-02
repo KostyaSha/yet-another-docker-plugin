@@ -1,6 +1,7 @@
 package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
+import com.google.common.annotations.VisibleForTesting;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.model.Label;
@@ -101,7 +102,8 @@ public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
     /**
      * Exclude unknown mix of configuration.
      */
-    private static boolean notAllowedStrategy(DockerSlaveTemplate template) {
+    @VisibleForTesting
+    protected static boolean notAllowedStrategy(DockerSlaveTemplate template) {
         if (isNull(template)) {
             LOG.debug("Skipping DockerProvisioningStrategy because: template is null");
             return true;
