@@ -120,6 +120,13 @@
                     <!--</archive>-->
                     <!--<maskClasses>com.google.common.</maskClasses>-->
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate-taglib-interface</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>

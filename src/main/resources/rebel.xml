@@ -2,8 +2,8 @@
 <application generated-by="intellij" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.zeroturnaround.com" xsi:schemaLocation="http://www.zeroturnaround.com http://update.zeroturnaround.com/jrebel/rebel-2_1.xsd">
 
 	<classpath>
-		<dir name="/Users/integer/src/github/yet-another-docker-plugin/yet-another-docker-plugin/target/classes"/>
-		<dir name="/Users/integer/src/github/yet-another-docker-plugin/yet-another-docker-plugin/src/main/resources"/>
+		<dir name="/Users/integer/src/github/yet-another-docker-plugin/target/classes">
+		</dir>
 	</classpath>
 
 </application>

@@ -636,6 +636,19 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             return FormValidation.ok();
         }
 
+        public FormValidation doCheckLinksString(@QueryParameter String linksString) {
+            final List<String> links = splitAndFilterEmpty(linksString);
+            for (String linkString : links) {
+                try {
+                    Link.parse(linkString);
+                } catch (Exception ex) {
+                    return FormValidation.error("Bad link configuration", ex);
+                }
+            }
+
+            return FormValidation.ok();
+        }
+
         public static ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
             return new SSHUserListBoxModel().withMatching(
                     SSHAuthenticator.matcher(Connection.class),
