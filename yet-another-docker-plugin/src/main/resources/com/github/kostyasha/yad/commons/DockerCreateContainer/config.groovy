@@ -8,8 +8,9 @@ def f = namespace(FormTagLib);
 if (instance == null) {
     instance = new DockerCreateContainer()
 }
-
-f.advanced(title: _("Container settings"), align: "left") {
+// until https://issues.jenkins-ci.org/browse/JENKINS-26407
+// all expandableTextboxes are textarea
+f.advanced(title: _("Create Container settings"), align: "left") {
     f.entry(title: _("Docker Command"), field: "command") {
         f.textbox()
     }
@@ -23,15 +24,15 @@ f.advanced(title: _("Container settings"), align: "left") {
     }
 
     f.entry(title: _("Volumes"), field: "volumesString") {
-        f.expandableTextbox()
+        f.textarea()
     }
 
     f.entry(title: _("Volumes From"), field: "volumesFromString") {
-        f.expandableTextbox()
+        f.textarea()
     }
 
     f.entry(title: _("Environment"), field: "environmentString") {
-        f.expandableTextbox()
+        f.textarea()
     }
 
     f.entry(title: _("Port bindings"), field: "bindPorts") {
@@ -63,7 +64,7 @@ f.advanced(title: _("Container settings"), align: "left") {
     }
 
     f.entry(title: _("Extra Hosts"), field: "extraHostsString") {
-        f.expandableTextbox()
+        f.textarea()
     }
 
     f.entry(title: _("Network Mode"), field: "networkMode") {
@@ -71,7 +72,7 @@ f.advanced(title: _("Container settings"), align: "left") {
     }
 
     f.entry(title: _("Devices"), field: "devicesString") {
-        f.expandableTextbox()
+        f.textarea()
     }
 
     f.entry(title: _("Cpuset constraint: CPUs"), field: "cpusetCpus") {
@@ -83,6 +84,6 @@ f.advanced(title: _("Container settings"), align: "left") {
     }
 
     f.entry(title: _("Links"), field: "linksString") {
-        f.expandableTextbox()
+        f.textarea()
     }
 }

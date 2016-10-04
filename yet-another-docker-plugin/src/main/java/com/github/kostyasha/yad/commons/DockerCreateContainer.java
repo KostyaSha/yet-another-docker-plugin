@@ -616,7 +616,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             final List<String> extraHosts = splitAndFilterEmpty(extraHostsString);
             for (String extraHost : extraHosts) {
                 if (extraHost.trim().split(":").length < 2) {
-                    return FormValidation.error("Wrong extraHost {}", extraHost);
+                    return FormValidation.error("Wrong extraHost: " + extraHost);
                 }
             }
 
@@ -629,7 +629,20 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
                 try {
                     Device.parse(deviceString);
                 } catch (Exception ex) {
-                    return FormValidation.error("Bad devices configuration", ex);
+                    return FormValidation.error("Bad device configuration: " + deviceString, ex);
+                }
+            }
+
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckLinksString(@QueryParameter String linksString) {
+            final List<String> links = splitAndFilterEmpty(linksString);
+            for (String linkString : links) {
+                try {
+                    Link.parse(linkString);
+                } catch (Exception ex) {
+                    return FormValidation.error("Bad link configuration: " + linkString, ex);
                 }
             }
 
