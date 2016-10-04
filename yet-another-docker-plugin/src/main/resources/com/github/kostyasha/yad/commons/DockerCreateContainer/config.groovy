@@ -2,14 +2,16 @@ package com.github.kostyasha.yad.commons.DockerCreateContainer
 
 import lib.FormTagLib
 import com.github.kostyasha.yad.commons.DockerCreateContainer
+import lib.YadTagLib
 
 def f = namespace(FormTagLib);
+def yad = namespace(YadTagLib)
 
 if (instance == null) {
     instance = new DockerCreateContainer()
 }
 
-f.advanced(title: _("Container settings"), align: "left") {
+f.advanced(title: _("Create Container settings"), align: "left") {
     f.entry(title: _("Docker Command"), field: "command") {
         f.textbox()
     }
@@ -83,6 +85,11 @@ f.advanced(title: _("Container settings"), align: "left") {
     }
 
     f.entry(title: _("Links"), field: "linksString") {
-        f.expandableTextbox()
+//        f.textarea()
+        yad.expandableTextbox()
+////                checkUrl: "${rootURL}/com.github.kostyasha.yad.commons.DockerCreateContainer/checkLinksString?linksString=" +
+////                escape('Load rules are mandatory') +
+////                ";value='+escape(this.value)"
+//        )
     }
 }

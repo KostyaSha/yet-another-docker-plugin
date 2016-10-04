@@ -1,0 +1,57 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core"
+         xmlns:d="jelly:define"
+         xmlns:f="/lib/form"
+         xmlns:st="jelly:stapler"
+         xmlns:m="jelly:hudson.util.jelly.MorphTagLibrary">
+    <!--<st:once>-->
+    <!--<script type="text/javascript" src="${rootURL}/plugin/yet-another-docker/js/yad.js"/>-->
+    <!--</st:once>-->
+    <st:adjunct includes="lib.yad.expandableTextbox.expandableTextbox"/>
+
+    <f:prepareDatabinding/>
+    <j:set var="value" value="${attrs.value?:instance[attrs.field]}"/>
+
+    <j:choose>
+        <j:when test="${h.isMultiline(value)}">
+            <!-- multiline text area to begin with -->
+            <!--BLd<br/>-->
+            <!--${attrs}<br/>-->
+            <!--BLAd<br/>-->
+            <f:textarea checkUrl="${attrs.checkUrl}" name='${attrs.name}' value="${value}" field="${attrs.field}"/>
+        </j:when>
+        <j:otherwise>
+            <!--BLAAA<br/>-->
+            <!--${attrs}<br/>-->
+            <!--BLA<br/>-->
+            <!-- single line textbox with expand button -->
+            <table border="0" style="width:100%" cellspacing="0" cellpadding="0">
+                <tr>
+                    <td width="100%">
+                        <j:set var="name" value="${attrs.name ?: '_.'+attrs.field}"/>
+                        <j:set var="default" value="${attrs.default ?: ''}"/>
+                        <!--<m:input class="setting-input"-->
+                        <m:input class="setting-input ${attrs.checkUrl != null ? 'validated':''} ${attrs.clazz}"
+                                 type="text"
+                                 name="${name}"
+                                 value="${value}"
+                                 id="textarea.${name}"
+                                 ATTRIBUTES="${attrs}" EXCEPT="field clazz"/>
+                        <j:if test="${customizedFields != null and attrs.field != null and value != default}">
+                            <j:mute>${customizedFields.add(name)}</j:mute>
+                        </j:if>
+                    </td>
+                    <td width="1">
+                        <input type="button" value="&#x25BC;" onclick="expandTextAreaYAD(this,'textarea.${name}')"
+                               tooltip="${%tooltip}"/>
+                    </td>
+                </tr>
+                <tr class="validation-error-area">
+                    <td colspan="2"/>
+                    <td/>
+                    <td/>
+                </tr>
+            </table>
+        </j:otherwise>
+    </j:choose>
+</j:jelly>
