@@ -2,6 +2,10 @@
 
 ## Next
 
+## 0.1.0-rc27
+ - [fix #83] Don't exclude Demand strategy. 
+ - Form validation for Links
+
 ## 0.1.0-rc26
  - Add links to create options
 
