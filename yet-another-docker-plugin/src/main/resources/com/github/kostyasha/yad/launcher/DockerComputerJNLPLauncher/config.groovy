@@ -21,4 +21,20 @@ f.entry(title: _("Launch timeout"), field: "launchTimeout", default: DEFAULT_TIM
     f.number()
 }
 
-f.property(field: "jnlpLauncher")
+f.entry(title: _("Slave JNLP Options"), field: "jnlpOpts") {
+    f.textbox()
+}
+
+f.entry(title: _("Slave JVM Options"), field: "jvmOpts") {
+    f.textbox()
+}
+
+f.entry(title: _("Slave to connect to specific jenkins URL"), field: "jenkinsUrl") {
+    f.textbox()
+}
+
+f.entry(title: _("Ignore certificate check"), field: "noCertificateCheck", default: false) {
+    f.checkbox()
+}
+
+// f.property(field: "jnlpLauncher")

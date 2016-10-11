@@ -56,11 +56,19 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     /**
      * Configured from UI
      */
-    protected JNLPLauncher jnlpLauncher = new JNLPLauncher();
+    protected transient JNLPLauncher jnlpLauncher;
 
     protected long launchTimeout = DEFAULT_TIMEOUT; //seconds
 
     protected String user = "jenkins";
+
+    protected String jvmOpts;
+
+    protected String jnlpOpts;
+
+    protected String jenkinsUrl;
+
+    protected boolean noCertificateCheck = false;
 
     public DockerComputerJNLPLauncher() {
     }
@@ -72,6 +80,49 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     public JNLPLauncher getJnlpLauncher() {
         return jnlpLauncher;
+    }
+
+    @DataBoundSetter
+    public void setJnlpOpts(String jnlpOpts) {
+        this.jnlpOpts = jnlpOpts;
+    }
+
+    public String getJnlpOpts() {
+        return jnlpOpts;
+    }
+
+    @DataBoundSetter
+    public void setJenkinsUrl(String jenkinsUrl) {
+        this.jenkinsUrl = jenkinsUrl;
+    }
+
+    public String getJenkinsUrl() {
+        return jenkinsUrl;
+    }
+
+    public String getJenkinsUrl(String rootUrl) {
+        if (!isNull(jenkinsUrl) && jenkinsUrl != "") {
+            return jenkinsUrl;
+        }
+        return rootUrl;
+    }
+
+    @DataBoundSetter
+    public void setJvmOpts(String jvmOpts) {
+        this.jvmOpts = jvmOpts;
+    }
+
+    public String getJvmOpts() {
+        return jvmOpts;
+    }
+
+    @DataBoundSetter
+    public void setNoCertificateCheck(boolean noCertificateCheck) {
+        this.noCertificateCheck = noCertificateCheck;
+    }
+
+    public boolean getNoCertificateCheck() {
+        return noCertificateCheck;
     }
 
     @DataBoundSetter
@@ -110,11 +161,12 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         Objects.requireNonNull(dockerComputer);
 
         final String containerId = dockerComputer.getContainerId();
-        final String rootUrl = Jenkins.getActiveInstance().getRootUrl();
+        final String rootUrl = getJenkinsUrl(Jenkins.getActiveInstance().getRootUrl());
 //        Objects.requireNonNull(rootUrl, "Jenkins root url is not specified!");
         if (isNull(rootUrl)) {
             throw new NullPointerException("Jenkins root url is not specified!");
         }
+
         final DockerCloud dockerCloud = dockerComputer.getCloud();
 //        Objects.requireNonNull(dockerCloud, "Cloud not found for computer " + computer.getName());
         if (isNull(dockerCloud)) {
@@ -136,6 +188,9 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                         "JENKINS_HOME=\"" + dockerSlaveTemplate.getRemoteFs() + NL +
                         "COMPUTER_URL=\"" + dockerComputer.getUrl() + NL +
                         "COMPUTER_SECRET=\"" + dockerComputer.getJnlpMac() + NL +
+                        "JAVA_OPTS=\"" + getJvmOpts() + NL +
+                        "JNLP_OPTS=\"" + getJnlpOpts() + NL +
+                        "NO_CERTIFICATE_CHECK=\"" + getNoCertificateCheck() + NL +
                         "EOF" + "\n";
 
         try {
@@ -258,8 +313,10 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
         return new EqualsBuilder()
                 .append(launchTimeout, that.launchTimeout)
-                .append(jnlpLauncher.tunnel, that.jnlpLauncher.tunnel) // no equals
-                .append(jnlpLauncher.vmargs, that.jnlpLauncher.vmargs) // no equals
+                .append(jvmOpts, that.jvmOpts)
+                .append(jnlpOpts, that.jnlpOpts)
+                .append(jenkinsUrl, that.jenkinsUrl)
+                .append(noCertificateCheck, that.noCertificateCheck)
                 .append(user, that.user)
                 .isEquals();
     }
@@ -267,7 +324,10 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
-                .append(jnlpLauncher)
+                .append(jvmOpts)
+                .append(jnlpOpts)
+                .append(jenkinsUrl)
+                .append(noCertificateCheck)
                 .append(launchTimeout)
                 .append(user)
                 .toHashCode();
