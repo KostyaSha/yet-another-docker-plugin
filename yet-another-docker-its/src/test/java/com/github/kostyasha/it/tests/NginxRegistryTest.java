@@ -2,7 +2,6 @@ package com.github.kostyasha.it.tests;
 
 import com.github.kostyasha.it.rule.DockerResource;
 import com.github.kostyasha.it.rule.DockerRule;
-import com.github.kostyasha.it.other.WaitMessageResultCallback;
 import com.github.kostyasha.it.utils.DockerUtils;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
@@ -114,9 +113,9 @@ public class NginxRegistryTest {
         }
     }
 
-    public NginxRegistryResource nginxContainer = new NginxRegistryResource();
+    private NginxRegistryResource nginxContainer = new NginxRegistryResource();
 
-    public class NginxRegistryResource extends DockerResource {
+    private class NginxRegistryResource extends DockerResource {
         private final String DATA_IMAGE_TAG = getClass().getSimpleName().toLowerCase();
         private final String HOST_CONTAINER_NAME = getClass().getCanonicalName() + "_host";
         public static final int CONTAINER_PORT = 80;
@@ -187,9 +186,9 @@ public class NginxRegistryTest {
         }
     }
 
-    public RegistryResource registryResource = new RegistryResource();
+    private RegistryResource registryResource = new RegistryResource();
 
-    public class RegistryResource extends DockerResource {
+    private class RegistryResource extends DockerResource {
         public final String REGISTRY_IMAGE_NAME = "registry:2.3.0";
         public final String HOST_CONTAINER_NAME = getClass().getCanonicalName() + "_host";
         public static final int CONTAINER_PORT = 5000;

@@ -12,6 +12,7 @@ import com.github.kostyasha.yad.DockerContainerLifecycle;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad.commons.DockerPullImage;
 import com.github.kostyasha.yad.commons.DockerRemoveContainer;
+import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PortBinding;
@@ -42,6 +43,7 @@ import java.util.List;
 import static com.github.kostyasha.it.rule.DockerRule.getDockerItDir;
 import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.caller;
 import static com.github.kostyasha.yad.commons.DockerImagePullStrategy.PULL_ALWAYS;
+import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
 import static java.util.Objects.nonNull;
 
 /**
@@ -168,6 +170,8 @@ public class UserNameNginxProxyAuthTest {
             final DockerConnector dockerConnector = new DockerConnector(
                     String.format("tcp://%s:%d", dockerUri.getHost(), CONTAINER_PORT)
             );
+            dockerConnector.setConnectTimeout(50 * 1000);
+            dockerConnector.setConnectorType(JERSEY);
             dockerConnector.setCredentialsId(credentials.getId());
             dockerConnector.testConnection();
 //            final Version version = dockerConnector.getClient().versionCmd().exec();

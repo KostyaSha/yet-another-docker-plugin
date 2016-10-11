@@ -35,7 +35,9 @@ import java.util.Collections;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
+import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 /**
@@ -52,6 +54,7 @@ public class ClientBuilderForConnector {
     private Builder configBuilder = new Builder();
 
     private ConnectorType connectorType = null;
+    private Integer connectTimeout = null;
 
     private ClientBuilderForConnector() {
     }
@@ -84,12 +87,18 @@ public class ClientBuilderForConnector {
         LOG.debug("Building connection to docker host '{}'", connector.getServerUrl());
         withCredentials(connector.getCredentialsId());
         withConnectorType(connector.getConnectorType());
+        withConnectTimeout(connector.getConnectTimeout());
 
         return forServer(connector.getServerUrl(), connector.getApiVersion());
     }
 
     public ClientBuilderForConnector withConnectorType(ConnectorType connectorType) {
         this.connectorType = connectorType;
+        return this;
+    }
+
+    public ClientBuilderForConnector withConnectTimeout(Integer connectTimeout) {
+        this.connectTimeout = connectTimeout;
         return this;
     }
 
@@ -167,10 +176,17 @@ public class ClientBuilderForConnector {
             KeyManagementException {
 
         if (isNull(dockerCmdExecFactory)) {
-            if (connectorType == ConnectorType.JERSEY) {
+            if (connectorType == JERSEY) {
                 dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
             } else {
                 dockerCmdExecFactory = new NettyDockerCmdExecFactory();
+            }
+        }
+
+        if (dockerCmdExecFactory instanceof JerseyDockerCmdExecFactory) {
+            if (nonNull(connectTimeout)) {
+                final JerseyDockerCmdExecFactory jersey = (JerseyDockerCmdExecFactory) dockerCmdExecFactory;
+                dockerCmdExecFactory = jersey.withConnectTimeout(connectTimeout);
             }
         }
 

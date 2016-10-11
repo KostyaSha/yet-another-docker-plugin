@@ -81,7 +81,7 @@ public class DockerRule extends ExternalResource {
 //            + "-agentlib:jdwp=transport=dt_socket,server=n,address=192.168.99.1:5005,suspend=y "
             + "-Dhudson.remoting.Launcher.pingIntervalSec=-1 "
             + "-Dhudson.model.UpdateCenter.never=true "
-            + "-Dhudson.model.LoadStatistics.clock=1000 "
+//            + "-Dhudson.model.LoadStatistics.clock=1000 "
 //            + "-verbose:class "
             ;
     public static final String YAD_PLUGIN_NAME = "yet-another-docker-plugin";
@@ -174,7 +174,7 @@ public class DockerRule extends ExternalResource {
         clientConfig = createDefaultConfigBuilder()
                 .build();
 
-        dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
+        dockerCmdExecFactory = new JerseyDockerCmdExecFactory().withConnectTimeout(10 * 1000);
 
         dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)
@@ -318,7 +318,10 @@ public class DockerRule extends ExternalResource {
      * Path ends with '/';
      */
     public static String getDockerItDir() {
-        return targetDir().getAbsolutePath() + "/docker-it/";
+        final String dockerItDir = targetDir().getAbsolutePath() + "/docker-it/";
+        final File dir = new File(dockerItDir);
+        dir.mkdirs();
+        return dockerItDir;
     }
 
     @Nonnull
