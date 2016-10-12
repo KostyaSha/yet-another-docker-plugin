@@ -16,6 +16,7 @@ import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import hudson.cli.DockerCLI;
+import hudson.logging.LogRecorder;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Node;
@@ -35,6 +36,8 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.jvnet.hudson.test.For;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,11 +46,14 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 
 import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.caller;
 import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.waitUntilNoActivityUpTo;
 import static com.github.kostyasha.yad.commons.DockerImagePullStrategy.PULL_LATEST;
+import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -58,12 +64,24 @@ import static org.mockito.Matchers.isNull;
 /**
  * @author Kanstantsin Shautsou
  */
+@RunWith(Parameterized.class)
 public class SimpleBuildTest implements Serializable {
     public static final Logger LOG = LoggerFactory.getLogger(SimpleBuildTest.class);
     private static final long serialVersionUID = 1L;
     private static final String DOCKER_CLOUD_LABEL = "docker-label";
     private static final String DOCKER_CLOUD_NAME = "docker-cloud";
     private static final String TEST_VALUE = "2323re23e";
+
+    @Parameterized.Parameters
+    public static Iterable<String> data() {
+        return Arrays.asList(
+                DockerRule.SLAVE_IMAGE_JNLP
+//                "alpine:3.4"
+        );
+    }
+
+    @Parameterized.Parameter
+    public static String slaveJnlpImage;
 
     //TODO redesign rule internals
     @ClassRule
@@ -89,6 +107,7 @@ public class SimpleBuildTest implements Serializable {
             assertThat(cli.jenkins, notNullValue());
             assertThat(d, notNullValue());
             assertThat(d.clientConfig, notNullValue());
+            assertThat(slaveJnlpImage, notNullValue());
 
             LOG.trace("Creating  PrepareCloudCallable object");
             try {
@@ -96,7 +115,7 @@ public class SimpleBuildTest implements Serializable {
                         cli.jenkins.getPort(),
                         d.getDockerServerCredentials(),
                         d.clientConfig.getDockerHost(),
-                        DockerRule.SLAVE_IMAGE_JNLP
+                        slaveJnlpImage
                 );
                 LOG.trace("Calling caller.");
                 caller(cli, prepareCloudCallable);
@@ -142,6 +161,12 @@ public class SimpleBuildTest implements Serializable {
         public Boolean call() throws Throwable {
             final Jenkins jenkins = Jenkins.getActiveInstance();
 
+            String logName = "com.github.kostyasha.yad";
+            final LogRecorder logRecorder = new LogRecorder(logName);
+            logRecorder.targets.add(new LogRecorder.Target("com.github.kostyasha.yad", Level.ALL));
+            jenkins.getLog().logRecorders.put("logName", logRecorder);
+            logRecorder.save();
+
             // prepare jenkins global (url, cred)
             JenkinsLocationConfiguration.get().setUrl(String.format("http://%s:%d", dockerUri.getHost(), jenkinsPort));
 
@@ -150,13 +175,15 @@ public class SimpleBuildTest implements Serializable {
             //verify doTestConnection
             final DescriptorImpl descriptor = (DescriptorImpl) jenkins.getDescriptor(DockerConnector.class);
             checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), "",
-                    dockerServerCredentials.getId(), ConnectorType.NETTY));
+                    dockerServerCredentials.getId(), ConnectorType.NETTY, 10 * 1000));
             checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), "",
-                    dockerServerCredentials.getId(), ConnectorType.JERSEY));
+                    dockerServerCredentials.getId(), JERSEY, 10 * 1000));
 
             // prepare Docker Cloud
             final DockerConnector dockerConnector = new DockerConnector(dockerUri.toString());
             dockerConnector.setCredentialsId(dockerServerCredentials.getId());
+            dockerConnector.setConnectTimeout(10 * 1000);
+            dockerConnector.setConnectorType(JERSEY);
             dockerConnector.testConnection();
 
             //launcher
@@ -182,6 +209,7 @@ public class SimpleBuildTest implements Serializable {
             nodeProperties.add(nodeProperty);
 
             final DockerSlaveTemplate slaveTemplate = new DockerSlaveTemplate();
+            slaveTemplate.setMaxCapacity(4);
             slaveTemplate.setLabelString(DOCKER_CLOUD_LABEL);
             slaveTemplate.setLauncher(launcher);
             slaveTemplate.setMode(Node.Mode.EXCLUSIVE);
@@ -198,7 +226,6 @@ public class SimpleBuildTest implements Serializable {
                     3,
                     dockerConnector
             );
-
             jenkins.clouds.add(dockerCloud);
             jenkins.save(); // either xmls a half broken
 
