@@ -16,6 +16,7 @@ import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import hudson.cli.DockerCLI;
+import hudson.logging.LogRecorder;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Node;
@@ -47,10 +48,12 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 
 import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.caller;
 import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.waitUntilNoActivityUpTo;
 import static com.github.kostyasha.yad.commons.DockerImagePullStrategy.PULL_LATEST;
+import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -158,6 +161,12 @@ public class SimpleBuildTest implements Serializable {
         public Boolean call() throws Throwable {
             final Jenkins jenkins = Jenkins.getActiveInstance();
 
+            String logName = "com.github.kostyasha.yad";
+            final LogRecorder logRecorder = new LogRecorder(logName);
+            logRecorder.targets.add(new LogRecorder.Target("com.github.kostyasha.yad", Level.ALL));
+            jenkins.getLog().logRecorders.put("logName", logRecorder);
+            logRecorder.save();
+
             // prepare jenkins global (url, cred)
             JenkinsLocationConfiguration.get().setUrl(String.format("http://%s:%d", dockerUri.getHost(), jenkinsPort));
 
@@ -168,12 +177,13 @@ public class SimpleBuildTest implements Serializable {
             checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), "",
                     dockerServerCredentials.getId(), ConnectorType.NETTY, 10 * 1000));
             checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), "",
-                    dockerServerCredentials.getId(), ConnectorType.JERSEY, 10 * 1000));
+                    dockerServerCredentials.getId(), JERSEY, 10 * 1000));
 
             // prepare Docker Cloud
             final DockerConnector dockerConnector = new DockerConnector(dockerUri.toString());
             dockerConnector.setCredentialsId(dockerServerCredentials.getId());
             dockerConnector.setConnectTimeout(10 * 1000);
+            dockerConnector.setConnectorType(JERSEY);
             dockerConnector.testConnection();
 
             //launcher
@@ -250,7 +260,7 @@ public class SimpleBuildTest implements Serializable {
             project.scheduleBuild(new TestCause());
 
             // image pull may take time
-            waitUntilNoActivityUpTo(jenkins, 60 * 1000);
+            waitUntilNoActivityUpTo(jenkins, 10 * 60 * 1000);
 
             final FreeStyleBuild lastBuild = project.getLastBuild();
             assertThat(lastBuild, not(isNull()));
