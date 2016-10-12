@@ -55,6 +55,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     /**
      * Configured from UI
+     * @deprecated because properties moved to fields
      */
     @Deprecated
     protected transient JNLPLauncher jnlpLauncher;
@@ -102,7 +103,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     public String getJenkinsUrl(String rootUrl) {
-        if (!isNull(jenkinsUrl) && jenkinsUrl != "") {
+        if (!isNull(jenkinsUrl) && !jenkinsUrl.equals("")) {
             return jenkinsUrl;
         }
         return rootUrl;
@@ -162,12 +163,6 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         Objects.requireNonNull(dockerComputer);
 
         final String containerId = dockerComputer.getContainerId();
-        final String rootUrl = getJenkinsUrl(Jenkins.getActiveInstance().getRootUrl());
-//        Objects.requireNonNull(rootUrl, "Jenkins root url is not specified!");
-        if (isNull(rootUrl)) {
-            throw new NullPointerException("Jenkins root url is not specified!");
-        }
-
         final DockerCloud dockerCloud = dockerComputer.getCloud();
 //        Objects.requireNonNull(dockerCloud, "Cloud not found for computer " + computer.getName());
         if (isNull(dockerCloud)) {
@@ -179,19 +174,26 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             throw new NullPointerException("Node can't be null");
         }
         final DockerSlaveTemplate dockerSlaveTemplate = node.getDockerSlaveTemplate();
+        final DockerComputerJNLPLauncher launcher = (DockerComputerJNLPLauncher) dockerSlaveTemplate.getLauncher();
+
+        final String rootUrl = launcher.getJenkinsUrl(Jenkins.getActiveInstance().getRootUrl());
+//        Objects.requireNonNull(rootUrl, "Jenkins root url is not specified!");
+        if (isNull(rootUrl)) {
+            throw new NullPointerException("Jenkins root url is not specified!");
+        }
 
         // exec jnlp connection in running container
         // TODO implement PID 1 replacement
         String startCmd =
                 "cat << EOF > /tmp/config.sh.tmp && cd /tmp && mv config.sh.tmp config.sh\n" +
                         "JENKINS_URL=\"" + rootUrl + NL +
-                        "JENKINS_USER=\"" + getUser() + NL +
+                        "JENKINS_USER=\"" + launcher.getUser() + NL +
                         "JENKINS_HOME=\"" + dockerSlaveTemplate.getRemoteFs() + NL +
                         "COMPUTER_URL=\"" + dockerComputer.getUrl() + NL +
                         "COMPUTER_SECRET=\"" + dockerComputer.getJnlpMac() + NL +
-                        "JAVA_OPTS=\"" + getJvmOpts() + NL +
-                        "SLAVE_OPTS=\"" + getSlaveOpts() + NL +
-                        "NO_CERTIFICATE_CHECK=\"" + isNoCertificateCheck() + NL +
+                        "JAVA_OPTS=\"" + launcher.getJvmOpts() + NL +
+                        "SLAVE_OPTS=\"" + launcher.getSlaveOpts() + NL +
+                        "NO_CERTIFICATE_CHECK=\"" + launcher.isNoCertificateCheck() + NL +
                         "EOF" + "\n";
 
         try {
