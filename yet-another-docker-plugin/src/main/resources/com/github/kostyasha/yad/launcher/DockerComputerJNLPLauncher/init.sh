@@ -67,7 +67,7 @@ if [ -z "$JAVA_OPTS" ] ; then
 fi
 RUN_CMD+=" -jar slave.jar"
 RUN_CMD+=" -noReconnect"
-if [ ! -z "$SLAVE_ARGS" ] ; then
+if [ -n "$SLAVE_ARGS" ] ; then
    RUN_CMD+=" $SLAVE_ARGS"
 fi
 RUN_CMD+=" -jnlpUrl ${JENKINS_URL}/${COMPUTER_URL}/slave-agent.jnlp"

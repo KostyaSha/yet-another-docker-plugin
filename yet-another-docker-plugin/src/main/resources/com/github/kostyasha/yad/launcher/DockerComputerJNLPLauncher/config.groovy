@@ -21,20 +21,18 @@ f.entry(title: _("Launch timeout"), field: "launchTimeout", default: DEFAULT_TIM
     f.number()
 }
 
-f.entry(title: _("Slave JNLP Options"), field: "jnlpOpts") {
+f.entry(title: _("Slave (slave.jar) options"), field: "slaveOpts") {
     f.textbox()
 }
 
-f.entry(title: _("Slave JVM Options"), field: "jvmOpts") {
+f.entry(title: _("Slave JVM options"), field: "jvmOpts") {
     f.textbox()
 }
 
-f.entry(title: _("Slave to connect to specific jenkins URL"), field: "jenkinsUrl") {
+f.entry(title: _("Different jenkins master URL"), field: "jenkinsUrl") {
     f.textbox()
 }
 
 f.entry(title: _("Ignore certificate check"), field: "noCertificateCheck", default: false) {
     f.checkbox()
 }
-
-// f.property(field: "jnlpLauncher")
