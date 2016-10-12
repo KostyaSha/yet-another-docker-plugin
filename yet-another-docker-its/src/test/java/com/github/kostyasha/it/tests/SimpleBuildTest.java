@@ -72,8 +72,8 @@ public class SimpleBuildTest implements Serializable {
     @Parameterized.Parameters
     public static Iterable<String> data() {
         return Arrays.asList(
-                DockerRule.SLAVE_IMAGE_JNLP,
-                "alpine:3.4"
+                DockerRule.SLAVE_IMAGE_JNLP
+//                "alpine:3.4"
         );
     }
 
