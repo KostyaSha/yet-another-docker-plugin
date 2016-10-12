@@ -42,13 +42,15 @@ fi
 
 cd "$JENKINS_HOME"
 
-if [ "$NO_CERTIFICATE_CHECK" = true ]
+if [ "$NO_CERTIFICATE_CHECK" == "true" ]
 then
    WGET_OPTIONS=" --no-check-certificate"
    CURL_OPTIONS=" -k"
+   NO_SLAVE_CERTIF=" -noCertificateCheck"
 else
    WGET_OPTIONS=""
    CURL_OPTIONS=""
+   NO_SLAVE_CERTIF=""
 fi
 
 # download slave jar
@@ -67,8 +69,9 @@ if [ -z "$JAVA_OPTS" ] ; then
 fi
 RUN_CMD+=" -jar slave.jar"
 RUN_CMD+=" -noReconnect"
-if [ -n "$SLAVE_ARGS" ] ; then
-   RUN_CMD+=" $SLAVE_ARGS"
+RUN_CMD+="$NO_SLAVE_CERTIF"
+if [ -n "$SLAVE_OPTS" ] ; then
+   RUN_CMD+=" $SLAVE_OPTS"
 fi
 RUN_CMD+=" -jnlpUrl ${JENKINS_URL}/${COMPUTER_URL}/slave-agent.jnlp"
 if [ ! -z "$COMPUTER_SECRET" ]; then
