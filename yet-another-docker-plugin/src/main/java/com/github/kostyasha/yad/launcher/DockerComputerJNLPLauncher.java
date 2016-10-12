@@ -56,6 +56,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     /**
      * Configured from UI
      */
+    @Deprecated
     protected transient JNLPLauncher jnlpLauncher;
 
     protected long launchTimeout = DEFAULT_TIMEOUT; //seconds
@@ -64,7 +65,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     protected String jvmOpts;
 
-    protected String jnlpOpts;
+    protected String slaveOpts;
 
     protected String jenkinsUrl;
 
@@ -83,12 +84,12 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @DataBoundSetter
-    public void setJnlpOpts(String jnlpOpts) {
-        this.jnlpOpts = jnlpOpts;
+    public void setSlaveOpts(String slaveOpts) {
+        this.slaveOpts = slaveOpts;
     }
 
-    public String getJnlpOpts() {
-        return jnlpOpts;
+    public String getSlaveOpts() {
+        return slaveOpts;
     }
 
     @DataBoundSetter
@@ -121,7 +122,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         this.noCertificateCheck = noCertificateCheck;
     }
 
-    public boolean getNoCertificateCheck() {
+    public boolean isNoCertificateCheck() {
         return noCertificateCheck;
     }
 
@@ -189,8 +190,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                         "COMPUTER_URL=\"" + dockerComputer.getUrl() + NL +
                         "COMPUTER_SECRET=\"" + dockerComputer.getJnlpMac() + NL +
                         "JAVA_OPTS=\"" + getJvmOpts() + NL +
-                        "JNLP_OPTS=\"" + getJnlpOpts() + NL +
-                        "NO_CERTIFICATE_CHECK=\"" + getNoCertificateCheck() + NL +
+                        "SLAVE_OPTS=\"" + getSlaveOpts() + NL +
+                        "NO_CERTIFICATE_CHECK=\"" + isNoCertificateCheck() + NL +
                         "EOF" + "\n";
 
         try {
@@ -314,7 +315,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         return new EqualsBuilder()
                 .append(launchTimeout, that.launchTimeout)
                 .append(jvmOpts, that.jvmOpts)
-                .append(jnlpOpts, that.jnlpOpts)
+                .append(slaveOpts, that.slaveOpts)
                 .append(jenkinsUrl, that.jenkinsUrl)
                 .append(noCertificateCheck, that.noCertificateCheck)
                 .append(user, that.user)
@@ -325,7 +326,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
                 .append(jvmOpts)
-                .append(jnlpOpts)
+                .append(slaveOpts)
                 .append(jenkinsUrl)
                 .append(noCertificateCheck)
                 .append(launchTimeout)
