@@ -77,50 +77,42 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     public DockerComputerJNLPLauncher() {
     }
 
-    public DockerComputerJNLPLauncher(JNLPLauncher jnlpLauncher) {
-        this.jnlpLauncher = jnlpLauncher;
-    }
-
-    public JNLPLauncher getJnlpLauncher() {
-        return jnlpLauncher;
-    }
-
     @DataBoundSetter
-    public void setSlaveOpts(@Nonnull String slaveOpts) {
+    public void setSlaveOpts(String slaveOpts) {
         this.slaveOpts = StringUtils.trimToEmpty(slaveOpts);
     }
 
+    @Nonnull
     public String getSlaveOpts() {
         return StringUtils.trimToEmpty(slaveOpts);
     }
 
     @DataBoundSetter
-    public void setJenkinsUrl(@Nonnull String jenkinsUrl) {
+    public void setJenkinsUrl(String jenkinsUrl) {
         this.jenkinsUrl = StringUtils.trimToEmpty(jenkinsUrl);
     }
 
+    @Nonnull
     public String getJenkinsUrl() {
         return StringUtils.trimToEmpty(jenkinsUrl);
     }
 
-    public String getJenkinsUrl(@Nonnull String rootUrl) {
-        if (!isNull(jenkinsUrl) && StringUtils.isNotEmpty(jenkinsUrl)) {
-            return jenkinsUrl;
-        }
-        return StringUtils.trimToEmpty(rootUrl);
+    public String getJenkinsUrl(String rootUrl) {
+        return isNotEmpty(jenkinsUrl) ? jenkinsUrl : trimToEmpty(rootUrl)
     }
 
     @DataBoundSetter
-    public void setJvmOpts(@Nonnull String jvmOpts) {
+    public void setJvmOpts(String jvmOpts) {
         this.jvmOpts = StringUtils.trimToEmpty(jvmOpts);
     }
 
+    @Nonnull
     public String getJvmOpts() {
         return StringUtils.trimToEmpty(jvmOpts);
     }
 
     @DataBoundSetter
-    public void setNoCertificateCheck(@Nonnull boolean noCertificateCheck) {
+    public void setNoCertificateCheck(boolean noCertificateCheck) {
         this.noCertificateCheck = noCertificateCheck;
     }
 
@@ -129,7 +121,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @DataBoundSetter
-    public void setUser(@Nonnull String user) {
+    public void setUser(String user) {
         this.user = StringUtils.trimToEmpty(user);
     }
 
