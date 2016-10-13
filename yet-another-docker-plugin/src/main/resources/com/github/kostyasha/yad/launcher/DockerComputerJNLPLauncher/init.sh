@@ -65,17 +65,17 @@ env # debug
 
 RUN_CMD="java"
 if [ -n "$JAVA_OPTS" ] ; then
-   RUN_CMD+=" $JAVA_OPTS"
+   RUN_CMD+="$RUN_CMD $JAVA_OPTS"
 fi
-RUN_CMD+=" -jar slave.jar"
-RUN_CMD+=" -noReconnect"
-RUN_CMD+="$NO_SLAVE_CERTIF"
+RUN_CMD="$RUN_CMD -jar slave.jar"
+RUN_CMD="$RUN_CMD -noReconnect"
+RUN_CMD="$RUN_CMD$NO_SLAVE_CERTIF"
 if [ -n "$SLAVE_OPTS" ] ; then
-   RUN_CMD+=" $SLAVE_OPTS"
+   RUN_CMD="$RUN_CMD $SLAVE_OPTS"
 fi
-RUN_CMD+=" -jnlpUrl ${JENKINS_URL}/${COMPUTER_URL}/slave-agent.jnlp"
+RUN_CMD="$RUN_CMD -jnlpUrl ${JENKINS_URL}/${COMPUTER_URL}/slave-agent.jnlp"
 if [ -n "$COMPUTER_SECRET" ]; then
- RUN_CMD+=" -secret $COMPUTER_SECRET"
+ RUN_CMD="$RUN_CMD -secret $COMPUTER_SECRET"
 fi
 
 if [ "$(id -nu)" != "$JENKINS_USER" ]; then
