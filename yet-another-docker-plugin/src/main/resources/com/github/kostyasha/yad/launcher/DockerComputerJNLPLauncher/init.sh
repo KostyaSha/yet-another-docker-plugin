@@ -46,11 +46,11 @@ if [ "$NO_CERTIFICATE_CHECK" == "true" ]
 then
    WGET_OPTIONS=" --no-check-certificate"
    CURL_OPTIONS=" -k"
-   NO_SLAVE_CERTIF=" -noCertificateCheck"
+   NO_SLAVE_CERT=" -noCertificateCheck"
 else
    WGET_OPTIONS=""
    CURL_OPTIONS=""
-   NO_SLAVE_CERTIF=""
+   NO_SLAVE_CERT=""
 fi
 
 # download slave jar
@@ -69,7 +69,7 @@ if [ -n "$JAVA_OPTS" ] ; then
 fi
 RUN_CMD="$RUN_CMD -jar slave.jar"
 RUN_CMD="$RUN_CMD -noReconnect"
-RUN_CMD="$RUN_CMD$NO_SLAVE_CERTIF"
+RUN_CMD="$RUN_CMD$NO_SLAVE_CERT"
 if [ -n "$SLAVE_OPTS" ] ; then
    RUN_CMD="$RUN_CMD $SLAVE_OPTS"
 fi
