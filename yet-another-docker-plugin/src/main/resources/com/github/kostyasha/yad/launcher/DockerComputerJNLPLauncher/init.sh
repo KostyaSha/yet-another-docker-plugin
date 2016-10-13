@@ -64,7 +64,7 @@ fi
 env # debug
 
 RUN_CMD="java"
-if [ -z "$JAVA_OPTS" ] ; then
+if [ -n "$JAVA_OPTS" ] ; then
    RUN_CMD+=" $JAVA_OPTS"
 fi
 RUN_CMD+=" -jar slave.jar"
@@ -74,7 +74,7 @@ if [ -n "$SLAVE_OPTS" ] ; then
    RUN_CMD+=" $SLAVE_OPTS"
 fi
 RUN_CMD+=" -jnlpUrl ${JENKINS_URL}/${COMPUTER_URL}/slave-agent.jnlp"
-if [ ! -z "$COMPUTER_SECRET" ]; then
+if [ -n "$COMPUTER_SECRET" ]; then
  RUN_CMD+=" -secret $COMPUTER_SECRET"
 fi
 
