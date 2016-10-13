@@ -24,6 +24,7 @@ import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
@@ -64,18 +65,18 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     protected String user = "jenkins";
 
-    protected String jvmOpts;
+    protected String jvmOpts = "";
 
-    protected String slaveOpts;
+    protected String slaveOpts = "";
 
-    protected String jenkinsUrl;
+    protected String jenkinsUrl = "";
 
     protected boolean noCertificateCheck = false;
 
+    @DataBoundConstructor
     public DockerComputerJNLPLauncher() {
     }
 
-    @DataBoundConstructor
     public DockerComputerJNLPLauncher(JNLPLauncher jnlpLauncher) {
         this.jnlpLauncher = jnlpLauncher;
     }
@@ -85,41 +86,41 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @DataBoundSetter
-    public void setSlaveOpts(String slaveOpts) {
-        this.slaveOpts = slaveOpts;
+    public void setSlaveOpts(@Nonnull String slaveOpts) {
+        this.slaveOpts = StringUtils.trimToEmpty(slaveOpts);
     }
 
     public String getSlaveOpts() {
-        return slaveOpts;
+        return StringUtils.trimToEmpty(slaveOpts);
     }
 
     @DataBoundSetter
-    public void setJenkinsUrl(String jenkinsUrl) {
-        this.jenkinsUrl = jenkinsUrl;
+    public void setJenkinsUrl(@Nonnull String jenkinsUrl) {
+        this.jenkinsUrl = StringUtils.trimToEmpty(jenkinsUrl);
     }
 
     public String getJenkinsUrl() {
-        return jenkinsUrl;
+        return StringUtils.trimToEmpty(jenkinsUrl);
     }
 
-    public String getJenkinsUrl(String rootUrl) {
-        if (!isNull(jenkinsUrl) && !jenkinsUrl.equals("")) {
+    public String getJenkinsUrl(@Nonnull String rootUrl) {
+        if (!isNull(jenkinsUrl) && StringUtils.isNotEmpty(jenkinsUrl)) {
             return jenkinsUrl;
         }
-        return rootUrl;
+        return StringUtils.trimToEmpty(rootUrl);
     }
 
     @DataBoundSetter
-    public void setJvmOpts(String jvmOpts) {
-        this.jvmOpts = jvmOpts;
+    public void setJvmOpts(@Nonnull String jvmOpts) {
+        this.jvmOpts = StringUtils.trimToEmpty(jvmOpts);
     }
 
     public String getJvmOpts() {
-        return jvmOpts;
+        return StringUtils.trimToEmpty(jvmOpts);
     }
 
     @DataBoundSetter
-    public void setNoCertificateCheck(boolean noCertificateCheck) {
+    public void setNoCertificateCheck(@Nonnull boolean noCertificateCheck) {
         this.noCertificateCheck = noCertificateCheck;
     }
 
@@ -128,12 +129,12 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @DataBoundSetter
-    public void setUser(String user) {
-        this.user = user;
+    public void setUser(@Nonnull String user) {
+        this.user = StringUtils.trimToEmpty(user);
     }
 
     public String getUser() {
-        return user;
+        return StringUtils.trimToEmpty(user);
     }
 
     public long getLaunchTimeout() {
