@@ -67,6 +67,9 @@ public class DockerConnector implements Describable<DockerConnector> {
 
     private ConnectorType connectorType = NETTY;
 
+    @CheckForNull
+    private Integer connectTimeout;
+
     @DataBoundConstructor
     public DockerConnector(String serverUrl) {
         setServerUrl(serverUrl);
@@ -111,6 +114,15 @@ public class DockerConnector implements Describable<DockerConnector> {
     @DataBoundSetter
     public void setConnectorType(ConnectorType connectorType) {
         this.connectorType = connectorType;
+    }
+
+    public Integer getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    @DataBoundSetter
+    public void setConnectTimeout(Integer connectTimeout) {
+        this.connectTimeout = connectTimeout;
     }
 
     public DockerClient getClient() {
@@ -159,6 +171,7 @@ public class DockerConnector implements Describable<DockerConnector> {
                 .append(credentialsId, that.credentialsId)
                 .append(tlsVerify, that.tlsVerify)
                 .append(connectorType, that.connectorType)
+                .append(connectTimeout, that.connectTimeout)
                 .isEquals();
     }
 
@@ -170,6 +183,7 @@ public class DockerConnector implements Describable<DockerConnector> {
                 .append(credentialsId)
                 .append(tlsVerify)
                 .append(connectorType)
+                .append(connectTimeout)
                 .toHashCode();
     }
 
@@ -197,7 +211,8 @@ public class DockerConnector implements Describable<DockerConnector> {
                 @QueryParameter String serverUrl,
                 @QueryParameter String apiVersion,
                 @QueryParameter String credentialsId,
-                @QueryParameter ConnectorType connectorType
+                @QueryParameter ConnectorType connectorType,
+                @QueryParameter Integer connectTimeout
         ) throws IOException, ServletException, DockerException {
             try {
                 DefaultDockerClientConfig.Builder configBuilder = new DefaultDockerClientConfig.Builder()
@@ -208,6 +223,7 @@ public class DockerConnector implements Describable<DockerConnector> {
                         .withConfigBuilder(configBuilder)
                         .withConnectorType(connectorType)
                         .withCredentials(credentialsId)
+                        .withConnectTimeout(connectTimeout)
                         .build();
 
                 Version verResult = testClient.versionCmd().exec();

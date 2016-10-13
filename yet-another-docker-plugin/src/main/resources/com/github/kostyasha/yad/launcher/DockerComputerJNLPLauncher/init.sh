@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 set -uxe
 
@@ -55,9 +55,9 @@ fi
 
 # download slave jar
 # TODO some caching mechanism with checksums
-if [[ -x $(command -v wget) ]]; then
-   wget $WGET_OPTIONS "${JENKINS_URL}/jnlpJars/slave.jar" -O "slave.jar"
-elif [[ -x $(command -v curl) ]]; then
+if [ -x "$(command -v wget)" ]; then
+    wget $WGET_OPTIONS "${JENKINS_URL}/jnlpJars/slave.jar" -O "slave.jar"
+elif [ -x "$(command -v curl)" ]; then
     curl $CURL_OPTIONS --remote-name "${JENKINS_URL}/jnlpJars/slave.jar"
 fi
 
@@ -78,10 +78,12 @@ if [ ! -z "$COMPUTER_SECRET" ]; then
  RUN_CMD+=" -secret $COMPUTER_SECRET"
 fi
 
-if [[ -x $(command -v gosu) ]]; then
-    RUN_CMD="gosu $JENKINS_USER $RUN_CMD"
-elif [ ! -z "$JENKINS_USER" ] && [ x"$JENKINS_USER" != "xroot" ]; then
-    RUN_CMD="su - $JENKINS_USER -c '$RUN_CMD'"
+if [ "$(id -nu)" != "$JENKINS_USER" ]; then
+    if [ -x "$(command -v gosu)" ]; then
+        RUN_CMD="gosu $JENKINS_USER $RUN_CMD"
+    else
+        RUN_CMD="su - $JENKINS_USER -c '$RUN_CMD'"
+    fi
 fi
 
 eval "$RUN_CMD"
