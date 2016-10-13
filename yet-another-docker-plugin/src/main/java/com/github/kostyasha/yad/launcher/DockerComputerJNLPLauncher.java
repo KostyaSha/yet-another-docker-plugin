@@ -24,6 +24,7 @@ import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
@@ -55,32 +56,77 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     /**
      * Configured from UI
+     * @deprecated because properties moved to fields
      */
-    protected JNLPLauncher jnlpLauncher = new JNLPLauncher();
+    @Deprecated
+    protected transient JNLPLauncher jnlpLauncher;
 
     protected long launchTimeout = DEFAULT_TIMEOUT; //seconds
 
     protected String user = "jenkins";
 
+    protected String jvmOpts = "";
+
+    protected String slaveOpts = "";
+
+    protected String jenkinsUrl = "";
+
+    protected boolean noCertificateCheck = false;
+
+    @DataBoundConstructor
     public DockerComputerJNLPLauncher() {
     }
 
-    @DataBoundConstructor
-    public DockerComputerJNLPLauncher(JNLPLauncher jnlpLauncher) {
-        this.jnlpLauncher = jnlpLauncher;
+    @DataBoundSetter
+    public void setSlaveOpts(String slaveOpts) {
+        this.slaveOpts = StringUtils.trimToEmpty(slaveOpts);
     }
 
-    public JNLPLauncher getJnlpLauncher() {
-        return jnlpLauncher;
+    @Nonnull
+    public String getSlaveOpts() {
+        return StringUtils.trimToEmpty(slaveOpts);
+    }
+
+    @DataBoundSetter
+    public void setJenkinsUrl(String jenkinsUrl) {
+        this.jenkinsUrl = StringUtils.trimToEmpty(jenkinsUrl);
+    }
+
+    @Nonnull
+    public String getJenkinsUrl() {
+        return StringUtils.trimToEmpty(jenkinsUrl);
+    }
+
+    public String getJenkinsUrl(String rootUrl) {
+        return isNotEmpty(jenkinsUrl) ? jenkinsUrl : trimToEmpty(rootUrl)
+    }
+
+    @DataBoundSetter
+    public void setJvmOpts(String jvmOpts) {
+        this.jvmOpts = StringUtils.trimToEmpty(jvmOpts);
+    }
+
+    @Nonnull
+    public String getJvmOpts() {
+        return StringUtils.trimToEmpty(jvmOpts);
+    }
+
+    @DataBoundSetter
+    public void setNoCertificateCheck(boolean noCertificateCheck) {
+        this.noCertificateCheck = noCertificateCheck;
+    }
+
+    public boolean isNoCertificateCheck() {
+        return noCertificateCheck;
     }
 
     @DataBoundSetter
     public void setUser(String user) {
-        this.user = user;
+        this.user = StringUtils.trimToEmpty(user);
     }
 
     public String getUser() {
-        return user;
+        return StringUtils.trimToEmpty(user);
     }
 
     public long getLaunchTimeout() {
@@ -110,11 +156,6 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         Objects.requireNonNull(dockerComputer);
 
         final String containerId = dockerComputer.getContainerId();
-        final String rootUrl = Jenkins.getActiveInstance().getRootUrl();
-//        Objects.requireNonNull(rootUrl, "Jenkins root url is not specified!");
-        if (isNull(rootUrl)) {
-            throw new NullPointerException("Jenkins root url is not specified!");
-        }
         final DockerCloud dockerCloud = dockerComputer.getCloud();
 //        Objects.requireNonNull(dockerCloud, "Cloud not found for computer " + computer.getName());
         if (isNull(dockerCloud)) {
@@ -126,16 +167,26 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             throw new NullPointerException("Node can't be null");
         }
         final DockerSlaveTemplate dockerSlaveTemplate = node.getDockerSlaveTemplate();
+        final DockerComputerJNLPLauncher launcher = (DockerComputerJNLPLauncher) dockerSlaveTemplate.getLauncher();
+
+        final String rootUrl = launcher.getJenkinsUrl(Jenkins.getActiveInstance().getRootUrl());
+//        Objects.requireNonNull(rootUrl, "Jenkins root url is not specified!");
+        if (isNull(rootUrl)) {
+            throw new NullPointerException("Jenkins root url is not specified!");
+        }
 
         // exec jnlp connection in running container
         // TODO implement PID 1 replacement
         String startCmd =
                 "cat << EOF > /tmp/config.sh.tmp && cd /tmp && mv config.sh.tmp config.sh\n" +
                         "JENKINS_URL=\"" + rootUrl + NL +
-                        "JENKINS_USER=\"" + getUser() + NL +
+                        "JENKINS_USER=\"" + launcher.getUser() + NL +
                         "JENKINS_HOME=\"" + dockerSlaveTemplate.getRemoteFs() + NL +
                         "COMPUTER_URL=\"" + dockerComputer.getUrl() + NL +
                         "COMPUTER_SECRET=\"" + dockerComputer.getJnlpMac() + NL +
+                        "JAVA_OPTS=\"" + launcher.getJvmOpts() + NL +
+                        "SLAVE_OPTS=\"" + launcher.getSlaveOpts() + NL +
+                        "NO_CERTIFICATE_CHECK=\"" + launcher.isNoCertificateCheck() + NL +
                         "EOF" + "\n";
 
         try {
@@ -258,8 +309,10 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
         return new EqualsBuilder()
                 .append(launchTimeout, that.launchTimeout)
-                .append(jnlpLauncher.tunnel, that.jnlpLauncher.tunnel) // no equals
-                .append(jnlpLauncher.vmargs, that.jnlpLauncher.vmargs) // no equals
+                .append(jvmOpts, that.jvmOpts)
+                .append(slaveOpts, that.slaveOpts)
+                .append(jenkinsUrl, that.jenkinsUrl)
+                .append(noCertificateCheck, that.noCertificateCheck)
                 .append(user, that.user)
                 .isEquals();
     }
@@ -267,7 +320,10 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
-                .append(jnlpLauncher)
+                .append(jvmOpts)
+                .append(slaveOpts)
+                .append(jenkinsUrl)
+                .append(noCertificateCheck)
                 .append(launchTimeout)
                 .append(user)
                 .toHashCode();

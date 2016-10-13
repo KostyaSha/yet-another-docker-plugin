@@ -42,21 +42,40 @@ fi
 
 cd "$JENKINS_HOME"
 
+if [ "$NO_CERTIFICATE_CHECK" == "true" ]
+then
+   WGET_OPTIONS=" --no-check-certificate"
+   CURL_OPTIONS=" -k"
+   NO_SLAVE_CERT=" -noCertificateCheck"
+else
+   WGET_OPTIONS=""
+   CURL_OPTIONS=""
+   NO_SLAVE_CERT=""
+fi
+
 # download slave jar
 # TODO some caching mechanism with checksums
 if [ -x "$(command -v wget)" ]; then
-    wget "${JENKINS_URL}/jnlpJars/slave.jar" -O "slave.jar"
+    wget $WGET_OPTIONS "${JENKINS_URL}/jnlpJars/slave.jar" -O "slave.jar"
 elif [ -x "$(command -v curl)" ]; then
-    curl --remote-name "${JENKINS_URL}/jnlpJars/slave.jar"
+    curl $CURL_OPTIONS --remote-name "${JENKINS_URL}/jnlpJars/slave.jar"
 fi
 
 env # debug
 
-RUN_CMD="java -jar slave.jar"
-RUN_CMD+=" -noReconnect"
-RUN_CMD+=" -jnlpUrl ${JENKINS_URL}/${COMPUTER_URL}/slave-agent.jnlp"
-if [ ! -z "$COMPUTER_SECRET" ]; then
- RUN_CMD+=" -secret $COMPUTER_SECRET"
+RUN_CMD="java"
+if [ -n "$JAVA_OPTS" ] ; then
+   RUN_CMD+="$RUN_CMD $JAVA_OPTS"
+fi
+RUN_CMD="$RUN_CMD -jar slave.jar"
+RUN_CMD="$RUN_CMD -noReconnect"
+RUN_CMD="$RUN_CMD$NO_SLAVE_CERT"
+if [ -n "$SLAVE_OPTS" ] ; then
+   RUN_CMD="$RUN_CMD $SLAVE_OPTS"
+fi
+RUN_CMD="$RUN_CMD -jnlpUrl ${JENKINS_URL}/${COMPUTER_URL}/slave-agent.jnlp"
+if [ -n "$COMPUTER_SECRET" ]; then
+ RUN_CMD="$RUN_CMD -secret $COMPUTER_SECRET"
 fi
 
 if [ "$(id -nu)" != "$JENKINS_USER" ]; then
