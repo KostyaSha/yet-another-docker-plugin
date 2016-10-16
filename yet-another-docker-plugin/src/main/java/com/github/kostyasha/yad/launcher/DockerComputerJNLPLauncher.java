@@ -184,13 +184,13 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         String startCmd =
                 "cat << EOF > /tmp/config.sh.tmp && cd /tmp && mv config.sh.tmp config.sh\n" +
                         "JENKINS_URL=\"" + rootUrl + NL +
-                        "JENKINS_USER=\"" + launcher.getUser() + NL +
+                        "JENKINS_USER=\"" + getUser() + NL +
                         "JENKINS_HOME=\"" + dockerSlaveTemplate.getRemoteFs() + NL +
                         "COMPUTER_URL=\"" + dockerComputer.getUrl() + NL +
                         "COMPUTER_SECRET=\"" + dockerComputer.getJnlpMac() + NL +
-                        "JAVA_OPTS=\"" + launcher.getJvmOpts() + NL +
-                        "SLAVE_OPTS=\"" + launcher.getSlaveOpts() + NL +
-                        "NO_CERTIFICATE_CHECK=\"" + launcher.isNoCertificateCheck() + NL +
+                        "JAVA_OPTS=\"" + getJvmOpts() + NL +
+                        "SLAVE_OPTS=\"" + getSlaveOpts() + NL +
+                        "NO_CERTIFICATE_CHECK=\"" + isNoCertificateCheck() + NL +
                         "EOF" + "\n";
 
         try {
@@ -199,7 +199,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                     .withAttachStdin(false)
                     .withAttachStderr(true)
                     .withAttachStdout(true)
-                    .withCmd("/bin/bash", "-cxe", startCmd.replace("$", "\\$"))
+                    .withCmd("/bin/sh", "-cxe", startCmd.replace("$", "\\$"))
                     .exec();
 
             LOG.info("Starting connection command for {}", containerId);
