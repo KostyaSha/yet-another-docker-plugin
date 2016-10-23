@@ -3,6 +3,9 @@
 ## Next
 
 ## 0.1.0-rc27
+- Sync durable-task Once retention strategy implementation.
+- Fix DockerCloudRetentionStrategy regression (was broken since 0.1.0-rc25).
+- Fix logging messages.
 - JNLP launcher:
   - No certificate check option.
   - Allow custom settings.
