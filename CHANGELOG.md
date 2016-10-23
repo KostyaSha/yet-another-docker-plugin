@@ -2,7 +2,7 @@
 
 ## Next
 
-## 0.1.0-rc27
+## 0.1.0-rc28
 - Sync durable-task Once retention strategy implementation.
 - Fix DockerCloudRetentionStrategy regression (was broken since 0.1.0-rc25).
 - Fix logging messages.
@@ -10,6 +10,8 @@
   - No certificate check option.
   - Allow custom settings.
   - Use adduser, gosu (Support stock jdk alpine image).
+
+## 0.1.0-rc27
 - [fix #83] Don't exclude Demand strategy. 
 - Form validation for Links
 
