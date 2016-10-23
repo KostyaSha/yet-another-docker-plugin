@@ -83,7 +83,10 @@ public class DockerCloudTest {
             final DockerComputerJNLPLauncher launcher = new DockerComputerJNLPLauncher();
             launcher.setLaunchTimeout(100);
             launcher.setUser("jenkins");
-            launcher.setLauncher(new JNLPLauncher());
+            launcher.setJenkinsUrl("http://jenkins");
+            launcher.setJvmOpts("-blah");
+            launcher.setSlaveOpts("-more");
+            launcher.setNoCertificateCheck(true);
 
             final DockerCreateContainer createContainer = new DockerCreateContainer();
             createContainer.setBindAllPorts(true);

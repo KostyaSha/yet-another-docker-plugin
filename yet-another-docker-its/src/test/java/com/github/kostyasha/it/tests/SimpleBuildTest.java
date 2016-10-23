@@ -75,8 +75,8 @@ public class SimpleBuildTest implements Serializable {
     @Parameterized.Parameters
     public static Iterable<String> data() {
         return Arrays.asList(
-                DockerRule.SLAVE_IMAGE_JNLP
-//                "alpine:3.4"
+                DockerRule.SLAVE_IMAGE_JNLP,
+                "java:8-jdk-alpine"
         );
     }
 
@@ -187,7 +187,9 @@ public class SimpleBuildTest implements Serializable {
             dockerConnector.testConnection();
 
             //launcher
-            final DockerComputerJNLPLauncher launcher = new DockerComputerJNLPLauncher(new JNLPLauncher());
+            final DockerComputerJNLPLauncher launcher = new DockerComputerJNLPLauncher();
+            launcher.setNoCertificateCheck(true);
+            launcher.setJvmOpts("-XX:-PrintClassHistogram");
             final DockerPullImage pullImage = new DockerPullImage();
             pullImage.setPullStrategy(PULL_LATEST);
 

@@ -177,7 +177,7 @@ public class UserNameNginxProxyAuthTest {
 //            final Version version = dockerConnector.getClient().versionCmd().exec();
 //            LOG.info("Version {}", version);
 
-            final DockerComputerJNLPLauncher launcher = new DockerComputerJNLPLauncher(new JNLPLauncher());
+            final DockerComputerJNLPLauncher launcher = new DockerComputerJNLPLauncher();
             final DockerPullImage pullImage = new DockerPullImage();
             pullImage.setPullStrategy(PULL_ALWAYS);
 
