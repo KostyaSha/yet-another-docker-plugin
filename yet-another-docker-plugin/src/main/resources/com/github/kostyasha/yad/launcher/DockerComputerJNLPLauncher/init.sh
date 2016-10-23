@@ -50,13 +50,19 @@ cd "$JENKINS_HOME"
 
 if [ "$NO_CERTIFICATE_CHECK" == "true" ]
 then
-   WGET_OPTIONS=" --no-check-certificate"
-   CURL_OPTIONS=" -k"
-   NO_SLAVE_CERT=" -noCertificateCheck"
+    # busybox has no options
+    if wget  --help 2>&1| grep BusyBox ; then
+        WGET_OPTIONS=""
+    else
+        WGET_OPTIONS=" --no-check-certificate"
+    fi
+
+    CURL_OPTIONS=" -k"
+    NO_SLAVE_CERT=" -noCertificateCheck"
 else
-   WGET_OPTIONS=""
-   CURL_OPTIONS=""
-   NO_SLAVE_CERT=""
+    WGET_OPTIONS=""
+    CURL_OPTIONS=""
+    NO_SLAVE_CERT=""
 fi
 
 # download slave jar
@@ -72,15 +78,19 @@ fi
 env # debug
 
 RUN_CMD="java"
+
 if [ -n "$JAVA_OPTS" ] ; then
    RUN_CMD="$RUN_CMD $JAVA_OPTS"
 fi
+
 RUN_CMD="$RUN_CMD -jar slave.jar"
 RUN_CMD="$RUN_CMD -noReconnect"
 RUN_CMD="$RUN_CMD$NO_SLAVE_CERT"
+
 if [ -n "$SLAVE_OPTS" ] ; then
    RUN_CMD="$RUN_CMD $SLAVE_OPTS"
 fi
+
 RUN_CMD="$RUN_CMD -jnlpUrl ${JENKINS_URL}/${COMPUTER_URL}/slave-agent.jnlp"
 if [ -n "$COMPUTER_SECRET" ]; then
  RUN_CMD="$RUN_CMD -secret $COMPUTER_SECRET"
