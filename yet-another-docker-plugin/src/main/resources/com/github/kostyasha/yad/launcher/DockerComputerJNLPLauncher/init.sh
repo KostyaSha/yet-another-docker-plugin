@@ -65,7 +65,7 @@ env # debug
 
 RUN_CMD="java"
 if [ -n "$JAVA_OPTS" ] ; then
-   RUN_CMD+="$RUN_CMD $JAVA_OPTS"
+   RUN_CMD="$RUN_CMD $JAVA_OPTS"
 fi
 RUN_CMD="$RUN_CMD -jar slave.jar"
 RUN_CMD="$RUN_CMD -noReconnect"
