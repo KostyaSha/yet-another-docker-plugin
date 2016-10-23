@@ -42,7 +42,7 @@ public class DockerCloudRetentionStrategy extends RetentionStrategy<AbstractClou
         if (c.isIdle() && computerNode != null) {
             final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
             if (idleMilliseconds > MINUTES.toMillis(idleMinutes)) {
-                LOG.info("Disconnecting {0}, after {} min timeout.", c.getName(), idleMinutes);
+                LOG.info("Disconnecting {}, after {} min timeout.", c.getName(), idleMinutes);
                 try {
                     computerNode.terminate();
                 } catch (InterruptedException | IOException e) {
@@ -51,6 +51,14 @@ public class DockerCloudRetentionStrategy extends RetentionStrategy<AbstractClou
             }
         }
         return 1;
+    }
+
+    /**
+     * Try to connect to it ASAP.
+     */
+    @Override
+    public void start(AbstractCloudComputer c) {
+        c.connect(false);
     }
 
     @Extension
