@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +50,7 @@ import static java.util.Objects.nonNull;
 public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerSlaveTemplate.class);
 
+    private int configVersion = 1;
     /**
      * Unique id of this template configuration. Required for:
      * - hashcode,
@@ -78,7 +80,7 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
      */
     private DockerContainerLifecycle dockerContainerLifecycle = new DockerContainerLifecycle();
 
-    private List<? extends NodeProperty<?>> nodeProperties = null;
+    private List<NodeProperty<?>> nodeProperties = null;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
 
@@ -103,7 +105,7 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
      * FIXME DescribableList doesn't work with DBS https://gist.github.com/KostyaSha/3414f4f453ea7c7406b4
      */
     @DataBoundConstructor
-    public DockerSlaveTemplate(@Nonnull String id, List<? extends NodeProperty<?>> nodePropertiesUI)
+    public DockerSlaveTemplate(@Nonnull String id, List<NodeProperty<?>> nodePropertiesUI)
             throws FormException {
         this(id);
         setNodeProperties(nodePropertiesUI);
@@ -209,7 +211,7 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
     @Nonnull
     @Restricted(value = NoExternalUse.class) // ancient UI jelly form
     public DescribableList<NodeProperty<?>, NodePropertyDescriptor> getNodePropertiesUI() throws IOException {
-        return new DescribableList<>(Jenkins.getActiveInstance().getNodesObject(), getNodeProperties());
+        return new DescribableList(Jenkins.getActiveInstance().getNodesObject(), getNodeProperties());
     }
 
     @Restricted(value = NoExternalUse.class) // ancient UI jelly form
@@ -222,7 +224,7 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
         return nonNull(nodeProperties) ? unmodifiableList(nodeProperties) : emptyList();
     }
 
-    public void setNodeProperties(List<? extends NodeProperty<?>> nodeProperties) {
+    public void setNodeProperties(List<NodeProperty<?>> nodeProperties) {
         this.nodeProperties = nodeProperties;
     }
 
@@ -230,6 +232,12 @@ public class DockerSlaveTemplate implements Describable<DockerSlaveTemplate> {
      * Initializes data structure that we don't persist.
      */
     public Object readResolve() {
+        if (configVersion < 1) {
+            if (isNull(nodeProperties)) nodeProperties = new ArrayList<>();
+            nodeProperties.add(new DockerNodeProperty("DOCKER_CONTAINER_ID", "JENKINS_CLOUD_ID", "DOCKER_HOST"));
+            configVersion = 1;
+        }
+
         // real @Nonnull
         if (mode == null) {
             mode = Node.Mode.NORMAL;
