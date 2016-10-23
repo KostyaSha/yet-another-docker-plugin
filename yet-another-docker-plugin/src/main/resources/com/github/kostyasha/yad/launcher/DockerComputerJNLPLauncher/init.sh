@@ -32,7 +32,13 @@ fi
 
 if ! id -u "$JENKINS_USER"; then
     echo "Jenkins user doesn't exist, creating..."
-    useradd -d "$JENKINS_HOME" "$JENKINS_USER"
+    if [ -x "$(command -v useradd)" ]; then
+        useradd -d "$JENKINS_HOME" "$JENKINS_USER"
+    elif [ -x "$(command -v adduser)" ]; then
+        adduser -D -h "${JENKINS_HOME}" "$JENKINS_USER"
+    else
+        echo "Error: can't add user. useradd or assuser didn't found."
+    fi
 fi
 
 if [ ! -d "$JENKINS_HOME" ]; then
@@ -59,6 +65,8 @@ if [ -x "$(command -v wget)" ]; then
    wget $WGET_OPTIONS "${JENKINS_URL}/jnlpJars/slave.jar" -O "slave.jar"
 elif [ -x "$(command -v curl)" ]; then
     curl $CURL_OPTIONS --remote-name "${JENKINS_URL}/jnlpJars/slave.jar"
+else
+    echo "Error: no wget or curl for fetching slave.jar."
 fi
 
 env # debug
