@@ -5,6 +5,7 @@ import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Executor;
 import hudson.model.ExecutorListener;
+import hudson.model.OneOffExecutor;
 import hudson.model.Queue;
 import hudson.slaves.AbstractCloudComputer;
 import hudson.slaves.AbstractCloudSlave;
@@ -95,6 +96,11 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
     private void done(Executor executor) {
         final AbstractCloudComputer<?> c = (AbstractCloudComputer) executor.getOwner();
         Queue.Executable exec = executor.getCurrentExecutable();
+        if (executor instanceof OneOffExecutor) {
+            LOG.debug("Not terminating {} because {} was a flyweight task", c.getName(), exec);
+            return;
+        }
+
         if (exec instanceof ContinuableExecutable && ((ContinuableExecutable) exec).willContinue()) {
             LOG.debug("not terminating {} because {} says it will be continued", c.getName(), exec);
             return;
