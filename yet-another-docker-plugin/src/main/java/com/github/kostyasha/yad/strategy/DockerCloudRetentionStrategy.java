@@ -53,6 +53,14 @@ public class DockerCloudRetentionStrategy extends RetentionStrategy<AbstractClou
         return 1;
     }
 
+    /**
+     * Try to connect to it ASAP.
+     */
+    @Override
+    public void start(AbstractCloudComputer c) {
+        c.connect(false);
+    }
+
     @Extension
     public static final class DescriptorImpl extends hudson.model.Descriptor<RetentionStrategy<?>> {
         @Override
