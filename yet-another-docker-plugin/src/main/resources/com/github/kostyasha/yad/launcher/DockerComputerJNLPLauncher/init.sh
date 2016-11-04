@@ -9,7 +9,7 @@ while [ ! -f "$CONFIG" ]; do
 done
 
 echo "Found config file"
-source "$CONFIG"
+. "$CONFIG"
 # require:
 # $JENKINS_URL
 # $COMPUTER_URL
