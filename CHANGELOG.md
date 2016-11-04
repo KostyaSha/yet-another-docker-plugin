@@ -2,6 +2,9 @@
 
 ## Next
 
+## 0.1.0-rc29
+- Support dash?
+
 ## 0.1.0-rc28
 - Sync durable-task Once retention strategy implementation.
 - Fix DockerCloudRetentionStrategy regression (was broken since 0.1.0-rc25).
