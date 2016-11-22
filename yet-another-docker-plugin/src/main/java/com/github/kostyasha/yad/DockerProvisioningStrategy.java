@@ -66,7 +66,8 @@ public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
 
                 int availableCapacity = snapshot.getAvailableExecutors() +
                         snapshot.getConnectingExecutors() +
-                        strategyState.getAdditionalPlannedCapacity();
+                        strategyState.getAdditionalPlannedCapacity() +
+                        strategyState.getPlannedCapacitySnapshot();
 
                 int currentDemand = snapshot.getQueueLength();
 
