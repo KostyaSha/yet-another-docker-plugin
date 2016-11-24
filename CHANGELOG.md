@@ -2,6 +2,9 @@
 
 ## Next
 
+## 0.1.0-rc30
+- Possibly fix overprovisioning.
+
 ## 0.1.0-rc29
 - Support dash?
 
