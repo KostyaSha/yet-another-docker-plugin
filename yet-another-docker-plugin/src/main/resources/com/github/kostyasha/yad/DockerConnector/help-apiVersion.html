@@ -1,1 +1,7 @@
-Docker API version.
+<div>
+    Docker Daemon API version. Should be set when plugin underlying library can't connect to new daemon
+    because docker daemon API become backward incompatible.<br/>
+    Version in format "1.22". Connector will append "/v${VERSION}" to api url for connector,
+    where ${VERSION} is entered string. For details see <a
+        href="https://docs.docker.com/reference/api/docker_remote_api/">docker_remote_api</a>
+</div>
