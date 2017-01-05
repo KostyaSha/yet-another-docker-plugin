@@ -1,6 +1,7 @@
 package com.github.kostyasha.yad.commons;
 
 import com.github.kostyasha.yad.DockerSlaveTemplate;
+import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.slaves.Cloud;
@@ -10,7 +11,12 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 /**
  * (Very) Pure abstraction to clean up docker specific implementation.
@@ -27,7 +33,7 @@ public abstract class AbstractCloud extends Cloud {
     protected final HashMap<DockerSlaveTemplate, Integer> provisionedImages = new HashMap<>();
 
     @Nonnull
-    protected List<DockerSlaveTemplate> templates = Collections.emptyList();
+    protected List<DockerSlaveTemplate> templates = new ArrayList<>(0);
 
     /**
      * Total max allowed number of containers
@@ -48,7 +54,23 @@ public abstract class AbstractCloud extends Cloud {
 
     @Override
     public boolean canProvision(Label label) {
-        return getTemplate(label) != null;
+        return nonNull(getAllTemplates(label));
+    }
+
+    @CheckForNull
+    public DockerSlaveTemplate getFirstTemplate(String template) {
+        final DockerSlaveTemplate transientTemplate = getTransientTemplate(template);
+        return nonNull(transientTemplate) ? transientTemplate : getTemplate(template);
+    }
+
+    @CheckForNull
+    public DockerSlaveTemplate getTransientTemplate(String template) {
+        for (DockerSlaveTemplate t : getTransientTemplates()) {
+            if (t.getDockerContainerLifecycle().getImage().equals(template)) {
+                return t;
+            }
+        }
+        return null;
     }
 
     @CheckForNull
@@ -81,8 +103,32 @@ public abstract class AbstractCloud extends Cloud {
         templates.add(t);
     }
 
+    public synchronized void addTransientTemplate(DockerSlaveTemplate t) {
+        getTransientTemplates().add(t);
+    }
+
+    @Nonnull
+    public List<DockerSlaveTemplate> getAllTemplates() {
+        List<DockerSlaveTemplate> temp = new ArrayList<>(getTemplates());
+        temp.addAll(getTransientTemplates());
+        return temp;
+    }
+
     public List<DockerSlaveTemplate> getTemplates() {
         return templates;
+    }
+
+    @Nonnull
+    public Set<DockerSlaveTemplate> getTransientTemplates() {
+        return getDescriptor().getTransientTemplates();
+    }
+
+    //
+    @Nonnull
+    public List<DockerSlaveTemplate> getAllTemplates(Label label) {
+        final ArrayList<DockerSlaveTemplate> labelTemplates = new ArrayList<>(getTemplates(label));
+        labelTemplates.addAll(getTransientTemplates(label));
+        return labelTemplates;
     }
 
     /**
@@ -95,17 +141,36 @@ public abstract class AbstractCloud extends Cloud {
         List<DockerSlaveTemplate> dockerSlaveTemplates = new ArrayList<>();
 
         for (DockerSlaveTemplate t : templates) {
-            if (label == null && t.getMode() == Node.Mode.NORMAL) {
+            if (isNull(label) && t.getMode() == Node.Mode.NORMAL) {
                 dockerSlaveTemplates.add(t);
             }
 
-            if (label != null && label.matches(t.getLabelSet())) {
+            if (nonNull(label) && label.matches(t.getLabelSet())) {
                 dockerSlaveTemplates.add(t);
             }
         }
 
         return dockerSlaveTemplates;
     }
+
+    @Nonnull
+    public List<DockerSlaveTemplate> getTransientTemplates(Label label) {
+        List<DockerSlaveTemplate> dockerSlaveTemplates = new ArrayList<>();
+
+        for (DockerSlaveTemplate t : getTransientTemplates()) {
+            if (isNull(label) && t.getMode() == Node.Mode.NORMAL) {
+                dockerSlaveTemplates.add(t);
+            }
+
+            if (nonNull(label) && label.matches(t.getLabelSet())) {
+                dockerSlaveTemplates.add(t);
+            }
+        }
+
+        return dockerSlaveTemplates;
+    }
+
+    //
 
     /**
      * Set list of available templates
@@ -125,6 +190,10 @@ public abstract class AbstractCloud extends Cloud {
         templates.remove(t);
     }
 
+    public synchronized void removeTransientTemplate(DockerSlaveTemplate t) {
+        getTransientTemplates().remove(t);
+    }
+
     /**
      * Decrease the count of slaves being "provisioned".
      */
@@ -135,6 +204,22 @@ public abstract class AbstractCloud extends Cloud {
                 currentProvisioning = provisionedImages.get(container);
             }
             provisionedImages.put(container, Math.max(currentProvisioning - 1, 0));
+        }
+    }
+
+    @Override
+    public AbstractCloudDescriptor getDescriptor() {
+        return (AbstractCloudDescriptor) super.getDescriptor();
+    }
+
+    public static abstract class AbstractCloudDescriptor extends Descriptor<Cloud> {
+        public transient Set<DockerSlaveTemplate> transientTemplates = new HashSet<>(0);
+        @Nonnull
+        public Set<DockerSlaveTemplate> getTransientTemplates() {
+            if (isNull(transientTemplates)) {
+                transientTemplates = new HashSet<>();
+            }
+            return transientTemplates;
         }
     }
 
