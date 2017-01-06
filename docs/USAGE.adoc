@@ -1,3 +1,6 @@
+== Jenkins configuration
+  - Since some 2.x version as usual jenkins introduced backward incompatible change and broke slaves classes inheritance, set `-Djenkins.slaves.DefaultJnlpSlaveReceiver.disableStrictVerification=true` to your jenkins instance. 
+ 
 == Cloud Configuration
  - Go to `Manage Jenkins` -> `Configure System`
  - Scroll down to `Cloud` section
