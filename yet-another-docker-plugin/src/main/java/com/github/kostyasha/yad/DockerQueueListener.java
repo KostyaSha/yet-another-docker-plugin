@@ -39,7 +39,7 @@ public class DockerQueueListener extends QueueListener {
         }
 
         final UUID uuid = UUID.randomUUID();
-        final LabelAtom label = new LabelAtom(uuid.toString());
+        final LabelAtom label = Jenkins.getInstance().getLabelAtom(uuid.toString());
 
         final DockerLabelAssignmentAction labelAssignmentAction = new DockerLabelAssignmentAction(label);
         wi.addAction(labelAssignmentAction);
