@@ -13,7 +13,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -30,7 +33,7 @@ public abstract class AbstractCloud extends Cloud {
      * Track the count per image name for images currently being
      * provisioned, but not necessarily reported yet by docker.
      */
-    protected final HashMap<DockerSlaveTemplate, Integer> provisionedImages = new HashMap<>();
+    protected final ConcurrentHashMap<DockerSlaveTemplate, Integer> provisionedImages = new ConcurrentHashMap<>();
 
     @Nonnull
     protected List<DockerSlaveTemplate> templates = new ArrayList<>(0);
@@ -120,7 +123,7 @@ public abstract class AbstractCloud extends Cloud {
 
     @Nonnull
     public Set<DockerSlaveTemplate> getTransientTemplates() {
-        return getDescriptor().getTransientTemplates();
+        return getDescriptor().getTransientTemplates(name);
     }
 
     //
@@ -213,14 +216,14 @@ public abstract class AbstractCloud extends Cloud {
     }
 
     public static abstract class AbstractCloudDescriptor extends Descriptor<Cloud> {
-        public transient Set<DockerSlaveTemplate> transientTemplates = new HashSet<>(0);
+        // docker cloud id <> set
+        public final transient ConcurrentHashMap<String, Set<DockerSlaveTemplate>> transientTemplates = new ConcurrentHashMap<>();
+        public final transient ConcurrentHashMap<String, ConcurrentHashMap<DockerSlaveTemplate, AtomicInteger>> provisionedImages = new ConcurrentHashMap<>();
+
         @Nonnull
-        public Set<DockerSlaveTemplate> getTransientTemplates() {
-            if (isNull(transientTemplates)) {
-                transientTemplates = new HashSet<>();
-            }
-            return transientTemplates;
+        public Set<DockerSlaveTemplate> getTransientTemplates(String cloudId) {
+            transientTemplates.putIfAbsent(cloudId, ConcurrentHashMap.newKeySet());
+            return transientTemplates.get(cloudId);
         }
     }
-
 }

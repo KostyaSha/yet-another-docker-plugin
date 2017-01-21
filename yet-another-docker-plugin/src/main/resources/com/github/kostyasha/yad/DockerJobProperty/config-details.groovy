@@ -14,23 +14,29 @@ if (instance == null) {
 }
 
 f.section() {
+    curSlaveJobConfig = instance.slaveJobConfig
     f.dropdownList(name: "slaveJobConfig", title: _("Docker agent configuration")) {
         // all possible descriptors.
-        getAllSlaveJobConfigurationDescriptors().each { sd ->
-            if (sd != null) {
-                f.dropdownListBlock(value: sd.clazz.name, name: sd.displayName,
+        getAllSlaveJobConfigurationDescriptors().each { desc ->
+            if (desc != null) {
+                f.dropdownListBlock(
+                        value: desc.clazz.name,
+                        name: desc.displayName,
                         selected: instance.slaveJobConfig == null ?
-                                "false" : instance.slaveJobConfig.descriptor.equals(sd),
-                        title: sd.displayName) {
-                    descriptor = sd
-                    if (instance.slaveJobConfig != null && instance.slaveJobConfig.descriptor.equals(sd)) {
+                                "false" : instance.slaveJobConfig.descriptor.equals(desc),
+                        title: desc.displayName
+                ) {
+                    descriptor = desc
+//                    if (instance.slaveJobConfig != null && instance.slaveJobConfig.descriptor.equals(desc)) {
                         instance = instance.slaveJobConfig
-                    }
+//                    }
                     f.invisibleEntry() {
-                        input(type: "hidden", name: "stapler-class", value: sd.clazz.name)
+                        input(type: "hidden", name: "stapler-class", value: desc.clazz.name)
                     }
-                    st.include(from: sd, page: sd.configPage, optional: "true")
+                    st.include(from: desc, page: desc.configPage, optional: "true")
                 }
+            } else {
+                println("descriptor is null")
             }
         }
     }
