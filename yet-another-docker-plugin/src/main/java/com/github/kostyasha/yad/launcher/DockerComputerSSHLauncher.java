@@ -14,7 +14,6 @@ import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Preconditions;
 import com.github.kostyasha.yad_docker_java.com.google.common.net.HostAndPort;
 import hudson.Extension;
-import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHConnector;
 import hudson.plugins.sshslaves.SSHLauncher;
