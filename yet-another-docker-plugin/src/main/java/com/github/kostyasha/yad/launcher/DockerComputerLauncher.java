@@ -5,10 +5,8 @@ import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
-import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
-import hudson.slaves.SlaveComputer;
 
 import java.io.IOException;
 
@@ -22,9 +20,11 @@ import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.Boole
  * like {@link DelegatingComputerLauncher}
  */
 @Beta
-public abstract class DockerComputerLauncher extends ComputerLauncher {
+public abstract class DockerComputerLauncher extends DelegatingComputerLauncher {
 
-    protected ComputerLauncher launcher;
+    protected DockerComputerLauncher(ComputerLauncher launcher) {
+        super(launcher);
+    }
 
     /**
      * Return valid configured launcher that will be used for launching slave
@@ -52,30 +52,7 @@ public abstract class DockerComputerLauncher extends ComputerLauncher {
         return true;
     }
 
-    public ComputerLauncher getLauncher() {
-        if (launcher == null) {
-            throw new IllegalStateException("Launcher must not be null");
-        }
-
-        return launcher;
-    }
-
     public void setLauncher(ComputerLauncher launcher) {
         this.launcher = launcher;
-    }
-
-    @Override
-    public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-        getLauncher().launch(computer, listener);
-    }
-
-    @Override
-    public void afterDisconnect(SlaveComputer computer, TaskListener listener) {
-        getLauncher().afterDisconnect(computer, listener);
-    }
-
-    @Override
-    public void beforeDisconnect(SlaveComputer computer, TaskListener listener) {
-        getLauncher().beforeDisconnect(computer, listener);
     }
 }
