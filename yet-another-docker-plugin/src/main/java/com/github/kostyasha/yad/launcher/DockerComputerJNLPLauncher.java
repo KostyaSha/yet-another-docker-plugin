@@ -10,12 +10,11 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.Ex
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.ExecStartResultCallback;
-import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
-import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
+import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
 import hudson.util.TimeUnit2;
@@ -49,20 +48,11 @@ import static java.util.Objects.isNull;
  *
  * @author Kanstantsin Shautsou
  */
-@Beta
 public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     private static final Logger LOG = LoggerFactory.getLogger(DockerComputerJNLPLauncher.class);
     private static final String NL = "\"\n";
     public static final long DEFAULT_TIMEOUT = 120L;
     public static final String DEFAULT_USER = "jenkins";
-
-    /**
-     * Configured from UI
-     *
-     * @deprecated because properties moved to fields
-     */
-    @Deprecated
-    protected transient JNLPLauncher jnlpLauncher;
 
     protected long launchTimeout = DEFAULT_TIMEOUT; //seconds
 
@@ -78,6 +68,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     @DataBoundConstructor
     public DockerComputerJNLPLauncher() {
+        super(null);
     }
 
     @DataBoundSetter
@@ -274,6 +265,11 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @Override
+    public ComputerLauncher getLauncher() {
+        return new JNLPLauncher();
+    }
+
+    @Override
     public void appendContainerConfig(DockerSlaveTemplate dockerSlaveTemplate, CreateContainerCmd createContainerCmd)
             throws IOException {
         try (InputStream instream = DockerComputerJNLPLauncher.class.getResourceAsStream("DockerComputerJNLPLauncher/init.sh")) {
@@ -316,11 +312,12 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<ComputerLauncher> {
+    public static class DescriptorImpl extends DelegatingComputerLauncher.DescriptorImpl {
         public Class getJNLPLauncher() {
             return JNLPLauncher.class;
         }
 
+        @Nonnull
         @Override
         public String getDisplayName() {
             return "Docker JNLP launcher";

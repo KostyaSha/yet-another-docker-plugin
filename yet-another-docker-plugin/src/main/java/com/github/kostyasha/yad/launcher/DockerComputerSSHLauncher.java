@@ -19,12 +19,14 @@ import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHConnector;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.slaves.ComputerLauncher;
+import hudson.slaves.DelegatingComputerLauncher;
 import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
@@ -43,6 +45,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
     @DataBoundConstructor
     public DockerComputerSSHLauncher(SSHConnector sshConnector) {
+        super(null);
         this.sshConnector = sshConnector;
     }
 
@@ -152,7 +155,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     }
 
     @Extension
-    public static final class DescriptorImpl extends Descriptor<ComputerLauncher> {
+    public static final class DescriptorImpl extends DelegatingComputerLauncher.DescriptorImpl {
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
             return DockerCreateContainer.DescriptorImpl.doFillCredentialsIdItems(context);
@@ -162,6 +165,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
             return SSHConnector.class;
         }
 
+        @Nonnull
         @Override
         public String getDisplayName() {
             return "Docker SSH computer launcher";
