@@ -2,6 +2,10 @@
 
 ## Next
 
+## 0.1.0-rc31
+- Bypass strictVerification from JNLPLauncher
+- Add cloud-stats-plugin (half worked, plugin missing integration points)
+
 ## 0.1.0-rc30
 - Possibly fix overprovisioning.
 
