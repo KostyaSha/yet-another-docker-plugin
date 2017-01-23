@@ -181,6 +181,9 @@ public class DockerSlave extends AbstractCloudSlave implements TrackedItem {
         } else {
             LOG.error("ContainerId is absent, no way to remove/stop container");
         }
+        // after it node will be finally removed from jenkins
+//        CloudStatistics.ProvisioningListener.get().onComplete() no completion method?!
+        // https://issues.jenkins-ci.org/browse/JENKINS-33780
     }
 
     @Nullable
