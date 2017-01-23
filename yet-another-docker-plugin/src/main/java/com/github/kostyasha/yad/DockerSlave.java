@@ -16,11 +16,14 @@ import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
+import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 
 
@@ -29,7 +32,7 @@ import java.io.IOException;
  */
 @SuppressFBWarnings(value = "SE_BAD_FIELD",
         justification = "Broken serialization https://issues.jenkins-ci.org/browse/JENKINS-31916")
-public class DockerSlave extends AbstractCloudSlave {
+public class DockerSlave extends AbstractCloudSlave implements TrackedItem {
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(DockerSlave.class);
 
@@ -52,8 +55,10 @@ public class DockerSlave extends AbstractCloudSlave {
 
     private String displayName;
 
+    protected ProvisioningActivity.Id provisioningId;
+
     public DockerSlave(String slaveName, String nodeDescription, ComputerLauncher launcher, String containerId,
-                       DockerSlaveTemplate dockerSlaveTemplate, String cloudId)
+                       DockerSlaveTemplate dockerSlaveTemplate, String cloudId, ProvisioningActivity.Id provisioningId)
             throws IOException, Descriptor.FormException {
         super(slaveName,
                 nodeDescription, //description
@@ -69,6 +74,7 @@ public class DockerSlave extends AbstractCloudSlave {
         this.containerId = containerId;
         this.cloudId = cloudId;
         setDockerSlaveTemplate(dockerSlaveTemplate);
+        this.provisioningId = provisioningId;
     }
 
     public String getContainerId() {
@@ -175,6 +181,15 @@ public class DockerSlave extends AbstractCloudSlave {
         } else {
             LOG.error("ContainerId is absent, no way to remove/stop container");
         }
+        // after it node will be finally removed from jenkins
+//        CloudStatistics.ProvisioningListener.get().onComplete() no completion method?!
+        // https://issues.jenkins-ci.org/browse/JENKINS-33780
+    }
+
+    @Nullable
+    @Override
+    public ProvisioningActivity.Id getId() {
+        return provisioningId;
     }
 
     public DockerClient getClient() {
