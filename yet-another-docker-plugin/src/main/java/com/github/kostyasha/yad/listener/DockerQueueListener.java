@@ -1,20 +1,35 @@
-package com.github.kostyasha.yad;
+package com.github.kostyasha.yad.listener;
 
+import com.github.kostyasha.yad.DockerCloud;
+import com.github.kostyasha.yad.DockerJobProperty;
+import com.github.kostyasha.yad.DockerSlaveSingle;
+import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad.action.DockerLabelAssignmentAction;
 import com.github.kostyasha.yad.jobconfig.DockerCloudJobConfig;
 import com.github.kostyasha.yad.jobconfig.SlaveJobConfig;
+import com.github.kostyasha.yad.launcher.DockerComputerSingleJNLPLauncher;
+import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import hudson.Extension;
+import hudson.model.Descriptor;
 import hudson.model.Job;
+import hudson.model.Node;
 import hudson.model.Queue;
+import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
 import hudson.model.queue.QueueListener;
 import hudson.slaves.Cloud;
+import hudson.slaves.DelegatingComputerLauncher;
+import hudson.slaves.SlaveComputer;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 
+import java.io.IOException;
 import java.util.UUID;
 
+import static java.util.Collections.emptyList;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.get;
 
 /**
  * @author Kanstantsin Shautsou
@@ -75,7 +90,32 @@ public class DockerQueueListener extends QueueListener {
     private boolean processItemWithAction(Queue.WaitingItem wi) {
         final DockerLabelAssignmentAction action = wi.getAction(DockerLabelAssignmentAction.class);
         if (nonNull(action)) {
+            try {
+                final ProvisioningActivity.Id activityId = new ProvisioningActivity.Id(wi.getDisplayName(),
+                    "fake-image");
+                get().onStarted(activityId);
 
+                final DockerSlaveSingle slave = new DockerSlaveSingle("docker-slave",
+                        "description",
+                        "/home/jenkins",
+                        1,
+                        Node.Mode.EXCLUSIVE,
+                        "", // label string
+                        new DelegatingComputerLauncher(new DockerComputerSingleJNLPLauncher()) {
+                            @Override
+                            public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
+                                // no launch
+                            }
+                        },
+                    new DockerOnceRetentionStrategy(10),
+                    emptyList(),
+                    activityId
+                );
+                Jenkins.getInstance().addNode(slave);
+                return true;
+            } catch (Descriptor.FormException | IOException e) {
+                e.printStackTrace();
+            }
         }
         return false;
     }

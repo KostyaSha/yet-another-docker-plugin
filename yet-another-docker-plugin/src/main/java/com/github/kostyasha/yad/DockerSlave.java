@@ -18,6 +18,7 @@ import hudson.slaves.ComputerLauncher;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.cloudstats.CloudStatistics;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.kohsuke.stapler.StaplerRequest;
@@ -29,6 +30,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 
+import static java.util.Objects.nonNull;
 
 /**
  * Jenkins Slave with yad specific configuration
@@ -98,7 +100,7 @@ public class DockerSlave extends AbstractCloudSlave implements TrackedItem {
 
     @Nonnull
     public DockerCloud getCloud() {
-        final Cloud cloud = Jenkins.getActiveInstance().getCloud(getCloudId());
+        final Cloud cloud = Jenkins.getInstance().getCloud(getCloudId());
 
         if (cloud == null) {
             throw new RuntimeException("Docker template " + dockerSlaveTemplate + " has no assigned Cloud.");
@@ -189,9 +191,11 @@ public class DockerSlave extends AbstractCloudSlave implements TrackedItem {
         } else {
             LOG.error("ContainerId is absent, no way to remove/stop container");
         }
-        // after it node will be finally removed from jenkins
-//        CloudStatistics.ProvisioningListener.get().onComplete() no completion method?!
-        // https://issues.jenkins-ci.org/browse/JENKINS-33780
+
+        ProvisioningActivity activity = CloudStatistics.get().getActivityFor(this);
+        if (nonNull(activity)) {
+            activity.enterIfNotAlready(ProvisioningActivity.Phase.COMPLETED);
+        }
     }
 
     @Nullable

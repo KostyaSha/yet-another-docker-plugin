@@ -2,11 +2,13 @@ package com.github.kostyasha.yad.action;
 
 import com.github.kostyasha.yad.DockerConnector;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
+import com.github.kostyasha.yad.connector.YADockerConnector;
 import hudson.model.Label;
 import hudson.model.labels.LabelAssignmentAction;
 import hudson.model.queue.SubTask;
 import jenkins.model.Jenkins;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -17,7 +19,7 @@ public class DockerLabelAssignmentAction implements LabelAssignmentAction {
 
     private final String assignedLabel;
 
-    private DockerConnector connector = null;
+    private YADockerConnector connector = null;
     private DockerSlaveTemplate slaveTemplate = null;
 
     public DockerLabelAssignmentAction(String assignedLabel) {
@@ -28,14 +30,16 @@ public class DockerLabelAssignmentAction implements LabelAssignmentAction {
         return assignedLabel;
     }
 
-    public DockerConnector getConnector() {
+    @CheckForNull
+    public YADockerConnector getConnector() {
         return connector;
     }
 
-    public void setConnector(DockerConnector connector) {
+    public void setConnector(YADockerConnector connector) {
         this.connector = connector;
     }
 
+    @CheckForNull
     public DockerSlaveTemplate getSlaveTemplate() {
         return slaveTemplate;
     }
