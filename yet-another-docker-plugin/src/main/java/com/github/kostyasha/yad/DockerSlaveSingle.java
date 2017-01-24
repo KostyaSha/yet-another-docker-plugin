@@ -67,6 +67,6 @@ public class DockerSlaveSingle extends AbstractCloudSlave implements TrackedItem
     @Nullable
     @Override
     public ProvisioningActivity.Id getId() {
-        return null;
+        return activityId;
     }
 }
