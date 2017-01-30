@@ -160,11 +160,6 @@ public class DockerSlaveConfig extends AbstractDescribableImpl<DockerSlaveConfig
         return id;
     }
 
-    protected Object readResolve() {
-
-        return this;
-    }
-
     @Override
     public int hashCode() {
         return id.hashCode();

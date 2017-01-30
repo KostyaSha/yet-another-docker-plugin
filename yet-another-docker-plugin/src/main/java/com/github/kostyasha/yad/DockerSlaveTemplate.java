@@ -1,32 +1,20 @@
 package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
-import com.github.kostyasha.yad_docker_java.com.google.common.base.MoreObjects;
-import com.github.kostyasha.yad_docker_java.com.google.common.base.Strings;
-import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.launcher.DockerComputerLauncher;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
+import com.github.kostyasha.yad_docker_java.com.google.common.base.MoreObjects;
 import hudson.Extension;
-import hudson.Util;
-import hudson.model.AbstractDescribableImpl;
-import hudson.model.Describable;
-import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.labels.LabelAtom;
-import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
-import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
-import hudson.util.DescribableList;
 import hudson.util.FormValidation;
-import jenkins.model.Jenkins;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -34,16 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 
 /**
  * All configuration (jenkins and docker specific) required for launching slave instances.
@@ -147,19 +131,6 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
         }
 
         return this;
-    }
-
-    /**
-     * Id used for counting running slaves
-     */
-    @Nonnull
-    public String getId() {
-        return id;
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
     }
 
     @Override

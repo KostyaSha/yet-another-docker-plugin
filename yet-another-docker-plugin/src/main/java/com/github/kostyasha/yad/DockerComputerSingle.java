@@ -1,13 +1,9 @@
 package com.github.kostyasha.yad;
 
-import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
-import hudson.model.Node;
 import hudson.model.Run;
-import hudson.model.Slave;
 import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.slaves.AbstractCloudComputer;
-import hudson.slaves.ComputerLauncher;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;
 

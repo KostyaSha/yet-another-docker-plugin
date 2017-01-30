@@ -132,7 +132,8 @@ public class ClientBuilderForConnector {
         return this;
     }
 
-    public ClientBuilderForConnector withCredentials(Credentials credentials) throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+    public ClientBuilderForConnector withCredentials(Credentials credentials) throws UnrecoverableKeyException,
+        NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         if (credentials instanceof CertificateCredentials) {
             CertificateCredentials certificateCredentials = (CertificateCredentials) credentials;
             withSslConfig(new KeystoreSSLConfig(

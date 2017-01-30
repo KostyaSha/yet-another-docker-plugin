@@ -2,35 +2,22 @@ package com.github.kostyasha.yad.listener;
 
 import com.github.kostyasha.yad.DockerComputer;
 import com.github.kostyasha.yad.DockerComputerSingle;
-import com.github.kostyasha.yad.DockerSlave;
 import com.github.kostyasha.yad.DockerSlaveSingle;
 import com.github.kostyasha.yad.action.DockerLabelAssignmentAction;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import hudson.Extension;
-import hudson.console.ConsoleLogFilter;
-import hudson.model.AbstractBuild;
-import hudson.model.BuildableItemWithBuildWrappers;
 import hudson.model.Computer;
 import hudson.model.Executor;
-import hudson.model.Job;
 import hudson.model.Node;
 import hudson.model.Run;
-import hudson.model.StreamBuildListener;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import hudson.slaves.DelegatingComputerLauncher;
-import hudson.tasks.BuildWrapper;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.fingerprint.DockerFingerprints;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.text.ParseException;
 
 import static com.github.kostyasha.yad.utils.ContainerRecordUtils.createRecordFor;

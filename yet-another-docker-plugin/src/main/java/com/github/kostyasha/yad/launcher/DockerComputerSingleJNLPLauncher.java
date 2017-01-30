@@ -2,7 +2,6 @@ package com.github.kostyasha.yad.launcher;
 
 import com.github.kostyasha.yad.DockerComputerSingle;
 import com.github.kostyasha.yad.DockerContainerLifecycle;
-import com.github.kostyasha.yad.DockerSlaveSingle;
 import com.github.kostyasha.yad.action.DockerLabelAssignmentAction;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
@@ -30,9 +29,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.concurrent.TimeUnit;
 
-import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.BooleanUtils.isFalse;
 import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils.isNotEmpty;
 import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils.trimToEmpty;
 import static java.util.Objects.isNull;
@@ -51,7 +48,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
 
     protected long launchTimeout = DEFAULT_TIMEOUT; //seconds
 
-    protected String user = "jenkins";
+    protected String user = DEFAULT_USER;
 
     protected String jvmOpts = "";
 
@@ -123,8 +120,8 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         listener.getLogger().println("Launching " + computer.getDisplayName());
         try {
             provisionWithWait((DockerComputerSingle) computer, listener);
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            LOG.error("Can't launch", e);
             listener.error(e.toString());
         }
     }
@@ -133,7 +130,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
      * Provision slave container and wait for it's availability.
      */
     private void provisionWithWait(DockerComputerSingle computer, TaskListener listener)
-            throws IOException, InterruptedException {
+            throws Exception {
         final PrintStream logger = listener.getLogger();
 
         final Run run = computer.getRun();
@@ -234,7 +231,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
                     .withTty(true)
                     .exec(new ExecStartResultCallback())
             ) {
-                exec.awaitCompletion(10 , SECONDS);
+                exec.awaitCompletion(10, SECONDS);
             } catch (NotFoundException ex) {
                 listener.error("Can't execute command: " + ex.getMessage().trim());
                 LOG.error("Can't execute jnlp connection command: '{}'", ex.getMessage().trim());
