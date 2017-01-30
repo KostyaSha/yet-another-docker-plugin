@@ -10,6 +10,7 @@ import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import hudson.model.Node;
 import hudson.model.Queue;
 import jenkins.model.Jenkins;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -24,6 +25,7 @@ public class TaskStepTest {
     @Rule
     public JenkinsRule jRule = new JenkinsRule();
 
+    @Ignore
     @Test
     public void actionTask() throws Exception {
         final Jenkins jenkins = jRule.getInstance();
@@ -34,13 +36,13 @@ public class TaskStepTest {
 
 //        final DockerCloud dockerCloud = new DockerCloud("localTestCloud");
 
-        final DockerLabelAssignmentAction assignmentAction = new DockerLabelAssignmentAction("docker-slave");
+//        final DockerLabelAssignmentAction assignmentAction = new DockerLabelAssignmentAction("docker-slave");
         final DockerConnector dockerConnector = new DockerConnector("tcp://192.168.1.3:2376/");
         dockerConnector.setConnectorType(NETTY);
 
-        assignmentAction.setConnector(dockerConnector);
+//        assignmentAction.setConnector(dockerConnector);
 
-        final Queue.WaitingItem waitingItem = jenkins.getQueue().schedule(new DockerTask(), 0, assignmentAction);
+//        final Queue.WaitingItem waitingItem = jenkins.getQueue().schedule(new DockerTask(), 0, assignmentAction);
 
         jRule.waitUntilNoActivity();
     }

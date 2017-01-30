@@ -215,7 +215,7 @@ public class DockerConnector extends YADockerConnector {
                 final DockerClient testClient = newClientBuilderForConnector()
                         .withConfigBuilder(configBuilder)
                         .withConnectorType(connectorType)
-                        .withCredentials(credentialsId)
+                        .withCredentialsId(credentialsId)
                         .withConnectTimeout(connectTimeout)
                         .build();
 

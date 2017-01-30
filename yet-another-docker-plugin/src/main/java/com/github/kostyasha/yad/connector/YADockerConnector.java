@@ -15,7 +15,7 @@ import jenkins.model.Jenkins;
  */
 public abstract class YADockerConnector extends AbstractDescribableImpl<YADockerConnector> implements ExtensionPoint {
 
-    public abstract DockerClient getClient();
+    public abstract DockerClient getClient() throws Exception;
 
     @Override
     public YADockerConnectorDescriptor getDescriptor() {

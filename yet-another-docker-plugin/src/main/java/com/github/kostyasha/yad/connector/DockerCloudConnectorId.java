@@ -21,7 +21,9 @@ import static org.apache.commons.lang.builder.ToStringBuilder.reflectionToString
 import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
 
 /**
- * Should be under `com.github.kostyasha.yad.connector` package, but it was first class and can't move.
+ * Should be under {@link com.github.kostyasha.yad.connector} package,
+ * but it was first class and can't move.
+ * Get {@link DockerClient} from existing {@link DockerCloud}
  *
  * @author Kanstantsin Shautsou
  */

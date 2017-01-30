@@ -2,6 +2,7 @@ package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.commons.AbstractCloud;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
+import com.github.kostyasha.yad.launcher.DockerComputerLauncher;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
@@ -102,7 +103,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
             final DockerSlaveTemplate t = tryTemplates.get(0); // get first
 
             LOG.info("Will provision '{}', for label: '{}', in cloud: '{}'",
-                    t.getDockerContainerLifecycle().getImage(), label, getDisplayName());
+                t.getDockerContainerLifecycle().getImage(), label, getDisplayName());
 
             try {
                 if (!addProvisionedSlave(t)) {
@@ -111,34 +112,34 @@ public class DockerCloud extends AbstractCloud implements Serializable {
                 }
             } catch (Exception e) {
                 LOG.warn("Bad template '{}' in cloud '{}': '{}'. Trying next template...",
-                        t.getDockerContainerLifecycle().getImage(), getDisplayName(), e.getMessage(), e);
+                    t.getDockerContainerLifecycle().getImage(), getDisplayName(), e.getMessage(), e);
                 tryTemplates.remove(t);
 
                 continue;
             }
 
             final ProvisioningActivity.Id id = new ProvisioningActivity.Id(getDisplayName(),
-                    t.getDockerContainerLifecycle().getImage());
+                t.getDockerContainerLifecycle().getImage());
 
             r.add(new TrackedPlannedNode(
-                            id,
-                            t.getNumExecutors(),
-                            Computer.threadPoolForRemoting.submit(() -> {
-                                get().onStarted(id);
-                                try {
-                                    final DockerSlave dockerSlave = provisionWithWait(t, id);
-                                    get().onComplete(id, dockerSlave); //rename
-                                    return dockerSlave;
-                                } catch (Exception ex) {
-                                    LOG.error("Error in provisioning; template='{}' for cloud='{}'",
-                                            t, getDisplayName(), ex);
-                                    get().onFailure(id, ex);
-                                    throw Throwables.propagate(ex);
-                                } finally {
-                                    decrementAmiSlaveProvision(t);
-                                }
-                            })
-                    )
+                    id,
+                    t.getNumExecutors(),
+                    Computer.threadPoolForRemoting.submit(() -> {
+                        get().onStarted(id);
+                        try {
+                            final DockerSlave dockerSlave = provisionWithWait(t, id);
+                            get().onComplete(id, dockerSlave); //rename
+                            return dockerSlave;
+                        } catch (Exception ex) {
+                            LOG.error("Error in provisioning; template='{}' for cloud='{}'",
+                                t, getDisplayName(), ex);
+                            get().onFailure(id, ex);
+                            throw Throwables.propagate(ex);
+                        } finally {
+                            decrementAmiSlaveProvision(t);
+                        }
+                    })
+                )
             );
             excessWorkload -= t.getNumExecutors();
         }
@@ -198,9 +199,10 @@ public class DockerCloud extends AbstractCloud implements Serializable {
      * Provision slave container and wait for it's availability.
      */
     private DockerSlave provisionWithWait(DockerSlaveTemplate template, ProvisioningActivity.Id id)
-            throws IOException, Descriptor.FormException {
+        throws IOException, Descriptor.FormException {
         final DockerContainerLifecycle dockerContainerLifecycle = template.getDockerContainerLifecycle();
         final String imageId = dockerContainerLifecycle.getImage();
+        final DockerComputerLauncher computerLauncher = template.getLauncher();
 
         //pull image
         dockerContainerLifecycle.getPullImage().exec(getClient(), imageId);
@@ -228,13 +230,13 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
         String slaveName = String.format("%s-%s", getDisplayName(), containerId.substring(0, 12));
 
-        if (template.getLauncher().waitUp(getDisplayName(), template, ir)) {
+        if (computerLauncher.waitUp(getDisplayName(), template, ir)) {
             LOG.debug("Container {} is ready for ssh slave connection", containerId);
         } else {
             LOG.error("Container {} is not ready for ssh slave connection.", containerId);
         }
 
-        final ComputerLauncher launcher = template.getLauncher().getPreparedLauncher(getDisplayName(), template, ir);
+        final ComputerLauncher launcher = computerLauncher.getPreparedLauncher(getDisplayName(), template, ir);
         return new DockerSlave(slaveName, nodeDescription, launcher, containerId, template, getDisplayName(), id);
     }
 
@@ -255,7 +257,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
                     // count only total cloud capacity
                     count++;
                 } else if (labels.containsKey(DOCKER_TEMPLATE_LABEL) &&
-                        labels.get(DOCKER_TEMPLATE_LABEL).equals(template.getId())) {
+                    labels.get(DOCKER_TEMPLATE_LABEL).equals(template.getId())) {
                     count++;
                 }
             }
@@ -289,18 +291,18 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
             if (estimatedTotalSlaves >= getContainerCap()) {
                 LOG.info("Not Provisioning '{}'; Server '{}' full with '{}' container(s)",
-                        dockerImageName, name, getContainerCap());
+                    dockerImageName, name, getContainerCap());
                 return false;      // maxed out
             }
 
             if (templateCapacity != 0 && estimatedAmiSlaves >= templateCapacity) {
                 LOG.info("Not Provisioning '{}'. Instance limit of '{}' reached on server '{}'",
-                        dockerImageName, templateCapacity, name);
+                    dockerImageName, templateCapacity, name);
                 return false;      // maxed out
             }
 
             LOG.info("Provisioning '{}' number '{}' on '{}'; Total containers: '{}'",
-                    dockerImageName, estimatedAmiSlaves, name, estimatedTotalSlaves);
+                dockerImageName, estimatedAmiSlaves, name, estimatedTotalSlaves);
 
             provisionedImages.put(template, currentProvisioning + 1);
             return true;

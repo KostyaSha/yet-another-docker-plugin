@@ -4,4 +4,4 @@ import lib.FormTagLib
 
 def f = namespace(FormTagLib)
 
-f.property(field: "slaveTemplate")
+f.property(field: "slaveConfig")

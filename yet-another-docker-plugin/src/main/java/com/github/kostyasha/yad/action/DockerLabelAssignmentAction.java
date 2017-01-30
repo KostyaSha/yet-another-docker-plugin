@@ -1,7 +1,6 @@
 package com.github.kostyasha.yad.action;
 
-import com.github.kostyasha.yad.DockerConnector;
-import com.github.kostyasha.yad.DockerSlaveTemplate;
+import com.github.kostyasha.yad.DockerSlaveConfig;
 import com.github.kostyasha.yad.connector.YADockerConnector;
 import hudson.model.Label;
 import hudson.model.labels.LabelAssignmentAction;
@@ -13,44 +12,41 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
+ * Configuration required to provision slave without Cloud.
+ *
  * @author Kanstantsin Shautsou
  */
 public class DockerLabelAssignmentAction implements LabelAssignmentAction {
+    // plugabble connector
+    @Nonnull
+    private final YADockerConnector connector;
 
-    private final String assignedLabel;
+    @Nonnull
+    private final DockerSlaveConfig slaveConfig;
 
-    private YADockerConnector connector = null;
-    private DockerSlaveTemplate slaveTemplate = null;
-
-    public DockerLabelAssignmentAction(String assignedLabel) {
-        this.assignedLabel = assignedLabel;
+    public DockerLabelAssignmentAction(@Nonnull DockerSlaveConfig slaveConfig,
+                                       @Nonnull YADockerConnector connector) {
+        this.slaveConfig = slaveConfig;
+        this.connector = connector;
     }
 
     public String getAssignedLabel() {
-        return assignedLabel;
+        return slaveConfig.getLabelString();
     }
 
-    @CheckForNull
+    @Nonnull
     public YADockerConnector getConnector() {
         return connector;
     }
 
-    public void setConnector(YADockerConnector connector) {
-        this.connector = connector;
-    }
-
-    @CheckForNull
-    public DockerSlaveTemplate getSlaveTemplate() {
-        return slaveTemplate;
-    }
-
-    public void setSlaveTemplate(DockerSlaveTemplate slaveTemplate) {
-        this.slaveTemplate = slaveTemplate;
+    @Nonnull
+    public DockerSlaveConfig getSlaveConfig() {
+        return slaveConfig;
     }
 
     @Override
     public Label getAssignedLabel(@Nullable SubTask task) {
-        return Jenkins.getInstance().getLabelAtom(assignedLabel);
+        return Jenkins.getInstance().getLabelAtom(getAssignedLabel());
     }
 
     @Override
