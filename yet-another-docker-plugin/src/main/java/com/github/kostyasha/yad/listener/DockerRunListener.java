@@ -36,6 +36,7 @@ public class DockerRunListener extends RunListener<Run<?, ?>> {
         if (isNull(assignmentAction)) {
             return;
         }
+
         try {
             final Node node = Jenkins.getInstance().getNode(assignmentAction.getAssignedLabel());
             final DockerSlaveSingle dockerSlave = (DockerSlaveSingle) node;
