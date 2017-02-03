@@ -93,7 +93,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
         done(executor);
     }
 
-    private void done(Executor executor) {
+    protected void done(Executor executor) {
         final AbstractCloudComputer<?> c = (AbstractCloudComputer) executor.getOwner();
         Queue.Executable exec = executor.getCurrentExecutable();
         if (executor instanceof OneOffExecutor) {
@@ -110,7 +110,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
         done(c);
     }
 
-    private void done(final AbstractCloudComputer<?> c) {
+    protected void done(final AbstractCloudComputer<?> c) {
         c.setAcceptingTasks(false); // just in case
         synchronized (this) {
             if (terminating) {

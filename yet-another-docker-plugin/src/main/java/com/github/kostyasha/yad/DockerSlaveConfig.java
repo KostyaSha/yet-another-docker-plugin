@@ -31,6 +31,9 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 /**
+ * Some generic config with everything required for container-slave operaition.
+ * Without docker connector because one connector may have multiple configs i.e. {@link DockerCloud}
+ *
  * @author Kanstantsin Shautsou
  */
 public class DockerSlaveConfig extends AbstractDescribableImpl<DockerSlaveConfig> {
@@ -59,8 +62,11 @@ public class DockerSlaveConfig extends AbstractDescribableImpl<DockerSlaveConfig
      */
     protected DockerContainerLifecycle dockerContainerLifecycle = new DockerContainerLifecycle();
 
-    private List<? extends NodeProperty<?>> nodeProperties = null;
+    private List<? extends NodeProperty<?>> nodeProperties = emptyList();
 
+    /**
+     * @param id some unique id to identify this configuration. Use case - count running computers based on this config.
+     */
     public DockerSlaveConfig(@Nonnull String id) {
         this.id = id;
     }
@@ -174,16 +180,16 @@ public class DockerSlaveConfig extends AbstractDescribableImpl<DockerSlaveConfig
         DockerSlaveConfig that = (DockerSlaveConfig) o;
 
         return new EqualsBuilder()
-            .append(numExecutors, that.numExecutors)
-            .append(id, that.id)
-            .append(labelString, that.labelString)
-            .append(launcher, that.launcher)
-            .append(remoteFs, that.remoteFs)
-            .append(mode, that.mode)
-            .append(retentionStrategy, that.retentionStrategy)
-            .append(dockerContainerLifecycle, that.dockerContainerLifecycle)
+                .append(numExecutors, that.numExecutors)
+                .append(id, that.id)
+                .append(labelString, that.labelString)
+                .append(launcher, that.launcher)
+                .append(remoteFs, that.remoteFs)
+                .append(mode, that.mode)
+                .append(retentionStrategy, that.retentionStrategy)
+                .append(dockerContainerLifecycle, that.dockerContainerLifecycle)
 //            .append(nodeProperties, that.nodeProperties)
-            .isEquals();
+                .isEquals();
     }
 
     @Extension

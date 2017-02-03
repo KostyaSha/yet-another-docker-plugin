@@ -155,10 +155,11 @@ public class DockerSlave extends AbstractCloudSlave implements TrackedItem {
             LOG.info("Requesting disconnect for computer: '{}'", name);
             final Computer toComputer = toComputer();
             if (toComputer != null) {
-                toComputer.disconnect(new DockerOfflineCause());
+                toComputer.disconnect(new DockerOfflineCause("Terminating from _terminate."));
             }
         } catch (Exception e) {
             LOG.error("Can't disconnect computer: '{}'", name, e);
+            listener.error("Can't disconnect computer: " + name);
         }
 
         if (StringUtils.isNotBlank(containerId)) {

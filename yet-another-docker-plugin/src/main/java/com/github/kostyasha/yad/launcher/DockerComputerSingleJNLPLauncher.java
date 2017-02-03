@@ -2,7 +2,7 @@ package com.github.kostyasha.yad.launcher;
 
 import com.github.kostyasha.yad.DockerComputerSingle;
 import com.github.kostyasha.yad.DockerContainerLifecycle;
-import com.github.kostyasha.yad.action.DockerLabelAssignmentAction;
+import com.github.kostyasha.yad.DockerSlaveSingle;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
@@ -25,6 +25,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,6 +58,8 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
     protected String jenkinsUrl = "";
 
     protected boolean noCertificateCheck = false;
+
+    private String containerId;
 
     @DataBoundSetter
     public void setSlaveOpts(String slaveOpts) {
@@ -114,6 +117,17 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         this.jenkinsUrl = trimToEmpty(jenkinsUrl);
     }
 
+    private void setContainerId(String containerId) {
+        this.containerId = containerId;
+    }
+
+    /**
+     * @return not null when container launched.
+     */
+    @CheckForNull
+    public String getContainerId() {
+        return containerId;
+    }
 
     @Override
     public void launch(SlaveComputer computer, TaskListener listener) {
@@ -134,11 +148,9 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         final PrintStream logger = listener.getLogger();
 
         final Run run = computer.getRun();
-        final DockerLabelAssignmentAction action = run.getAction(DockerLabelAssignmentAction.class);
-        final DockerClient client = action.getConnector().getClient();
-        //        final DockerContainerLifecycle dockerContainerLifecycle = template.getDockerContainerLifecycle();
-        final DockerContainerLifecycle containerLifecycle = new DockerContainerLifecycle();
-        containerLifecycle.setImage("java:8-jdk-alpine");
+        final DockerSlaveSingle slave = computer.getNode();
+        final DockerClient client = slave.getConnector().getClient();
+        final DockerContainerLifecycle containerLifecycle = slave.getConfig().getDockerContainerLifecycle();
 
         final String imageId = containerLifecycle.getImage();
 
@@ -159,6 +171,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         // create
         CreateContainerResponse createResp = containerConfig.exec();
         String containerId = createResp.getId();
+        setContainerId(containerId);
         logger.println("Created container " + containerId + ", for " + run.getDisplayName());
         LOG.debug("Created container {}, for {}", containerId, run.getDisplayName());
         // start
@@ -270,7 +283,6 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
                 computer.getSlaveVersion(), computer.getName(), containerId);
         logger.println("Launched slave for " + containerId);
     }
-
 
     public void appendContainerConfig(CreateContainerCmd createContainerCmd)
             throws IOException {

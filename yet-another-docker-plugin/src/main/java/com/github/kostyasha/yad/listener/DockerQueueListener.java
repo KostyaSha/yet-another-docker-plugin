@@ -1,6 +1,7 @@
 package com.github.kostyasha.yad.listener;
 
 import com.github.kostyasha.yad.DockerContainerLifecycle;
+import com.github.kostyasha.yad.DockerSlaveConfig;
 import com.github.kostyasha.yad.DockerSlaveSingle;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad.action.DockerLabelAssignmentAction;
@@ -9,6 +10,7 @@ import hudson.model.Descriptor;
 import hudson.model.Queue;
 import hudson.model.queue.QueueListener;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.cloudstats.CloudStatistics;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 
 import java.io.IOException;
@@ -60,7 +62,7 @@ public class DockerQueueListener extends QueueListener {
 //        final SlaveJobConfig slaveJobConfig = dockerProp.getSlaveJobConfig();
 //        if (slaveJobConfig instanceof DockerCloudJobConfig) {
 //            final DockerCloudJobConfig cloudJobConfig = (DockerCloudJobConfig) slaveJobConfig;
-//            final DockerSlaveTemplate template = cloudJobConfig.getTemplate();
+//            final DockerSlaveTemplate template = cloudJobConfig.getConfig();
 //            template.setLabelString(uuid.toString());
 //
 //            final DockerCloud cloud = (DockerCloud) Jenkins.getInstance().getCloud(cloudJobConfig.getConnector().getCloudId());
@@ -78,32 +80,27 @@ public class DockerQueueListener extends QueueListener {
     private boolean processItemWithAction(Queue.WaitingItem wi) {
         final DockerLabelAssignmentAction action = wi.getAction(DockerLabelAssignmentAction.class);
         if (nonNull(action)) {
-            try {
-                final DockerSlaveTemplate template = action.getSlaveConfig();
-                final DockerContainerLifecycle lifecycle = template.getDockerContainerLifecycle();
+            final DockerSlaveConfig template = action.getSlaveConfig();
+            final DockerContainerLifecycle lifecycle = template.getDockerContainerLifecycle();
 
-                final ProvisioningActivity.Id activityId = new ProvisioningActivity.Id(
+            final ProvisioningActivity.Id activityId = new ProvisioningActivity.Id(
                     wi.getDisplayName(),
                     lifecycle.getImage()
-                );
+            );
 
+            try {
                 get().onStarted(activityId);
 
                 final DockerSlaveSingle slave = new DockerSlaveSingle("docker-slave",
-                    "Slave for " + wi.getDisplayName(),
-                    template.getRemoteFs(),
-                    template.getNumExecutors(),
-                    template.getMode(),
-                    "", // label string
-                    template.getLauncher(),
-                    template.getRetentionStrategy(),
-                    emptyList(),
-                    activityId
+                        "Slave for " + wi.getDisplayName(),
+                        action.getSlaveConfig(),
+                        action.getConnector(),
+                        activityId
                 );
                 Jenkins.getInstance().addNode(slave);
                 return true;
             } catch (Descriptor.FormException | IOException e) {
-                e.printStackTrace();
+                CloudStatistics.ProvisioningListener.get().onFailure(activityId, e);
             }
         }
         return false;

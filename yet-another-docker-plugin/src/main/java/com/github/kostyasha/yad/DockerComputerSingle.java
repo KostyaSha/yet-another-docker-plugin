@@ -7,6 +7,7 @@ import hudson.slaves.AbstractCloudComputer;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -22,7 +23,7 @@ public class DockerComputerSingle extends AbstractCloudComputer<DockerSlaveSingl
     private transient TaskListener listener;
     private transient Run run;
 
-    public DockerComputerSingle(DockerSlaveSingle slave, ProvisioningActivity.Id activityId) {
+    public DockerComputerSingle(@Nonnull DockerSlaveSingle slave, @Nonnull ProvisioningActivity.Id activityId) {
         super(slave);
         this.activityId = activityId;
     }
@@ -45,7 +46,8 @@ public class DockerComputerSingle extends AbstractCloudComputer<DockerSlaveSingl
     }
 
     @Override
-    public void setChannel(Channel channel, OutputStream launchLog, Channel.Listener listener) throws IOException, InterruptedException {
+    public void setChannel(Channel channel, OutputStream launchLog, Channel.Listener listener)
+            throws IOException, InterruptedException {
         super.setChannel(channel, launchLog, listener);
     }
 

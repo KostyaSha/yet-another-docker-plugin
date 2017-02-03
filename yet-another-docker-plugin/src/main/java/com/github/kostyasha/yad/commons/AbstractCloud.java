@@ -10,10 +10,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -215,7 +212,7 @@ public abstract class AbstractCloud extends Cloud {
         return (AbstractCloudDescriptor) super.getDescriptor();
     }
 
-    public static abstract class AbstractCloudDescriptor extends Descriptor<Cloud> {
+    public abstract static class AbstractCloudDescriptor extends Descriptor<Cloud> {
         // docker cloud id <> set
         public final transient ConcurrentHashMap<String, Set<DockerSlaveTemplate>> transientTemplates = new ConcurrentHashMap<>();
         public final transient ConcurrentHashMap<String, ConcurrentHashMap<DockerSlaveTemplate, AtomicInteger>> provisionedImages = new ConcurrentHashMap<>();
