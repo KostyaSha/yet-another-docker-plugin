@@ -24,7 +24,6 @@ import org.kohsuke.stapler.QueryParameter;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;

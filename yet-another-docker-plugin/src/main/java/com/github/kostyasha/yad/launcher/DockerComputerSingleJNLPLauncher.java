@@ -170,25 +170,25 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
 
         // create
         CreateContainerResponse createResp = containerConfig.exec();
-        String containerId = createResp.getId();
-        setContainerId(containerId);
-        logger.println("Created container " + containerId + ", for " + run.getDisplayName());
-        LOG.debug("Created container {}, for {}", containerId, run.getDisplayName());
+        String cId = createResp.getId();
+        setContainerId(cId);
+        logger.println("Created container " + cId + ", for " + run.getDisplayName());
+        LOG.debug("Created container {}, for {}", cId, run.getDisplayName());
         // start
-        StartContainerCmd startCommand = client.startContainerCmd(containerId);
+        StartContainerCmd startCommand = client.startContainerCmd(cId);
         startCommand.exec();
-        logger.println("Started container " + containerId);
-        LOG.debug("Start container {}, for {}", containerId, run.getDisplayName());
+        logger.println("Started container " + cId);
+        LOG.debug("Start container {}, for {}", cId, run.getDisplayName());
 
         boolean running = false;
         long launchTime = System.currentTimeMillis();
         while (!running &&
                 TimeUnit2.SECONDS.toMillis(launchTimeout) > System.currentTimeMillis() - launchTime) {
             try {
-                InspectContainerResponse inspectResp = client.inspectContainerCmd(containerId).exec();
+                InspectContainerResponse inspectResp = client.inspectContainerCmd(cId).exec();
                 if (isTrue(inspectResp.getState().getRunning())) {
                     logger.println("Container is running!");
-                    LOG.debug("Container {} is running", containerId);
+                    LOG.debug("Container {} is running", cId);
                     running = true;
                 } else {
                     logger.println("Container is not running...");
@@ -201,7 +201,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         if (!running) {
             listener.error("Failed to run container for %s, clean-up container", imageId);
             LOG.error("Failed to run container for {}, clean-up container", imageId);
-            containerLifecycle.getRemoveContainer().exec(client, containerId);
+            containerLifecycle.getRemoveContainer().exec(client, cId);
         }
 
         // now real launch
@@ -209,7 +209,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
 //        Objects.requireNonNull(rootUrl, "Jenkins root url is not specified!");
         if (isNull(rootUrl)) {
             listener.fatalError("Jenkins root url is not specified!");
-            containerLifecycle.getRemoveContainer().exec(client, containerId);
+            containerLifecycle.getRemoveContainer().exec(client, cId);
             throw new IllegalStateException("Jenkins root url is not specified!");
         }
 
@@ -228,7 +228,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
                         "EOF" + "\n";
 
         try {
-            final ExecCreateCmdResponse createCmdResponse = client.execCreateCmd(containerId)
+            final ExecCreateCmdResponse createCmdResponse = client.execCreateCmd(cId)
                     .withTty(true)
                     .withAttachStdin(false)
                     .withAttachStderr(true)
@@ -236,8 +236,8 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
                     .withCmd("/bin/sh", "-cxe", startCmd.replace("$", "\\$"))
                     .exec();
 
-            logger.println("Starting connection command for " + containerId);
-            LOG.info("Starting connection command for {}", containerId);
+            logger.println("Starting connection command for " + cId);
+            LOG.info("Starting connection command for {}", cId);
 
             try (ExecStartResultCallback exec = client.execStartCmd(createCmdResponse.getId())
                     .withDetach(true)
@@ -248,20 +248,20 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
             } catch (NotFoundException ex) {
                 listener.error("Can't execute command: " + ex.getMessage().trim());
                 LOG.error("Can't execute jnlp connection command: '{}'", ex.getMessage().trim());
-                containerLifecycle.getRemoveContainer().exec(client, containerId);
+                containerLifecycle.getRemoveContainer().exec(client, cId);
                 computer.getNode().terminate();
                 throw ex;
             }
         } catch (Exception ex) {
             listener.error("Can't execute command: " + ex.getMessage().trim());
             LOG.error("Can't execute jnlp connection command: '{}'", ex.getMessage().trim());
-            containerLifecycle.getRemoveContainer().exec(client, containerId);
+            containerLifecycle.getRemoveContainer().exec(client, cId);
             computer.getNode().terminate();
             throw ex;
         }
 
-        LOG.info("Successfully executed jnlp connection for '{}'", containerId);
-        logger.println("Successfully executed jnlp connection for " + containerId);
+        LOG.info("Successfully executed jnlp connection for '{}'", cId);
+        logger.println("Successfully executed jnlp connection for " + cId);
 
         // TODO better strategy
         launchTime = System.currentTimeMillis();
@@ -272,16 +272,16 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         }
 
         if (computer.isReallyOffline()) {
-            LOG.info("Launch timeout, termintaing slave based on '{}'", containerId);
+            LOG.info("Launch timeout, termintaing slave based on '{}'", cId);
             logger.println("Launch timeout, termintaing slave.");
-            containerLifecycle.getRemoveContainer().exec(client, containerId);
+            containerLifecycle.getRemoveContainer().exec(client, cId);
             computer.getNode().terminate();
             throw new IOException("Can't connect slave to jenkins");
         }
 
         LOG.info("Launched slave '{}' '{}' based on '{}'",
-                computer.getSlaveVersion(), computer.getName(), containerId);
-        logger.println("Launched slave for " + containerId);
+                computer.getSlaveVersion(), computer.getName(), cId);
+        logger.println("Launched slave for " + cId);
     }
 
     public void appendContainerConfig(CreateContainerCmd createContainerCmd)

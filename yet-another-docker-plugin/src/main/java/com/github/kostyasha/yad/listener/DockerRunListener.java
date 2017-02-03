@@ -1,29 +1,21 @@
 package com.github.kostyasha.yad.listener;
 
-import com.github.kostyasha.yad.DockerComputer;
 import com.github.kostyasha.yad.DockerComputerSingle;
 import com.github.kostyasha.yad.DockerSlaveSingle;
 import com.github.kostyasha.yad.action.DockerLabelAssignmentAction;
 import hudson.Extension;
-import hudson.model.Computer;
-import hudson.model.Executor;
-import hudson.model.Node;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
-import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.cloudstats.CloudStatistics;
-import org.jenkinsci.plugins.docker.commons.fingerprint.DockerFingerprints;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.text.ParseException;
 
 import static com.github.kostyasha.yad.utils.ContainerRecordUtils.attachFacet;
-import static com.github.kostyasha.yad.utils.ContainerRecordUtils.createRecordFor;
 import static java.util.Objects.isNull;
 
 /**

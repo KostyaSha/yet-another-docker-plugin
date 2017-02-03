@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.ServletContext;
 import java.io.IOException;
 import java.net.URL;
-import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;

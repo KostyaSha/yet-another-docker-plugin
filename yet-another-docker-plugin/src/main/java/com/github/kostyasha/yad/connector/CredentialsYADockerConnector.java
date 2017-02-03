@@ -7,7 +7,6 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DefaultDo
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -121,14 +120,15 @@ public class CredentialsYADockerConnector extends YADockerConnector {
                 .withApiVersion(apiVersion)
                 .withDockerHost(serverUrl);
 
-            final DockerClient client = newClientBuilderForConnector()
+            final DockerClient newClient = newClientBuilderForConnector()
                 .withConfigBuilder(configBuilder)
                 .withConnectorType(connectorType)
                 .withCredentials(credentials)
                 .withConnectTimeout(connectTimeout)
                 .build();
 
-            client.versionCmd().exec();
+            newClient.versionCmd().exec();
+            client = newClient;
         }
 
         return client;

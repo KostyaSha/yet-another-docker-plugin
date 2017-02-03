@@ -19,13 +19,10 @@ import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.logging.Level;
 
-import static java.nio.charset.Charset.defaultCharset;
 import static java.util.Objects.nonNull;
 
 /**
@@ -78,6 +75,9 @@ public class DockerSlaveSingle extends AbstractCloudSlave implements TrackedItem
         return nonNull(listener) ? listener : new StreamTaskListener(System.out, Charset.forName("UTF-8"));
     }
 
+    /**
+     * Set listener that will be used for printing out messages instead default listener.
+     */
     public void setListener(TaskListener listener) {
         this.listener = listener;
     }

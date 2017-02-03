@@ -3,7 +3,6 @@ package com.github.kostyasha.yad.launcher;
 import hudson.Extension;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
-import hudson.slaves.ComputerLauncherFilter;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.SlaveComputer;
 
