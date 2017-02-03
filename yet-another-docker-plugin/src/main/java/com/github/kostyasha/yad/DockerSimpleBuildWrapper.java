@@ -16,9 +16,11 @@ import jenkins.tasks.SimpleBuildWrapper;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.cloudstats.CloudStatistics;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 
@@ -26,15 +28,21 @@ import static com.github.kostyasha.yad.utils.ContainerRecordUtils.attachFacet;
 import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.get;
 
 /**
+ * Wrapper that starts node and allows body execute anything in created {@link #getSlaveName()} slave.
+ * Body may assign tasks by {@link hudson.model.Label} using Actions or do anything directly on it.
+ * By defauld {@link com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy} is used and terminates
+ * slave after first execution, set other or override it with custom logic.
+ *
  * @author Kanstantsin Shautsou
  */
 public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
     private static final Logger LOG = LoggerFactory.getLogger(DockerSimpleBuildWrapper.class);
+
     private DockerConnector connector;
     private DockerSlaveConfig config;
-
     private String slaveName;
 
+    @DataBoundConstructor
     public DockerSimpleBuildWrapper(@Nonnull DockerConnector connector, @Nonnull DockerSlaveConfig config) {
         this.connector = connector;
         this.config = config;
@@ -48,11 +56,12 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
         return config;
     }
 
+    @CheckForNull
     public String getSlaveName() {
         return slaveName;
     }
 
-    public void setSlaveName(String slaveName) {
+    protected void setSlaveName(String slaveName) {
         this.slaveName = slaveName;
     }
 
@@ -80,8 +89,6 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
                     activityId
             );
 
-            attachFacet(run, listener);
-
             Jenkins.getInstance().addNode(slave);
 
             final DockerSlaveSingle node = (DockerSlaveSingle) Jenkins.getInstance().getNode(futureName);
@@ -97,23 +104,18 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
                 CloudStatistics.ProvisioningListener.get().onFailure(node.getId(), e);
             }
             setSlaveName(futureName);
+            context.setDisposer(new DisposerImpl(futureName));
+
         } catch (Descriptor.FormException | IOException e) {
             get().onFailure(activityId, e);
             throw new AbortException("failed to run slave");
         }
 
-        context.setDisposer(new DisposerImpl(getSlaveName()));
     }
 
-    @Symbol("dockerCustomWrapper")
-    @Extension
-    public static final class DescriptorImpl extends BuildWrapperDescriptor {
-        @Override
-        public boolean isApplicable(AbstractProject<?, ?> item) {
-            return true;
-        }
-    }
-
+    /**
+     * Terminates slave for specified slaveName. Works only with {@link DockerSlaveSingle}.
+     */
     public static class DisposerImpl extends Disposer {
         private static final long serialVersionUID = 1;
         private final String slaveName;
@@ -132,10 +134,19 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
             try {
                 node.terminate();
             } catch (IOException | InterruptedException e) {
-                LOG.error("fd", e);
+                LOG.error("Can't terminate node", e);
                 CloudStatistics.ProvisioningListener.get().onFailure(node.getId(), e);
             }
 
+        }
+    }
+
+    @Symbol("dockerCustomWrapper")
+    @Extension
+    public static final class DescriptorImpl extends BuildWrapperDescriptor {
+        @Override
+        public boolean isApplicable(AbstractProject<?, ?> item) {
+            return true;
         }
     }
 }

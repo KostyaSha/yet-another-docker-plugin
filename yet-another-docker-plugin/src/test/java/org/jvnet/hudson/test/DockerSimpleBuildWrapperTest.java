@@ -92,7 +92,7 @@ public class DockerSimpleBuildWrapperTest {
         final DockerConnector connector = new DockerConnector("tcp://" + ADDRESS + ":2376/");
         connector.setConnectorType(JERSEY);
 
-        final DockerSlaveConfig config = new DockerSlaveConfig(UUID.randomUUID().toString());
+        final DockerSlaveConfig config = new DockerSlaveConfig();
         config.getDockerContainerLifecycle().setImage("java:8-jdk-alpine");
         config.setLauncher(new NoOpDelegatingComputerLauncher(new DockerComputerSingleJNLPLauncher()));
         config.setRetentionStrategy(new DockerOnceRetentionStrategy(10));

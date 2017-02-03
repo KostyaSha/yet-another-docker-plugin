@@ -24,11 +24,13 @@ import org.kohsuke.stapler.QueryParameter;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static java.util.UUID.randomUUID;
 
 /**
  * Some generic config with everything required for container-slave operaition.
@@ -63,6 +65,10 @@ public class DockerSlaveConfig extends AbstractDescribableImpl<DockerSlaveConfig
     protected DockerContainerLifecycle dockerContainerLifecycle = new DockerContainerLifecycle();
 
     private List<? extends NodeProperty<?>> nodeProperties = emptyList();
+
+    public DockerSlaveConfig() {
+        this.id = randomUUID().toString();
+    }
 
     /**
      * @param id some unique id to identify this configuration. Use case - count running computers based on this config.

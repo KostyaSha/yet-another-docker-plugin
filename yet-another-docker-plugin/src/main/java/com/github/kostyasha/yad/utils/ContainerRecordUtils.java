@@ -2,6 +2,7 @@ package com.github.kostyasha.yad.utils;
 
 import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.DockerComputer;
+import com.github.kostyasha.yad.DockerComputerSingle;
 import com.github.kostyasha.yad_docker_java.com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
@@ -66,18 +67,19 @@ public class ContainerRecordUtils {
         DockerComputer dockerComputer;
         if (owner instanceof DockerComputer) {
             dockerComputer = (DockerComputer) owner;
-        } else {
-            return;
+            try {
+                DockerFingerprints.addRunFacet(
+                        createRecordFor(dockerComputer),
+                        run
+                );
+            } catch (IOException | ParseException e) {
+                listener.error("Can't add Docker fingerprint to run.");
+                LOG.error("Can't add fingerprint to run {}", run, e);
+            }
+        } else if (owner instanceof DockerComputerSingle) {
+
         }
 
-        try {
-            DockerFingerprints.addRunFacet(
-                    createRecordFor(dockerComputer),
-                    run
-            );
-        } catch (IOException | ParseException e) {
-            listener.error("Can't add Docker fingerprint to run.");
-            LOG.error("Can't add fingerprint to run {}", run, e);
-        }
+
     }
 }

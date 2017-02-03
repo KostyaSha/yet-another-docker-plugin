@@ -43,7 +43,7 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
      * Generates new unique ID for new instances.
      */
     public DockerSlaveTemplate() {
-        super(UUID.randomUUID().toString());
+        super();
     }
 
     /**
