@@ -24,7 +24,6 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 
-import static com.github.kostyasha.yad.utils.ContainerRecordUtils.attachFacet;
 import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.get;
 
 /**

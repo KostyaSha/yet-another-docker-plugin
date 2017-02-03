@@ -25,7 +25,6 @@ import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import static java.util.Objects.isNull;
 
@@ -145,6 +144,11 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
                 .appendSuper(true)
                 .append(maxCapacity, that.maxCapacity)
                 .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 
     @Override

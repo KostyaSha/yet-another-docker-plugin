@@ -3,7 +3,6 @@ package com.github.kostyasha.yad.listener;
 import com.github.kostyasha.yad.DockerContainerLifecycle;
 import com.github.kostyasha.yad.DockerSlaveConfig;
 import com.github.kostyasha.yad.DockerSlaveSingle;
-import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad.action.DockerLabelAssignmentAction;
 import hudson.Extension;
 import hudson.model.Descriptor;
@@ -15,7 +14,6 @@ import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 
 import java.io.IOException;
 
-import static java.util.Collections.emptyList;
 import static java.util.Objects.nonNull;
 import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.get;
 
