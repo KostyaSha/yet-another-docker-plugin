@@ -61,7 +61,7 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
      */
     @DataBoundConstructor
     public DockerSlaveTemplate(@Nonnull String id, List<? extends NodeProperty<?>> nodePropertiesUI)
-        throws FormException {
+            throws FormException {
         this(id);
         setNodeProperties(nodePropertiesUI);
     }
@@ -142,9 +142,9 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
         DockerSlaveTemplate that = (DockerSlaveTemplate) o;
 
         return new EqualsBuilder()
-            .appendSuper(true)
-            .append(maxCapacity, that.maxCapacity)
-            .isEquals();
+                .appendSuper(true)
+                .append(maxCapacity, that.maxCapacity)
+                .isEquals();
     }
 
     @Override
@@ -154,8 +154,8 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
 
     public String getShortDescription() {
         return MoreObjects.toStringHelper(this)
-            .add("image", dockerContainerLifecycle.getImage())
-            .toString();
+                .add("image", dockerContainerLifecycle.getImage())
+                .toString();
     }
 
     @Override
