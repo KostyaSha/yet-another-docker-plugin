@@ -79,7 +79,7 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
 
         try {
             get().onStarted(activityId);
-            final String futureName = Integer.toString(activityId.getFingerprint());
+            final String futureName = "yadp" + Integer.toString(activityId.getFingerprint());
 
             final DockerSlaveSingle slave = new DockerSlaveSingle(futureName,
                     "Slave for " + run.getFullDisplayName(),
