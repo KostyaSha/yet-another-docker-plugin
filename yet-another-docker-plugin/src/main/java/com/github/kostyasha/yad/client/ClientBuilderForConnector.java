@@ -85,7 +85,7 @@ public class ClientBuilderForConnector {
     public ClientBuilderForConnector forConnector(DockerConnector connector)
             throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         LOG.debug("Building connection to docker host '{}'", connector.getServerUrl());
-        withCredentials(connector.getCredentialsId());
+        withCredentialsId(connector.getCredentialsId());
         withConnectorType(connector.getConnectorType());
         withConnectTimeout(connector.getConnectTimeout());
 
@@ -121,17 +121,25 @@ public class ClientBuilderForConnector {
      * @param credentialsId credentials to find in jenkins
      * @return docker-java client
      */
-    public ClientBuilderForConnector withCredentials(String credentialsId)
+    public ClientBuilderForConnector withCredentialsId(String credentialsId)
             throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         if (isNotBlank(credentialsId)) {
-            Credentials credentials = lookupSystemCredentials(credentialsId);
+            withCredentials(lookupSystemCredentials(credentialsId));
+        } else {
+            withSslConfig(null);
+        }
 
-            if (credentials instanceof CertificateCredentials) {
-                CertificateCredentials certificateCredentials = (CertificateCredentials) credentials;
-                withSslConfig(new KeystoreSSLConfig(
-                        certificateCredentials.getKeyStore(),
-                        certificateCredentials.getPassword().getPlainText()
-                ));
+        return this;
+    }
+
+    public ClientBuilderForConnector withCredentials(Credentials credentials) throws UnrecoverableKeyException,
+        NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        if (credentials instanceof CertificateCredentials) {
+            CertificateCredentials certificateCredentials = (CertificateCredentials) credentials;
+            withSslConfig(new KeystoreSSLConfig(
+                certificateCredentials.getKeyStore(),
+                certificateCredentials.getPassword().getPlainText()
+            ));
 //            } else if (credentials instanceof StandardUsernamePasswordCredentials) {
 //                StandardUsernamePasswordCredentials usernamePasswordCredentials =
 //                        ((StandardUsernamePasswordCredentials) credentials);
@@ -139,17 +147,14 @@ public class ClientBuilderForConnector {
 //                dockerClientConfigBuilder.withRegistryUsername(usernamePasswordCredentials.getUsername());
 //                dockerClientConfigBuilder.withRegistryPassword(usernamePasswordCredentials.getPassword().getPlainText());
 //
-            } else if (credentials instanceof DockerServerCredentials) {
-                final DockerServerCredentials dockerCreds = (DockerServerCredentials) credentials;
+        } else if (credentials instanceof DockerServerCredentials) {
+            final DockerServerCredentials dockerCreds = (DockerServerCredentials) credentials;
 
-                withSslConfig(new VariableSSLConfig(
-                        dockerCreds.getClientKey(),
-                        dockerCreds.getClientCertificate(),
-                        dockerCreds.getServerCaCertificate()
-                ));
-            }
-        } else {
-            withSslConfig(null);
+            withSslConfig(new VariableSSLConfig(
+                dockerCreds.getClientKey(),
+                dockerCreds.getClientCertificate(),
+                dockerCreds.getServerCaCertificate()
+            ));
         }
 
         return this;

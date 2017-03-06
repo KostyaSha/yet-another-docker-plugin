@@ -1,20 +1,22 @@
 package com.github.kostyasha.yad.listener;
 
-import com.github.kostyasha.yad.DockerComputer;
+import com.github.kostyasha.yad.DockerComputerSingle;
+import com.github.kostyasha.yad.DockerSlaveSingle;
+import com.github.kostyasha.yad.action.DockerLabelAssignmentAction;
 import hudson.Extension;
-import hudson.model.Computer;
-import hudson.model.Executor;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
-import org.jenkinsci.plugins.docker.commons.fingerprint.DockerFingerprints;
+import hudson.slaves.DelegatingComputerLauncher;
+import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.cloudstats.CloudStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.text.ParseException;
 
-import static com.github.kostyasha.yad.utils.ContainerRecordUtils.createRecordFor;
+import static com.github.kostyasha.yad.utils.ContainerRecordUtils.attachFacet;
+import static java.util.Objects.isNull;
 
 /**
  * @author Kanstantsin Shautsou
@@ -25,26 +27,24 @@ public class DockerRunListener extends RunListener<Run<?, ?>> {
 
     @Override
     public void onStarted(Run<?, ?> run, TaskListener listener) {
-        final Executor executor = run.getExecutor();
-        if (executor == null) {
+        final DockerLabelAssignmentAction assignmentAction = run.getAction(DockerLabelAssignmentAction.class);
+        if (isNull(assignmentAction)) {
             return;
         }
 
-        final Computer owner = executor.getOwner();
-        DockerComputer dockerComputer;
-        if (owner instanceof DockerComputer) {
-            dockerComputer = (DockerComputer) owner;
-        } else {
-            return;
-        }
-
+        final DockerSlaveSingle node = (DockerSlaveSingle) Jenkins.getInstance().getNode(assignmentAction.getAssignedLabel());
         try {
-            DockerFingerprints.addRunFacet(
-                    createRecordFor(dockerComputer),
-                    run
-            );
-        } catch (IOException | ParseException e) {
-            LOG.error("Can't add fingerprint to run {}", run, e);
+            final DockerComputerSingle computer = (DockerComputerSingle) node.toComputer();
+            computer.setRun(run);
+            computer.setListener(listener);
+            ((DelegatingComputerLauncher) computer.getLauncher()).getLauncher().launch(computer, listener);
+        } catch (IOException | InterruptedException e) {
+            LOG.error("fd", e);
+            CloudStatistics.ProvisioningListener.get().onFailure(node.getId(), e);
         }
+
+        attachFacet(run, listener);
     }
+
+
 }

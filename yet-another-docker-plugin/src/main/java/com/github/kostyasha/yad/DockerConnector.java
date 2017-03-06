@@ -3,6 +3,9 @@ package com.github.kostyasha.yad;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.github.kostyasha.yad.connector.YADockerConnector;
+import com.github.kostyasha.yad.other.ConnectorType;
+import com.github.kostyasha.yad.utils.CredentialsListBoxModel;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.DockerException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Version;
@@ -10,18 +13,13 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DefaultDo
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.RemoteApiVersion;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Preconditions;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
-import com.github.kostyasha.yad.other.ConnectorType;
-import com.github.kostyasha.yad.utils.CredentialsListBoxModel;
 import com.google.common.base.Throwables;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
-import hudson.model.Describable;
-import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.kohsuke.stapler.AncestorInPath;
@@ -30,6 +28,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -37,19 +36,19 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.github.kostyasha.yad.client.ClientBuilderForConnector.newClientBuilderForConnector;
-import static com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.RemoteApiVersion.parseConfig;
 import static com.github.kostyasha.yad.other.ConnectorType.NETTY;
+import static com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.RemoteApiVersion.parseConfig;
 import static hudson.util.FormValidation.ok;
 import static hudson.util.FormValidation.warning;
 import static org.apache.commons.lang.builder.ToStringBuilder.reflectionToString;
 import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
 
 /**
- * Settings for connecting to docker.
+ * Settings for connecting to docker via docker-java configured connection.
  *
  * @author Kanstantsin Shautsou
  */
-public class DockerConnector implements Describable<DockerConnector> {
+public class DockerConnector extends YADockerConnector {
 
     @CheckForNull
     private String serverUrl;
@@ -187,14 +186,8 @@ public class DockerConnector implements Describable<DockerConnector> {
                 .toHashCode();
     }
 
-    @Override
-    public Descriptor<DockerConnector> getDescriptor() {
-        return (DescriptorImpl) Jenkins.getActiveInstance().getDescriptor(DockerConnector.class);
-    }
-
-
-    @Extension
-    public static class DescriptorImpl extends Descriptor<DockerConnector> {
+    @Extension(ordinal = 100)
+    public static class DescriptorImpl extends YADockerConnectorDescriptor {
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
             List<StandardCredentials> credentials =
@@ -222,7 +215,7 @@ public class DockerConnector implements Describable<DockerConnector> {
                 final DockerClient testClient = newClientBuilderForConnector()
                         .withConfigBuilder(configBuilder)
                         .withConnectorType(connectorType)
-                        .withCredentials(credentialsId)
+                        .withCredentialsId(credentialsId)
                         .withConnectTimeout(connectTimeout)
                         .build();
 
@@ -253,9 +246,10 @@ public class DockerConnector implements Describable<DockerConnector> {
             return ok();
         }
 
+        @Nonnull
         @Override
         public String getDisplayName() {
-            return "Docker Connector";
+            return "Direct Docker Connector";
         }
     }
 }

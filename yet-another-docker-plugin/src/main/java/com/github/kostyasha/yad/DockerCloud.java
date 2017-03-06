@@ -2,6 +2,7 @@ package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.commons.AbstractCloud;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
+import com.github.kostyasha.yad.launcher.DockerComputerLauncher;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
@@ -96,7 +97,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         LOG.info("Asked to provision load: '{}', for: '{}' label", excessWorkload, label);
 
         List<PlannedNode> r = new ArrayList<>(excessWorkload);
-        final List<DockerSlaveTemplate> tryTemplates = getTemplates(label);
+        final List<DockerSlaveTemplate> tryTemplates = getAllTemplates(label);
 
         while (excessWorkload > 0 && !tryTemplates.isEmpty()) {
             final DockerSlaveTemplate t = tryTemplates.get(0); // get first
@@ -113,6 +114,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
                 LOG.warn("Bad template '{}' in cloud '{}': '{}'. Trying next template...",
                         t.getDockerContainerLifecycle().getImage(), getDisplayName(), e.getMessage(), e);
                 tryTemplates.remove(t);
+
                 continue;
             }
 
@@ -200,6 +202,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
             throws IOException, Descriptor.FormException {
         final DockerContainerLifecycle dockerContainerLifecycle = template.getDockerContainerLifecycle();
         final String imageId = dockerContainerLifecycle.getImage();
+        final DockerComputerLauncher computerLauncher = template.getLauncher();
 
         //pull image
         dockerContainerLifecycle.getPullImage().exec(getClient(), imageId);
@@ -227,13 +230,13 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
         String slaveName = String.format("%s-%s", getDisplayName(), containerId.substring(0, 12));
 
-        if (template.getLauncher().waitUp(getDisplayName(), template, ir)) {
+        if (computerLauncher.waitUp(getDisplayName(), template, ir)) {
             LOG.debug("Container {} is ready for ssh slave connection", containerId);
         } else {
             LOG.error("Container {} is not ready for ssh slave connection.", containerId);
         }
 
-        final ComputerLauncher launcher = template.getLauncher().getPreparedLauncher(getDisplayName(), template, ir);
+        final ComputerLauncher launcher = computerLauncher.getPreparedLauncher(getDisplayName(), template, ir);
         return new DockerSlave(slaveName, nodeDescription, launcher, containerId, template, getDisplayName(), id);
     }
 
@@ -361,7 +364,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
     }
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<Cloud> {
+    public static class DescriptorImpl extends AbstractCloudDescriptor {
 
         public FormValidation doCheckName(@QueryParameter String name) {
             if (StringUtils.isEmpty(name)) {
@@ -371,6 +374,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
             return FormValidation.ok();
         }
 
+        @Nonnull
         @Override
         public String getDisplayName() {
             return "Yet Another Docker";
