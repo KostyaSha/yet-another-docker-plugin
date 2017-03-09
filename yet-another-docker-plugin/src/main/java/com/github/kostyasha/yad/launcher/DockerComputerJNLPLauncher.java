@@ -146,7 +146,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         if (computer instanceof DockerComputer) {
             dockerComputer = (DockerComputer) computer;
         } else {
-            throw new IllegalArgumentException("Docker JNLP Launcher accepts only DockerComputer");
+            listener.error("Docker JNLP Launcher accepts only DockerComputer.class");
+            throw new IllegalArgumentException("Docker JNLP Launcher accepts only DockerComputer.class");
         }
         Objects.requireNonNull(dockerComputer);
 
@@ -154,6 +155,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         final DockerCloud dockerCloud = dockerComputer.getCloud();
 //        Objects.requireNonNull(dockerCloud, "Cloud not found for computer " + computer.getName());
         if (isNull(dockerCloud)) {
+            listener.error("Cloud not found for computer " + computer.getName());
             throw new NullPointerException("Cloud not found for computer " + computer.getName());
         }
         final DockerClient connect = dockerCloud.getClient();

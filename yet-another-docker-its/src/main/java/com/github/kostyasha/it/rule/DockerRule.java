@@ -174,7 +174,9 @@ public class DockerRule extends ExternalResource {
         clientConfig = createDefaultConfigBuilder()
                 .build();
 
-        dockerCmdExecFactory = new JerseyDockerCmdExecFactory().withConnectTimeout(10 * 1000);
+        dockerCmdExecFactory = new JerseyDockerCmdExecFactory()
+                .withConnectTimeout(10 * 1000)
+                .withReadTimeout(10 * 1000);
 
         dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)

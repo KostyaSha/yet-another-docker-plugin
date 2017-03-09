@@ -15,8 +15,8 @@ if (instance == null) {
     instance = new DockerSlaveTemplate();
 }
 
-f.invisibleEntry() {
-    f.textbox(field: "id")
+f.entry(title: "Internal template ID") {
+    f.textbox(field: "id", readonly: "true")
 }
 
 f.entry(title: _("Max Instances"), field: "maxCapacity") {

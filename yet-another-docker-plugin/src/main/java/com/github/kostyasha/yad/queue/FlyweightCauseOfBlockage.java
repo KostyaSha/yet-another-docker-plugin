@@ -1,4 +1,4 @@
-package com.github.kostyasha.yad;
+package com.github.kostyasha.yad.queue;
 
 import hudson.model.queue.CauseOfBlockage;
 
