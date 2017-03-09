@@ -2,6 +2,10 @@
 
 ## Next
 
+## 0.1.0-rc33
+- Docker Simple BuildWrapper for external specific use case.
+- Use docker-java 3.0.9
+
 ## 0.1.0-rc31
 - Bypass strictVerification from JNLPLauncher
 - Add cloud-stats-plugin (half worked, plugin missing integration points)
