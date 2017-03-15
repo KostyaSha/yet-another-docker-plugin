@@ -1,5 +1,6 @@
 package com.github.kostyasha.yad;
 
+import com.github.kostyasha.yad.connector.YADockerConnector;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -40,17 +41,17 @@ import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListe
 public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
     private static final Logger LOG = LoggerFactory.getLogger(DockerSimpleBuildWrapper.class);
 
-    private DockerConnector connector;
+    private YADockerConnector connector;
     private DockerSlaveConfig config;
     private String slaveName;
 
     @DataBoundConstructor
-    public DockerSimpleBuildWrapper(@Nonnull DockerConnector connector, @Nonnull DockerSlaveConfig config) {
+    public DockerSimpleBuildWrapper(@Nonnull YADockerConnector connector, @Nonnull DockerSlaveConfig config) {
         this.connector = connector;
         this.config = config;
     }
 
-    public DockerConnector getConnector() {
+    public YADockerConnector getConnector() {
         return connector;
     }
 
