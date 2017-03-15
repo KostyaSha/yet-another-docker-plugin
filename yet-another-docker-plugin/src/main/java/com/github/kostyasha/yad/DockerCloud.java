@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Collections.singletonList;
 import static java.util.Objects.isNull;
 import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.get;
 
@@ -372,6 +373,10 @@ public class DockerCloud extends AbstractCloud implements Serializable {
             }
 
             return FormValidation.ok();
+        }
+
+        public List<Descriptor> getTemplatesDescriptors() {
+            return singletonList(this);
         }
 
         @Override
