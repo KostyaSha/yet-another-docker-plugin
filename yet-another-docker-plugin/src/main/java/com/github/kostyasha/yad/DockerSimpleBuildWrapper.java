@@ -3,7 +3,6 @@ package com.github.kostyasha.yad;
 import com.github.kostyasha.yad.connector.YADockerConnector;
 import hudson.AbortException;
 import hudson.EnvVars;
-import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
@@ -155,7 +154,7 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
     }
 
     @Symbol("yadockerWrapper")
-    @Extension
+//    @Extension hide from users because it used programmatically
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
         @Override
         public boolean isApplicable(AbstractProject<?, ?> item) {
