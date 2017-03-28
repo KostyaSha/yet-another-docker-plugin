@@ -31,7 +31,6 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
     private Boolean remove = true;
     private Boolean quiet;
     private Boolean pull;
-    private String credentialsId;
     private String baseDirectory;
 
     /**
@@ -92,18 +91,6 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
 
     public void setPull(Boolean pull) {
         this.pull = pull;
-    }
-
-    /**
-     * @see #credentialsId
-     */
-    @CheckForNull
-    public String getCredentialsId() {
-        return credentialsId;
-    }
-
-    public void setCredentialsId(String credentialsId) {
-        this.credentialsId = credentialsId;
     }
 
     /**

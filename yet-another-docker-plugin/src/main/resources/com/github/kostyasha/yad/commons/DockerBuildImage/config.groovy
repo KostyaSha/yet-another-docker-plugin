@@ -1,12 +1,12 @@
 package com.github.kostyasha.yad.commons.DockerBuildImage
 
+import com.github.kostyasha.yad.commons.DockerBuildImage
 import lib.FormTagLib
-import com.github.kostyasha.yad.commons.DockerCreateContainer
 
 def f = namespace(FormTagLib);
 
 if (instance == null) {
-    instance = new DockerCreateContainer()
+    instance = new DockerBuildImage()
 }
 
 f.advanced(title: _("Build Image Settings"), align: "left") {
