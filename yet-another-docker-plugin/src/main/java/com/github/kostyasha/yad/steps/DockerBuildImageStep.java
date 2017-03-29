@@ -2,6 +2,7 @@ package com.github.kostyasha.yad.steps;
 
 import com.github.kostyasha.yad.DockerConnector;
 import com.github.kostyasha.yad.commons.DockerBuildImage;
+import com.github.kostyasha.yad.connector.YADockerConnector;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
@@ -17,6 +18,7 @@ import java.io.IOException;
  */
 public class DockerBuildImageStep extends Builder implements SimpleBuildStep {
 
+    YADockerConnector connector = null;
     DockerBuildImage buildImage = new DockerBuildImage();
 
     @Override

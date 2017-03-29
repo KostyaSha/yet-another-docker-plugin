@@ -4,6 +4,9 @@ import com.cloudbees.plugins.credentials.Credentials;
 import com.github.kostyasha.yad.credentials.DockerRegistryAuthCredentials;
 import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.AuthConfig;
 import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.StringUtils;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfig;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfigurations;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.CheckForNull;
@@ -11,6 +14,8 @@ import javax.annotation.CheckForNull;
 import static com.github.kostyasha.yad.client.ClientBuilderForConnector.lookupSystemCredentials;
 
 /**
+ * Registry + credentialsId storage that returns docker-java AuthConfig object.
+ *
  * @author Kanstantsin Shautsou
  */
 public class DockerAuthConfig {
