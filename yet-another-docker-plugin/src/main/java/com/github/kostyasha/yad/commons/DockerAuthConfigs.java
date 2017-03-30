@@ -1,6 +1,7 @@
 package com.github.kostyasha.yad.commons;
 
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.model.AuthConfigurations;
+import com.github.kostyasha.yad.commons.cmds.DockerBuildImage;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfigurations;
 import hudson.model.AbstractDescribableImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;

@@ -1,13 +1,16 @@
-package com.github.kostyasha.yad.commons;
+package com.github.kostyasha.yad.commons.cmds;
 
-import com.github.kostyasha.yad.docker_java.com.github.dockerjava.api.command.BuildImageCmd;
-import com.github.kostyasha.yad.docker_java.com.google.common.annotations.Beta;
-import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.builder.EqualsBuilder;
-import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.builder.HashCodeBuilder;
-import com.github.kostyasha.yad.docker_java.org.apache.commons.lang.builder.ToStringBuilder;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.BuildImageCmd;
+import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
+import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
+import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.EqualsBuilder;
+import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.HashCodeBuilder;
+import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.ToStringBuilder;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +19,8 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.Serializable;
 import java.util.List;
-import static com.github.kostyasha.yad.docker_java.org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
+
+import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 /**
  * @author Kanstantsin Shautsou
@@ -32,6 +36,11 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
     private Boolean quiet;
     private Boolean pull;
     private String baseDirectory;
+    private String dockerFile;
+
+    @DataBoundConstructor
+    public DockerBuildImage() {
+    }
 
     /**
      * @see #tags
@@ -41,6 +50,7 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
         return tags;
     }
 
+    @DataBoundSetter
     public void setTags(List<String> tags) {
         this.tags = tags;
     }
@@ -53,6 +63,7 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
         return noCache;
     }
 
+    @DataBoundSetter
     public void setNoCache(Boolean noCache) {
         this.noCache = noCache;
     }
@@ -65,6 +76,7 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
         return remove;
     }
 
+    @DataBoundSetter
     public void setRemove(Boolean remove) {
         this.remove = remove;
     }
@@ -77,6 +89,7 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
         return quiet;
     }
 
+    @DataBoundSetter
     public void setQuiet(Boolean quiet) {
         this.quiet = quiet;
     }
@@ -89,6 +102,7 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
         return pull;
     }
 
+    @DataBoundSetter
     public void setPull(Boolean pull) {
         this.pull = pull;
     }
@@ -101,6 +115,7 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
         return baseDirectory;
     }
 
+    @DataBoundSetter
     public void setBaseDirectory(String baseDirectory) {
         this.baseDirectory = baseDirectory;
     }
@@ -112,6 +127,11 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
         cmd.withQuiet(quiet);
         cmd.withPull(pull);
         cmd.withBaseDirectory(new File(baseDirectory));
+        if (StringUtils.isNotBlank(dockerFile)) {
+            cmd.withDockerfile(new File(baseDirectory, dockerFile));
+        } else {
+            cmd.withDockerfile(new File(baseDirectory, "Dockerfile"));
+        }
         return cmd;
     }
 

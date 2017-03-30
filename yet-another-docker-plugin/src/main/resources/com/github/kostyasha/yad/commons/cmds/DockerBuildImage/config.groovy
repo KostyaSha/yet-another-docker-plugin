@@ -1,6 +1,6 @@
-package com.github.kostyasha.yad.commons.DockerBuildImage
+package com.github.kostyasha.yad.commons.cmds.DockerBuildImage
 
-import com.github.kostyasha.yad.commons.DockerBuildImage
+import com.github.kostyasha.yad.commons.cmds.DockerBuildImage
 import lib.FormTagLib
 
 def f = namespace(FormTagLib);
