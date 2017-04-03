@@ -42,13 +42,8 @@ public class VariableSSLConfig implements SSLConfig, Serializable {
         try {
             Security.addProvider(new BouncyCastleProvider());
 
-            // properties acrobatics not needed for java > 1.6
-            String httpProtocols = System.getProperty("https.protocols");
-            System.setProperty("https.protocols", "TLSv1");
             SslConfigurator sslConfig = SslConfigurator.newInstance(true);
-            if (nonNull(httpProtocols)) {
-                System.setProperty("https.protocols", httpProtocols);
-            }
+            sslConfig.securityProtocol("TLSv1.2");
 
             // add keystore
             sslConfig.keyStore(createKeyStore(keypem, certpem));

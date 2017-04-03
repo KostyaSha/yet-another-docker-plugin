@@ -5,6 +5,8 @@ import com.cloudbees.plugins.credentials.common.CertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.kostyasha.yad.DockerConnector;
+import com.github.kostyasha.yad.credentials.DockerDaemonCerts;
+import com.github.kostyasha.yad.credentials.DockerDaemonFileCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
@@ -160,6 +162,14 @@ public class ClientBuilderForConnector {
                 dockerCreds.getClientKey(),
                 dockerCreds.getClientCertificate(),
                 dockerCreds.getServerCaCertificate()
+            ));
+        } else if (credentials instanceof DockerDaemonCerts) {
+            final DockerDaemonCerts dockerCreds = (DockerDaemonCerts) credentials;
+
+            withSslConfig(new VariableSSLConfig(
+                    dockerCreds.getClientKey(),
+                    dockerCreds.getClientCertificate(),
+                    dockerCreds.getServerCaCertificate()
             ));
         }
 

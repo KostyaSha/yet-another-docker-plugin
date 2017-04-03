@@ -32,6 +32,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
@@ -49,7 +50,8 @@ import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
  *
  * @author Kanstantsin Shautsou
  */
-public class DockerConnector extends YADockerConnector {
+public class DockerConnector extends YADockerConnector implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     @CheckForNull
     private String serverUrl;

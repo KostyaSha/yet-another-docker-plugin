@@ -7,13 +7,15 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
 
+import java.io.Serializable;
+
 /**
  * Different connectors to docker.
  * DockerConnector appeared first so can't rename and YAD become parent.
  *
  * @author Kanstantsin Shautsou
  */
-public abstract class YADockerConnector extends AbstractDescribableImpl<YADockerConnector> implements ExtensionPoint {
+public abstract class YADockerConnector extends AbstractDescribableImpl<YADockerConnector> implements ExtensionPoint, Serializable {
 
     public abstract DockerClient getClient() throws Exception;
 

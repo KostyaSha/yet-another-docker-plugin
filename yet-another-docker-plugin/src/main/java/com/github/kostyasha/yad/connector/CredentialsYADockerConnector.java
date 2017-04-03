@@ -1,9 +1,11 @@
 package com.github.kostyasha.yad.connector;
 
 import com.cloudbees.plugins.credentials.Credentials;
+import com.github.kostyasha.yad.client.ClientBuilderForConnector;
 import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.SSLConfig;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -15,6 +17,7 @@ import java.security.UnrecoverableKeyException;
 import static com.github.kostyasha.yad.client.ClientBuilderForConnector.newClientBuilderForConnector;
 import static com.github.kostyasha.yad.other.ConnectorType.NETTY;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 /**
  * Connector from Credentials.
@@ -44,6 +47,9 @@ public class CredentialsYADockerConnector extends YADockerConnector {
 
     @CheckForNull
     private Integer readTimeout;
+
+    @CheckForNull
+    private SSLConfig sslConfig;
 
     public CredentialsYADockerConnector() {
     }
@@ -114,6 +120,16 @@ public class CredentialsYADockerConnector extends YADockerConnector {
     }
 
     @CheckForNull
+    public SSLConfig getSslConfig() {
+        return sslConfig;
+    }
+
+    public CredentialsYADockerConnector withSslConfig(SSLConfig sslConfig) {
+        this.sslConfig = sslConfig;
+        return this;
+    }
+
+    @CheckForNull
     public Integer getReadTimeout() {
         return readTimeout;
     }
@@ -125,21 +141,31 @@ public class CredentialsYADockerConnector extends YADockerConnector {
 
     @Nonnull
     @Override
-    public DockerClient getClient() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException,
-        KeyManagementException {
+    public DockerClient getClient() throws UnrecoverableKeyException, NoSuchAlgorithmException,
+            KeyStoreException,
+            KeyManagementException {
 
         if (isNull(client)) {
             DefaultDockerClientConfig.Builder configBuilder = new DefaultDockerClientConfig.Builder()
-                .withApiVersion(apiVersion)
-                .withDockerHost(serverUrl);
+                    .withApiVersion(apiVersion)
+                    .withDockerTlsVerify(tlsVerify)
+                    .withDockerHost(serverUrl);
 
-            final DockerClient newClient = newClientBuilderForConnector()
-                .withConfigBuilder(configBuilder)
-                .withConnectorType(connectorType)
-                .withCredentials(credentials)
-                .withConnectTimeout(connectTimeout)
-                .withReadTimeout(readTimeout)
-                .build();
+            ClientBuilderForConnector clientBuilder = newClientBuilderForConnector()
+                    .withConfigBuilder(configBuilder)
+                    .withConnectorType(connectorType);
+            if (nonNull(credentials)) {
+                clientBuilder.withCredentials(credentials);
+            }
+
+            if (nonNull(sslConfig)) {
+                clientBuilder.withSslConfig(sslConfig);
+            }
+
+            clientBuilder.withConnectTimeout(connectTimeout)
+                    .withReadTimeout(readTimeout);
+
+            final DockerClient newClient = clientBuilder.build();
 
             newClient.versionCmd().exec();
             client = newClient;

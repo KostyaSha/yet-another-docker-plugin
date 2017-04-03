@@ -24,16 +24,23 @@ import java.util.List;
 import static com.github.kostyasha.yad.steps.DockerBuildImageStepFileCallable.newDockerBuildImageStepCallable;
 
 /**
+ * Let's assume that user wants:
+ * 1) build image from one Dockerfile possibly with multiple tags
+ * 2) tag image with multiple tags i.e. different domains
+ * 3) push all this tags
+ * 4) cleanup image
+ * Cleanup image on failure.
+ *
  * @author Kanstantsin Shautsou
  */
-public class DockerBuildImageStep extends Builder implements SimpleBuildStep {
+public class DockerImageBuildPushRemove extends Builder implements SimpleBuildStep {
     private static Logger LOG = LoggerFactory.getLogger(DockerBuildImageStep.class);
 
     private YADockerConnector connector = null;
     private DockerBuildImage buildImage = new DockerBuildImage();
 
     @DataBoundConstructor
-    public DockerBuildImageStep(YADockerConnector connector, DockerBuildImage buildImage) {
+    public DockerImageBuildPushRemove(YADockerConnector connector, DockerBuildImage buildImage) {
         this.connector = connector;
         this.buildImage = buildImage;
     }
@@ -64,7 +71,7 @@ public class DockerBuildImageStep extends Builder implements SimpleBuildStep {
     }
 
     @Extension
-    @Symbol("docker-image-build")
+    @Symbol("docker-image-producer")
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
         @Override
