@@ -11,8 +11,11 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.Ex
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.ExecStartResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.LogContainerResultCallback;
 import com.github.kostyasha.yad_docker_java.javax.ws.rs.ProcessingException;
+import com.google.common.base.Throwables;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.slaves.JNLPLauncher;
@@ -143,7 +146,8 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
             provisionWithWait((DockerComputerSingle) computer, listener);
         } catch (Throwable e) {
             LOG.error("Can't launch ", e);
-            listener.error(e.toString());
+            listener.error("Can't launch " + e.getMessage());
+            Throwables.propagate(e);
         }
     }
 
@@ -211,7 +215,23 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         if (!running) {
             listener.error("Failed to run container for %s, clean-up container", imageId);
             LOG.error("Failed to run container for {}, clean-up container", imageId);
-            containerLifecycle.getRemoveContainer().exec(client, cId);
+            try {
+                client.logContainerCmd(cId)
+                        .withStdErr(true)
+                        .withStdOut(true)
+                        .exec(new LogContainerResultCallback(){
+                            @Override
+                            public void onNext(Frame item) {
+                                listener.getLogger().println(new String(item.getPayload()).trim());
+                                super.onNext(item);
+                            }
+                        })
+                        .awaitCompletion();
+            } catch (Exception ex) {
+                listener.error("Failed to get logs from container " + cId);
+                LOG.error("failed to get logs from container {}", cId, ex);
+            }
+            throw new IllegalStateException("Container is not running!");
         }
 
         // now real launch
@@ -224,7 +244,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         }
         final DockerSlaveSingle node = computer.getNode();
         if (isNull(node)) {
-            throw new NullPointerException("Node can't be null");
+            throw new NullPointerException("Node can't be null for " + computer.getName());
         }
 
         // exec jnlp connection in running container
@@ -262,15 +282,13 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
             } catch (NotFoundException ex) {
                 listener.error("Can't execute command: " + ex.getMessage().trim());
                 LOG.error("Can't execute jnlp connection command: '{}'", ex.getMessage().trim());
-                containerLifecycle.getRemoveContainer().exec(client, cId);
-                node.terminate();
+//                containerLifecycle.getRemoveContainer().exec(client, cId);
+//                node.terminate();
                 throw ex;
             }
         } catch (Throwable ex) {
             listener.error("Can't execute command: " + ex.getMessage().trim());
             LOG.error("Can't execute jnlp connection command: '{}'", ex.getMessage().trim());
-            containerLifecycle.getRemoveContainer().exec(client, cId);
-            node.terminate();
             throw ex;
         }
 
@@ -286,10 +304,10 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         }
 
         if (computer.isReallyOffline()) {
-            LOG.info("Launch timeout, termintaing slave based on '{}'", cId);
-            logger.println("Launch timeout, termintaing slave.");
-            containerLifecycle.getRemoveContainer().exec(client, cId);
-            node.terminate();
+            LOG.info("Launch timeout, terminating slave based on '{}'", cId);
+            logger.println("Launch timeout, terminating slave.");
+//            containerLifecycle.getRemoveContainer().exec(client, cId);
+//            node.terminate();
             throw new IOException("Can't connect slave to jenkins");
         }
 

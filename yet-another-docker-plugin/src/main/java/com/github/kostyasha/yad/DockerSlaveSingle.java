@@ -111,6 +111,7 @@ public class DockerSlaveSingle extends AbstractCloudSlave implements TrackedItem
 
     @Override
     protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
+        boolean failure = false;
         final DockerContainerLifecycle dockerContainerLifecycle = config.getDockerContainerLifecycle();
         try {
             LOG.info("Requesting disconnect for computer: '{}'", name);
@@ -133,6 +134,7 @@ public class DockerSlaveSingle extends AbstractCloudSlave implements TrackedItem
             } catch (Exception ex) {
                 LOG.error("Failed to stop instance '{}' for slave '{}' due to exception: {}",
                         getContainerId(), name, ex.getMessage());
+                failure = true;
             }
 
             final Computer computer = toComputer();
@@ -163,6 +165,7 @@ public class DockerSlaveSingle extends AbstractCloudSlave implements TrackedItem
         } else {
             LOG.error("ContainerId is absent, no way to remove/stop container");
             listener.error("ContainerId is absent, no way to remove/stop container");
+            failure = true;
         }
 
         ProvisioningActivity activity = CloudStatistics.get().getActivityFor(this);

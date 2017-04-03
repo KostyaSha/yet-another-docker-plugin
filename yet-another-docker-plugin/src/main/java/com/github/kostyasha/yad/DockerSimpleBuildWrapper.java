@@ -111,7 +111,11 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
             } catch (Throwable e) {
                 LOG.error("fd", e);
                 CloudStatistics.ProvisioningListener.get().onFailure(node.getId(), e);
+                //terminate will do container cleanups and remove node from jenkins silently
+                slave.terminate();
+                throw e;
             }
+
             setSlaveName(futureName);
             context.setDisposer(new DisposerImpl(futureName));
 
@@ -119,7 +123,6 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
             get().onFailure(activityId, e);
             throw new AbortException("failed to run slave");
         }
-
     }
 
     /**
