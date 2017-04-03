@@ -219,7 +219,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
                 client.logContainerCmd(cId)
                         .withStdErr(true)
                         .withStdOut(true)
-                        .exec(new LogContainerResultCallback(){
+                        .exec(new LogContainerResultCallback() {
                             @Override
                             public void onNext(Frame item) {
                                 listener.getLogger().println(new String(item.getPayload()).trim());
@@ -282,8 +282,6 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
             } catch (NotFoundException ex) {
                 listener.error("Can't execute command: " + ex.getMessage().trim());
                 LOG.error("Can't execute jnlp connection command: '{}'", ex.getMessage().trim());
-//                containerLifecycle.getRemoveContainer().exec(client, cId);
-//                node.terminate();
                 throw ex;
             }
         } catch (Throwable ex) {
@@ -306,8 +304,6 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         if (computer.isReallyOffline()) {
             LOG.info("Launch timeout, terminating slave based on '{}'", cId);
             logger.println("Launch timeout, terminating slave.");
-//            containerLifecycle.getRemoveContainer().exec(client, cId);
-//            node.terminate();
             throw new IOException("Can't connect slave to jenkins");
         }
 
