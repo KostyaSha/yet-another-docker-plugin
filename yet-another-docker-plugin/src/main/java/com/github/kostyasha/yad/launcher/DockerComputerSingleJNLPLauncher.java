@@ -16,6 +16,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.E
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.LogContainerResultCallback;
 import com.github.kostyasha.yad_docker_java.javax.ws.rs.ProcessingException;
 import com.google.common.base.Throwables;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.slaves.JNLPLauncher;
@@ -219,13 +220,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
                 client.logContainerCmd(cId)
                         .withStdErr(true)
                         .withStdOut(true)
-                        .exec(new LogContainerResultCallback() {
-                            @Override
-                            public void onNext(Frame item) {
-                                listener.getLogger().println(new String(item.getPayload()).trim());
-                                super.onNext(item);
-                            }
-                        })
+                        .exec(new ListenerLogContainerResultCallback(listener))
                         .awaitCompletion();
             } catch (Exception ex) {
                 listener.error("Failed to get logs from container " + cId);
@@ -331,5 +326,20 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
 
         createContainerCmd.withTty(true);
         createContainerCmd.withStdinOpen(true);
+    }
+
+    public static class ListenerLogContainerResultCallback extends LogContainerResultCallback {
+        private final TaskListener listener;
+
+        public ListenerLogContainerResultCallback(TaskListener listener) {
+            this.listener = listener;
+        }
+
+        @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING")
+        @Override
+        public void onNext(Frame item) {
+            listener.getLogger().println(new String(item.getPayload()).trim());
+            super.onNext(item);
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.connector.YADockerConnector;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -67,6 +68,7 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
         this.slaveName = slaveName;
     }
 
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
     @Override
     public void setUp(Context context,
                       Run<?, ?> run,
@@ -93,15 +95,17 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
 
             Jenkins.getInstance().addNode(slave);
             final Node futureNode = Jenkins.getInstance().getNode(futureName);
-            if (isNull(futureNode)) {
+            if (!(futureNode instanceof DockerSlaveSingle)) {
                 throw new IllegalStateException("Can't get Node " + futureName);
             }
+
             final DockerSlaveSingle node = (DockerSlaveSingle) futureNode;
             try {
                 final Computer toComputer = node.toComputer();
-                if (isNull(toComputer)) {
+                if (!(toComputer instanceof DockerComputerSingle)) {
                     throw new IllegalStateException("Can't get computer for " + node.getNodeName());
                 }
+
                 final DockerComputerSingle computer = (DockerComputerSingle) toComputer;
                 computer.setRun(run);
                 computer.setListener(listener);
