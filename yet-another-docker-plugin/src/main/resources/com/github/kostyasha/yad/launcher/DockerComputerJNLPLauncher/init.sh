@@ -48,7 +48,7 @@ fi
 
 cd "$JENKINS_HOME"
 
-if [ "$NO_CERTIFICATE_CHECK" == "true" ]
+if [ "$NO_CERTIFICATE_CHECK" = "true" ]
 then
     # busybox has no options
     if wget  --help 2>&1| grep BusyBox ; then
