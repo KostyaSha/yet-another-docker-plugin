@@ -36,13 +36,13 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Collections.singletonList;
 import static java.util.Objects.isNull;
 import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.get;
 
@@ -312,7 +312,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
     //    @CheckForNull
     public static DockerCloud getCloudByName(String name) {
-        final Cloud cloud = Jenkins.getActiveInstance().getCloud(name);
+        final Cloud cloud = Jenkins.getInstance().getCloud(name);
         if (cloud instanceof DockerCloud) {
             return (DockerCloud) cloud;
         }
@@ -376,7 +376,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         }
 
         public List<Descriptor> getTemplatesDescriptors() {
-            return singletonList(this);
+            return Arrays.asList(jenkins.model.Jenkins.getInstance().getDescriptor(DockerSlaveTemplate.class));
         }
 
         @Override

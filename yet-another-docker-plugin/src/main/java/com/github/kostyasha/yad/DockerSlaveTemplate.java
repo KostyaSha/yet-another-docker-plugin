@@ -186,7 +186,7 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
         }
 
         public Class getDockerTemplateBase() {
-            return DockerCreateContainer.class;
+            return DockerSlaveTemplate.class;
         }
     }
 }
