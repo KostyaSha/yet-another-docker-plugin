@@ -42,6 +42,9 @@ public class CredentialsYADockerConnector extends YADockerConnector {
     @CheckForNull
     private Integer connectTimeout;
 
+    @CheckForNull
+    private Integer readTimeout;
+
     public CredentialsYADockerConnector() {
     }
 
@@ -110,6 +113,16 @@ public class CredentialsYADockerConnector extends YADockerConnector {
         return this;
     }
 
+    @CheckForNull
+    public Integer getReadTimeout() {
+        return readTimeout;
+    }
+
+    public CredentialsYADockerConnector withReadTimeout(Integer readTimeout) {
+        this.readTimeout = readTimeout;
+        return this;
+    }
+
     @Nonnull
     @Override
     public DockerClient getClient() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException,
@@ -125,6 +138,7 @@ public class CredentialsYADockerConnector extends YADockerConnector {
                 .withConnectorType(connectorType)
                 .withCredentials(credentials)
                 .withConnectTimeout(connectTimeout)
+                .withReadTimeout(readTimeout)
                 .build();
 
             newClient.versionCmd().exec();

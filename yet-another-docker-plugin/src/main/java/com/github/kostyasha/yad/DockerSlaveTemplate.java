@@ -1,6 +1,5 @@
 package com.github.kostyasha.yad;
 
-import com.github.kostyasha.yad.commons.DockerCreateContainer;
 import com.github.kostyasha.yad.launcher.DockerComputerLauncher;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.MoreObjects;
@@ -186,7 +185,7 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
         }
 
         public Class getDockerTemplateBase() {
-            return DockerCreateContainer.class;
+            return DockerSlaveTemplate.class;
         }
     }
 }

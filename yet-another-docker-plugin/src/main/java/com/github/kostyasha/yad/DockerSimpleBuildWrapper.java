@@ -1,8 +1,9 @@
 package com.github.kostyasha.yad;
 
+import com.github.kostyasha.yad.connector.YADockerConnector;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.AbortException;
 import hudson.EnvVars;
-import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
@@ -40,17 +41,17 @@ import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListe
 public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
     private static final Logger LOG = LoggerFactory.getLogger(DockerSimpleBuildWrapper.class);
 
-    private DockerConnector connector;
+    private YADockerConnector connector;
     private DockerSlaveConfig config;
     private String slaveName;
 
     @DataBoundConstructor
-    public DockerSimpleBuildWrapper(@Nonnull DockerConnector connector, @Nonnull DockerSlaveConfig config) {
+    public DockerSimpleBuildWrapper(@Nonnull YADockerConnector connector, @Nonnull DockerSlaveConfig config) {
         this.connector = connector;
         this.config = config;
     }
 
-    public DockerConnector getConnector() {
+    public YADockerConnector getConnector() {
         return connector;
     }
 
@@ -67,6 +68,7 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
         this.slaveName = slaveName;
     }
 
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
     @Override
     public void setUp(Context context,
                       Run<?, ?> run,
@@ -93,15 +95,17 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
 
             Jenkins.getInstance().addNode(slave);
             final Node futureNode = Jenkins.getInstance().getNode(futureName);
-            if (isNull(futureNode)) {
+            if (!(futureNode instanceof DockerSlaveSingle)) {
                 throw new IllegalStateException("Can't get Node " + futureName);
             }
+
             final DockerSlaveSingle node = (DockerSlaveSingle) futureNode;
             try {
                 final Computer toComputer = node.toComputer();
-                if (isNull(toComputer)) {
+                if (!(toComputer instanceof DockerComputerSingle)) {
                     throw new IllegalStateException("Can't get computer for " + node.getNodeName());
                 }
+
                 final DockerComputerSingle computer = (DockerComputerSingle) toComputer;
                 computer.setRun(run);
                 computer.setListener(listener);
@@ -111,7 +115,11 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
             } catch (Throwable e) {
                 LOG.error("fd", e);
                 CloudStatistics.ProvisioningListener.get().onFailure(node.getId(), e);
+                //terminate will do container cleanups and remove node from jenkins silently
+                slave.terminate();
+                throw e;
             }
+
             setSlaveName(futureName);
             context.setDisposer(new DisposerImpl(futureName));
 
@@ -119,7 +127,6 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
             get().onFailure(activityId, e);
             throw new AbortException("failed to run slave");
         }
-
     }
 
     /**
@@ -154,7 +161,7 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
     }
 
     @Symbol("yadockerWrapper")
-    @Extension
+//    @Extension hide from users because it used programmatically
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
         @Override
         public boolean isApplicable(AbstractProject<?, ?> item) {

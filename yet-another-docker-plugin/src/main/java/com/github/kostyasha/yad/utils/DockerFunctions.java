@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static jenkins.model.Jenkins.getActiveInstance;
+import static jenkins.model.Jenkins.getInstance;
 
 /**
  * UI helper class.
@@ -34,8 +34,8 @@ public class DockerFunctions {
     public static List<Descriptor<ComputerLauncher>> getDockerComputerLauncherDescriptors() {
         List<Descriptor<ComputerLauncher>> launchers = new ArrayList<>();
 
-        launchers.add(getActiveInstance().getDescriptor(DockerComputerSSHLauncher.class));
-        launchers.add(getActiveInstance().getDescriptor(DockerComputerJNLPLauncher.class));
+        launchers.add(getInstance().getDescriptor(DockerComputerSSHLauncher.class));
+        launchers.add(getInstance().getDescriptor(DockerComputerJNLPLauncher.class));
 
         return launchers;
     }
@@ -46,8 +46,8 @@ public class DockerFunctions {
     public static List<Descriptor<RetentionStrategy<?>>> getDockerRetentionStrategyDescriptors() {
         List<Descriptor<RetentionStrategy<?>>> strategies = new ArrayList<>();
 
-        strategies.add(getActiveInstance().getDescriptor(DockerOnceRetentionStrategy.class));
-        strategies.add(getActiveInstance().getDescriptor(DockerCloudRetentionStrategy.class));
+        strategies.add(getInstance().getDescriptor(DockerOnceRetentionStrategy.class));
+        strategies.add(getInstance().getDescriptor(DockerCloudRetentionStrategy.class));
 
         return strategies;
     }
@@ -60,7 +60,7 @@ public class DockerFunctions {
      */
     @Nonnull
     public static synchronized List<DockerCloud> getDockerClouds() {
-        return getActiveInstance().clouds.stream()
+        return getInstance().clouds.stream()
                 .filter(Objects::nonNull)
                 .filter(DockerCloud.class::isInstance)
                 .map(cloud -> (DockerCloud) cloud)
