@@ -5,11 +5,8 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import com.github.kostyasha.yad.DockerConnector;
 import com.github.kostyasha.yad.commons.cmds.DockerBuildImage;
 import com.github.kostyasha.yad.connector.CredentialsYADockerConnector;
-import com.github.kostyasha.yad.connector.YADockerConnector;
-import com.github.kostyasha.yad.credentials.DockerDaemonFileCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.LocalDirectorySSLConfig;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
@@ -19,25 +16,26 @@ import hudson.remoting.Callable;
 import hudson.slaves.DumbSlave;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.remoting.RoleChecker;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
 
 import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
 import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
+import static org.junit.Assert.*;
 
 /**
  * @author Kanstantsin Shautsou
  */
-@Ignore
-public class DockerBuildImageStepTest {
+public class DockerImageComboStepTest {
 
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
@@ -46,7 +44,7 @@ public class DockerBuildImageStepTest {
     public JenkinsRule jRule = new JenkinsRule();
 
     @Test
-    public void testBuild() throws Throwable {
+    public void testComboBuild() throws Throwable {
         jRule.getInstance().setNumExecutors(0);
 //        jRule.createSlave();
 //        jRule.createSlave("my-slave", "remote-slave", new EnvVars());
@@ -81,11 +79,14 @@ public class DockerBuildImageStepTest {
         DockerBuildImage buildImage = new DockerBuildImage();
         buildImage.setBaseDirectory(dockerfilePath);
         buildImage.setPull(true);
+        buildImage.setTags(Collections.singletonList("localhost:5000/myfirstimage"));
 
-        DockerBuildImageStep dockerBuildImageStep = new DockerBuildImageStep(dockerConnector, buildImage);
+        DockerImageComboStep comboStep = new DockerImageComboStep(dockerConnector, buildImage);
+        comboStep.setCleanAll(true);
+        comboStep.setPushAll(true);
 
         FreeStyleProject project = jRule.createFreeStyleProject("test");
-        project.getBuildersList().add(dockerBuildImageStep);
+        project.getBuildersList().add(comboStep);
 
         project.save();
 

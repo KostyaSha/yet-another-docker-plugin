@@ -63,7 +63,7 @@ public class DockerBuildImageStep extends Builder implements SimpleBuildStep {
         }
     }
 
-    @Extension
+//    @Extension
     @Symbol("docker-image-build")
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
@@ -71,5 +71,11 @@ public class DockerBuildImageStep extends Builder implements SimpleBuildStep {
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;
         }
+
+    @Nonnull
+    @Override
+    public String getDisplayName() {
+        return "Experimental: docker image build command";
     }
+}
 }

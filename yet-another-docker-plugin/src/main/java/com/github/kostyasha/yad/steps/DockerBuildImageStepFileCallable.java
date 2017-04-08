@@ -60,7 +60,7 @@ public class DockerBuildImageStepFileCallable extends MasterToSlaveFileCallable<
             BuildImageCmd buildImageCmd = client.buildImageCmd();
             buildImage.fillSettings(buildImageCmd);
             llog.println("Pulling image ");
-            buildImageCmd.exec(new BuildImageResultCallback() {
+            String imageId = buildImageCmd.exec(new BuildImageResultCallback() {
                 public void onNext(BuildResponseItem item) {
                     String text = item.getStream();
                     if (nonNull(text)) {
@@ -70,6 +70,7 @@ public class DockerBuildImageStepFileCallable extends MasterToSlaveFileCallable<
                     super.onNext(item);
                 }
             }).awaitImageId();
+            llog.println("Image tagging during build isn't support atm, no tags applied.");
         } catch (Exception ex) {
             LOG.error("Can't get client", ex);
             throw new IOException("Can't get docker client", ex);

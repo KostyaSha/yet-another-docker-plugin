@@ -1,6 +1,8 @@
 package com.github.kostyasha.yad.commons.cmds;
 
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.BuildImageCmd;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfig;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.EqualsBuilder;
@@ -18,9 +20,13 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
+import static java.util.Objects.isNull;
+import static org.apache.commons.lang.StringUtils.isEmpty;
 
 /**
  * @author Kanstantsin Shautsou
@@ -36,7 +42,8 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
     private Boolean quiet;
     private Boolean pull;
     private String baseDirectory;
-    private String dockerFile;
+    private String dockerFilePath;
+    private AuthConfig authConfig;
 
     @DataBoundConstructor
     public DockerBuildImage() {
@@ -45,9 +52,9 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
     /**
      * @see #tags
      */
-    @CheckForNull
+    @Nonnull
     public List<String> getTags() {
-        return tags;
+        return isNull(tags) ? Collections.emptyList() : tags;
     }
 
     @DataBoundSetter
@@ -120,6 +127,20 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
         this.baseDirectory = baseDirectory;
     }
 
+    public List<String> getTagsNormalised() {
+        ArrayList<String> normalizedTags = new ArrayList<>();
+        for (String tag : getTags()) {
+            NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
+            normalizedTags.add(reposTag.repos + ":" + getRealImageTag(reposTag));
+        }
+        return normalizedTags;
+    }
+
+    private static String getRealImageTag(NameParser.ReposTag reposTag) {
+        return isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
+    }
+
+
     @Nonnull
     public BuildImageCmd fillSettings(@Nonnull BuildImageCmd cmd) {
         cmd.withNoCache(noCache);
@@ -127,8 +148,8 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
         cmd.withQuiet(quiet);
         cmd.withPull(pull);
         cmd.withBaseDirectory(new File(baseDirectory));
-        if (StringUtils.isNotBlank(dockerFile)) {
-            cmd.withDockerfile(new File(baseDirectory, dockerFile));
+        if (StringUtils.isNotBlank(dockerFilePath)) {
+            cmd.withDockerfile(new File(baseDirectory, dockerFilePath));
         } else {
             cmd.withDockerfile(new File(baseDirectory, "Dockerfile"));
         }
@@ -148,6 +169,10 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
     @Override
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
+    }
+
+    public AuthConfig getAuthConfig() {
+        return authConfig;
     }
 
     @Extension

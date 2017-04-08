@@ -3,6 +3,8 @@ package com.github.kostyasha.yad.utils;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.ResponseItem;
 import hudson.model.TaskListener;
 
+import static java.util.Objects.nonNull;
+
 /**
  * @author Kanstantsin Shautsou
  */
@@ -25,7 +27,18 @@ public class LogUtils {
             stringBuffer.append(item.getStatus());
 
             if (item.getProgressDetail() != null) {
-                stringBuffer.append(" ").append(item.getErrorDetail().toString());
+                Long current = item.getProgressDetail().getCurrent();
+                Long start = item.getProgressDetail().getStart();
+                Long total = item.getProgressDetail().getTotal();
+                if (nonNull(current)) {
+                    stringBuffer.append(" current=").append(current);
+                }
+                if (nonNull(start)) {
+                    stringBuffer.append(",start=").append(start);
+                }
+                if (nonNull(total)) {
+                    stringBuffer.append(",total=").append(total);
+                }
             }
 
             listener.getLogger().println(stringBuffer.toString());
