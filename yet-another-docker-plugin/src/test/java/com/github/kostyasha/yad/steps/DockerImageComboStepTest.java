@@ -15,6 +15,7 @@ import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.remoting.Callable;
 import hudson.slaves.DumbSlave;
 import org.apache.commons.io.FileUtils;
+import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.jenkinsci.remoting.RoleChecker;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,6 +25,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 
 import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
 import static com.jayway.awaitility.Awaitility.await;
@@ -42,6 +44,26 @@ public class DockerImageComboStepTest {
 
     @Rule
     public JenkinsRule jRule = new JenkinsRule();
+
+    @Test
+    public void yaml() {
+        final CredentialsYADockerConnector dockerConnector = new CredentialsYADockerConnector()
+                .withConnectorType(JERSEY)
+                .withServerUrl("tcp://127.0.0.1:2376")
+                .withSslConfig(new LocalDirectorySSLConfig("/home/vagrant/keys"));
+
+        DockerBuildImage buildImage = new DockerBuildImage();
+        buildImage.setBaseDirectory("sdf");
+        buildImage.setPull(true);
+        buildImage.setTags(Collections.singletonList("localhost:5000/myfirstimage"));
+
+        DockerImageComboStep comboStep = new DockerImageComboStep(dockerConnector, buildImage);
+        comboStep.setCleanAll(true);
+        comboStep.setPushAll(true);
+
+        final Map<String, Object> uninstantiate = DescribableHelper.uninstantiate(comboStep);
+
+    }
 
     @Test
     public void testComboBuild() throws Throwable {
