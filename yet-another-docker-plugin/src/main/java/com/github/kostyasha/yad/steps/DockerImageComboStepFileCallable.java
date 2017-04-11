@@ -129,20 +129,26 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
 
             // push
             if (pushAll) {
+                llog.println("Pushing all tagged images...");
                 for (String tag : buildImage.getTagsNormalised()) {
-                    llog.println("Pushing '" + tag + "'...");
-                    PushImageCmd pushImageCmd = client.pushImageCmd(tag);
-                    if (nonNull(buildImage.getAuthConfig())) {
-                        pushImageCmd.withAuthConfig(buildImage.getAuthConfig());
-                    }
-                    pushImageCmd.exec(new PushImageResultCallback() {
-                        @Override
-                        public void onNext(PushResponseItem item) {
-                            printResponseItemToListener(taskListener, item);
-                            super.onNext(item);
+                    try {
+                        llog.println("Pushing '" + tag + "'...");
+                        PushImageCmd pushImageCmd = client.pushImageCmd(tag);
+                        if (nonNull(buildImage.getAuthConfig())) {
+                            pushImageCmd.withAuthConfig(buildImage.getAuthConfig());
                         }
-                    }).awaitSuccess();
-                    llog.println("Pushed '" + tag + "'.");
+                        pushImageCmd.exec(new PushImageResultCallback() {
+                            @Override
+                            public void onNext(PushResponseItem item) {
+                                printResponseItemToListener(taskListener, item);
+                                super.onNext(item);
+                            }
+                        }).awaitSuccess();
+                        llog.println("Pushed '" + tag + "'.");
+                    } catch (Exception ex) {
+                        taskListener.error("Can't push " + tag + " " + ex.getMessage());
+                        throw ex;
+                    }
                 }
             }
         } finally {
@@ -159,6 +165,8 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         if (!cleanAll) {
             llog.println("Skipping cleanup.");
             return;
+        } else {
+            llog.println("Running cleanup...");
         }
 
         if (isNotEmpty(imageId)) {
@@ -178,16 +186,16 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         for (String tag : buildImage.getTagsNormalised()) {
             try {
                 NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
-                llog.printf("Removing image '%s:%s'.%n", reposTag.repos, reposTag.tag);
+                llog.printf("Removing tagged image '%s:%s'.%n", reposTag.repos, reposTag.tag);
                 // no need to remove before
                 try {
                     client.removeImageCmd(reposTag.repos + ":" + reposTag.tag)
                             .withForce(true)
                             .exec();
                 } catch (NotFoundException ex) {
-                    llog.println("Image doesn't exist.");
+                    llog.println("Tagged image doesn't exist.");
                 } catch (Throwable ex) {
-                    taskListener.error("Can't remove image" + ex.getMessage());
+                    taskListener.error("Can't remove tagged image" + ex.getMessage());
                     //ignore as it cleanup
                 }
             } catch (Exception ex) {

@@ -17,6 +17,7 @@ import hudson.slaves.DumbSlave;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.jenkinsci.remoting.RoleChecker;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -45,6 +46,7 @@ public class DockerImageComboStepTest {
     @Rule
     public JenkinsRule jRule = new JenkinsRule();
 
+    @Ignore
     @Test
     public void yaml() {
         final CredentialsYADockerConnector dockerConnector = new CredentialsYADockerConnector()
