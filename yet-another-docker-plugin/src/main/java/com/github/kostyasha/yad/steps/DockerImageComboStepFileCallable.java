@@ -25,6 +25,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.github.kostyasha.yad.utils.LogUtils.printResponseItemToListener;
 import static java.util.Objects.isNull;
@@ -50,23 +52,20 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
     private final boolean cleanup;
     private final boolean push;
 
-    private transient TaskListener taskListener;
-    private transient Run run;
+    private final TaskListener taskListener;
 
     private transient String imageId;
 
-    public DockerImageComboStepFileCallable(YADockerConnector connector,
-                                            DockerBuildImage buildImage,
-                                            boolean cleanup,
-                                            boolean push,
-                                            TaskListener taskListener,
-                                            Run run) {
+    public DockerImageComboStepFileCallable(final YADockerConnector connector,
+                                            final DockerBuildImage buildImage,
+                                            final boolean cleanup,
+                                            final boolean push,
+                                            final TaskListener taskListener) {
         this.connector = connector;
         this.buildImage = buildImage;
         this.cleanup = cleanup;
         this.push = push;
         this.taskListener = taskListener;
-        this.run = run;
     }
 
     public static class Builder {
@@ -79,6 +78,21 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         private Run run;
 
         public Builder() {
+        }
+
+        /**
+         * Resolve on remoting side during execution.
+         * Because node may have some specific node vars.
+         */
+        private String resolveVar(String var) {
+            String resolvedVar = var;
+            try {
+                final EnvVars envVars = run.getEnvironment(taskListener);
+                resolvedVar = envVars.expand(var);
+            } catch (IOException | InterruptedException e) {
+                LOG.warn("Can't resolve variable {}", var, e);
+            }
+            return resolvedVar;
         }
 
         public Builder withConnector(YADockerConnector connector) {
@@ -116,14 +130,19 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
                 throw new IllegalStateException("Specify vars!");
             }
             // if something should be resolved on master side do it here
+            final List<String> tags = buildImage.getTags();
+            final ArrayList<String> expandedTags = new ArrayList<>(tags.size());
+            for (String tag : tags) {
+                expandedTags.add(resolveVar(tag));
+            }
+            buildImage.setTags(expandedTags);
 
             return new DockerImageComboStepFileCallable(
                     connector,
                     buildImage,
                     cleanup,
                     push,
-                    taskListener,
-                    run
+                    taskListener
             );
         }
     }
@@ -143,21 +162,6 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         }
 
         return true;
-    }
-
-    /**
-     * Resolve on remoting side during execution.
-     * Because node may have some specific node vars.
-     */
-    private String resolveVar(String var) {
-        String resolvedVar = var;
-        try {
-            final EnvVars envVars = run.getEnvironment(taskListener);
-            resolvedVar = envVars.expand(var);
-        } catch (IOException | InterruptedException e) {
-            LOG.warn("Can't resolve variable {}", var, e);
-        }
-        return resolvedVar;
     }
 
     /**
@@ -190,7 +194,6 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
 
             // re-tag according to buildImage config
             for (String tag : buildImage.getTagsNormalised()) {
-                tag = resolveVar(tag);
                 NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
                 llog.printf("Adding additional tag '%s:%s'...%n", reposTag.repos, reposTag.tag);
                 // no need to remove before
@@ -203,8 +206,6 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
             if (push) {
                 llog.println("Pushing all tagged images...");
                 for (String tag : buildImage.getTagsNormalised()) {
-                    tag = resolveVar(tag);
-
                     try {
                         llog.println("Pushing '" + tag + "'...");
                         PushImageCmd pushImageCmd = client.pushImageCmd(tag);
@@ -258,7 +259,6 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         }
 
         for (String tag : buildImage.getTagsNormalised()) {
-            tag = resolveVar(tag);
             try {
                 NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
                 llog.printf("Removing tagged image '%s:%s'.%n", reposTag.repos, reposTag.tag);
