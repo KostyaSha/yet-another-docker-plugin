@@ -22,18 +22,15 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.List;
 
-import static com.github.kostyasha.yad.steps.DockerBuildImageStepFileCallable.newDockerBuildImageStepCallable;
-import static com.github.kostyasha.yad.steps.DockerImageComboStepFileCallable.newDockerImageComboStepFileCallable;
+import static com.github.kostyasha.yad.steps.DockerImageComboStepFileCallable.newDockerImageComboStepFileCallableBuilder;
 
 /**
  * Let's assume that user wants:
- * 1) build image from one Dockerfile possibly with multiple tags
- * 2) tag image with multiple tags i.e. different domains
+ * 1) build image from one 'Dockerfile' possibly with multiple tags
+ * 2) tag image with multiple tags i.e. different domains. Tag name may have variable.
  * 3) push all this tags
- * 4) cleanup image
- * Cleanup image on failure.
+ * 4) cleanup images after success or failure.
  *
  * @author Kanstantsin Shautsou
  */
@@ -42,8 +39,8 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
 
     private YADockerConnector connector = null;
     private DockerBuildImage buildImage = new DockerBuildImage();
-    private boolean cleanAll = true;
-    private boolean pushAll = true;
+    private boolean clean = true;
+    private boolean push = true;
 
     @DataBoundConstructor
     public DockerImageComboStep(YADockerConnector connector, DockerBuildImage buildImage) {
@@ -59,22 +56,22 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
         return buildImage;
     }
 
-    public boolean isCleanAll() {
-        return cleanAll;
+    public boolean isClean() {
+        return clean;
     }
 
     @DataBoundSetter
-    public void setCleanAll(boolean cleanAll) {
-        this.cleanAll = cleanAll;
+    public void setClean(boolean clean) {
+        this.clean = clean;
     }
 
-    public boolean isPushAll() {
-        return pushAll;
+    public boolean isPush() {
+        return push;
     }
 
     @DataBoundSetter
-    public void setPushAll(boolean pushAll) {
-        this.pushAll = pushAll;
+    public void setPush(boolean push) {
+        this.push = push;
     }
 
     @Override
@@ -85,12 +82,14 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
             llog.println("Executing remote combo builder...");
             if (BooleanUtils.isFalse(
                     workspace.act(
-                            newDockerImageComboStepFileCallable()
+                            newDockerImageComboStepFileCallableBuilder()
+                                    .withTaskListener(listener)
+                                    .withRun(run)
                                     .withBuildImage(buildImage)
                                     .withConnector(connector)
-                                    .withTaskListener(listener)
-                                    .withPushAll(pushAll)
-                                    .withCleanAll(cleanAll)
+                                    .withPushAll(push)
+                                    .withCleanAll(clean)
+                                    .build()
                     ))) {
                 throw new AbortException("Something failed");
             }

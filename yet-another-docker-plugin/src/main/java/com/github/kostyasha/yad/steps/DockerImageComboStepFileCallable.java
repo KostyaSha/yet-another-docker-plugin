@@ -13,6 +13,8 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.B
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.PushImageResultCallback;
 import com.google.common.base.Throwables;
 import hudson.AbortException;
+import hudson.EnvVars;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
@@ -25,55 +27,109 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 import static com.github.kostyasha.yad.utils.LogUtils.printResponseItemToListener;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
 /**
+ * All actions happening on remote.
+ * Variables should be resolved during execution on remote.
+ * Client should be instantiated in this remoting exection.
+ * All configuration objects should be serializable.
+ *
  * @author Kanstantsin Shautsou
+ * @see DockerImageComboStep
  */
 public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<Boolean> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerBuildImageStepFileCallable.class);
     private static final long serialVersionUID = 1L;
 
-    private YADockerConnector connector = null;
-    private DockerBuildImage buildImage = new DockerBuildImage();
-    private TaskListener taskListener;
-    private boolean cleanAll;
-    private boolean pushAll;
+    private final YADockerConnector connector;
+    private final DockerBuildImage buildImage;
+    private final boolean cleanup;
+    private final boolean push;
+
+    private transient TaskListener taskListener;
+    private transient Run run;
 
     private transient String imageId;
 
-    private DockerImageComboStepFileCallable() {
-    }
-
-    public static DockerImageComboStepFileCallable newDockerImageComboStepFileCallable() {
-        return new DockerImageComboStepFileCallable();
-    }
-
-    public DockerImageComboStepFileCallable withConnector(YADockerConnector connector) {
+    public DockerImageComboStepFileCallable(YADockerConnector connector,
+                                            DockerBuildImage buildImage,
+                                            boolean cleanup,
+                                            boolean push,
+                                            TaskListener taskListener,
+                                            Run run) {
         this.connector = connector;
-        return this;
-    }
-
-    public DockerImageComboStepFileCallable withBuildImage(DockerBuildImage buildImage) {
         this.buildImage = buildImage;
-        return this;
-    }
-
-    public DockerImageComboStepFileCallable withTaskListener(TaskListener taskListener) {
+        this.cleanup = cleanup;
+        this.push = push;
         this.taskListener = taskListener;
-        return this;
+        this.run = run;
     }
 
-    public DockerImageComboStepFileCallable withCleanAll(boolean cleanAll) {
-        this.cleanAll = cleanAll;
-        return this;
+    public static class Builder {
+        private YADockerConnector connector;
+        private DockerBuildImage buildImage;
+        private boolean cleanup;
+        private boolean push;
+
+        private TaskListener taskListener;
+        private Run run;
+
+        public Builder() {
+        }
+
+        public Builder withConnector(YADockerConnector connector) {
+            this.connector = connector;
+            return this;
+        }
+
+        public Builder withBuildImage(DockerBuildImage that) {
+            this.buildImage = new DockerBuildImage(that);
+            return this;
+        }
+
+        public Builder withTaskListener(TaskListener taskListener) {
+            this.taskListener = taskListener;
+            return this;
+        }
+
+        public Builder withRun(Run run) {
+            this.run = run;
+            return this;
+        }
+
+        public Builder withCleanAll(boolean cleanup) {
+            this.cleanup = cleanup;
+            return this;
+        }
+
+        public Builder withPushAll(boolean push) {
+            this.push = push;
+            return this;
+        }
+
+        public DockerImageComboStepFileCallable build() throws IOException, InterruptedException {
+            if (isNull(run) || isNull(taskListener) || isNull(connector) || isNull(buildImage)) {
+                throw new IllegalStateException("Specify vars!");
+            }
+            // if something should be resolved on master side do it here
+
+            return new DockerImageComboStepFileCallable(
+                    connector,
+                    buildImage,
+                    cleanup,
+                    push,
+                    taskListener,
+                    run
+            );
+        }
     }
 
-    public DockerImageComboStepFileCallable withPushAll(boolean pushAll) {
-        this.pushAll = pushAll;
-        return this;
+    public static Builder newDockerImageComboStepFileCallableBuilder() {
+        return new Builder();
     }
 
     public Boolean invoke(File f, VirtualChannel channel) throws IOException {
@@ -87,6 +143,21 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         }
 
         return true;
+    }
+
+    /**
+     * Resolve on remoting side during execution.
+     * Because node may have some specific node vars.
+     */
+    private String resolveVar(String var) {
+        String resolvedVar = var;
+        try {
+            final EnvVars envVars = run.getEnvironment(taskListener);
+            resolvedVar = envVars.expand(var);
+        } catch (IOException | InterruptedException e) {
+            LOG.warn("Can't resolve variable {}", var, e);
+        }
+        return resolvedVar;
     }
 
     /**
@@ -119,6 +190,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
 
             // re-tag according to buildImage config
             for (String tag : buildImage.getTagsNormalised()) {
+                tag = resolveVar(tag);
                 NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
                 llog.printf("Adding additional tag '%s:%s'...%n", reposTag.repos, reposTag.tag);
                 // no need to remove before
@@ -128,9 +200,11 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
             }
 
             // push
-            if (pushAll) {
+            if (push) {
                 llog.println("Pushing all tagged images...");
                 for (String tag : buildImage.getTagsNormalised()) {
+                    tag = resolveVar(tag);
+
                     try {
                         llog.println("Pushing '" + tag + "'...");
                         PushImageCmd pushImageCmd = client.pushImageCmd(tag);
@@ -162,7 +236,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
      */
     private void invokeCleanup(DockerClient client) {
         PrintStream llog = taskListener.getLogger();
-        if (!cleanAll) {
+        if (!cleanup) {
             llog.println("Skipping cleanup.");
             return;
         } else {
@@ -184,6 +258,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         }
 
         for (String tag : buildImage.getTagsNormalised()) {
+            tag = resolveVar(tag);
             try {
                 NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
                 llog.printf("Removing tagged image '%s:%s'.%n", reposTag.repos, reposTag.tag);
