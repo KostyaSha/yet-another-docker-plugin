@@ -100,7 +100,7 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
         }
     }
 
-    @Extension
+//    @Extension
     @Symbol("docker-image-producer")
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
