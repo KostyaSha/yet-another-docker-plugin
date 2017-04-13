@@ -38,6 +38,7 @@ import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
+import static java.util.Collections.emptyList;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
@@ -236,9 +237,9 @@ public class ClientBuilderForConnector {
         return firstOrNull(
                 lookupCredentials(
                         Credentials.class,
-                        Jenkins.getActiveInstance(),
+                        Jenkins.getInstance(),
                         ACL.SYSTEM,
-                        Collections.<DomainRequirement>emptyList()
+                        emptyList()
                 ),
                 withId(credentialsId)
         );

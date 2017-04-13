@@ -60,8 +60,8 @@ public class DockerImageComboStepTest {
         buildImage.setTags(Collections.singletonList("localhost:5000/myfirstimage"));
 
         DockerImageComboStep comboStep = new DockerImageComboStep(dockerConnector, buildImage);
-        comboStep.setCleanAll(true);
-        comboStep.setPushAll(true);
+        comboStep.setClean(true);
+        comboStep.setPush(true);
 
         final Map<String, Object> uninstantiate = DescribableHelper.uninstantiate(comboStep);
 
@@ -106,8 +106,8 @@ public class DockerImageComboStepTest {
         buildImage.setTags(Collections.singletonList("localhost:5000/myfirstimage"));
 
         DockerImageComboStep comboStep = new DockerImageComboStep(dockerConnector, buildImage);
-        comboStep.setCleanAll(true);
-        comboStep.setPushAll(true);
+        comboStep.setClean(true);
+        comboStep.setPush(true);
 
         FreeStyleProject project = jRule.createFreeStyleProject("test");
         project.getBuildersList().add(comboStep);

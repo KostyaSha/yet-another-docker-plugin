@@ -38,12 +38,12 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
     private static Logger LOG = LoggerFactory.getLogger(DockerBuildImageStep.class);
 
     private YADockerConnector connector = null;
-    private DockerBuildImage buildImage = new DockerBuildImage();
+    private DockerBuildImage buildImage = null;
     private boolean clean = true;
     private boolean push = true;
 
     @DataBoundConstructor
-    public DockerImageComboStep(YADockerConnector connector, DockerBuildImage buildImage) {
+    public DockerImageComboStep(@Nonnull YADockerConnector connector, @Nonnull DockerBuildImage buildImage) {
         this.connector = connector;
         this.buildImage = buildImage;
     }
@@ -78,18 +78,19 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher,
                         @Nonnull TaskListener listener) throws InterruptedException, IOException {
         PrintStream llog = listener.getLogger();
+        final DockerImageComboStepFileCallable comboCallable = newDockerImageComboStepFileCallableBuilder()
+                .withTaskListener(listener)
+                .withRun(run)
+                .withBuildImage(buildImage)
+                .withConnector(connector)
+                .withPushAll(push)
+                .withCleanAll(clean)
+                .build();
         try {
             llog.println("Executing remote combo builder...");
             if (BooleanUtils.isFalse(
                     workspace.act(
-                            newDockerImageComboStepFileCallableBuilder()
-                                    .withTaskListener(listener)
-                                    .withRun(run)
-                                    .withBuildImage(buildImage)
-                                    .withConnector(connector)
-                                    .withPushAll(push)
-                                    .withCleanAll(clean)
-                                    .build()
+                            comboCallable
                     ))) {
                 throw new AbortException("Something failed");
             }

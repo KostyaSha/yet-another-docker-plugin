@@ -6,6 +6,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClie
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.PushImageCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PushResponseItem;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
@@ -28,6 +29,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.github.kostyasha.yad.utils.DockerJavaUtils.getAuthConfig;
 import static com.github.kostyasha.yad.utils.LogUtils.printResponseItemToListener;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -48,7 +50,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
     private static final long serialVersionUID = 1L;
 
     private final YADockerConnector connector;
-    private final DockerBuildImage buildImage;
+    private DockerBuildImage buildImage;
     private final boolean cleanup;
     private final boolean push;
 
@@ -137,6 +139,10 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
             }
             buildImage.setTags(expandedTags);
 
+            if (isNull(buildImage.getAuthConfigurations())) {
+                buildImage.resolveCreds();
+            }
+
             return new DockerImageComboStepFileCallable(
                     connector,
                     buildImage,
@@ -174,7 +180,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
             // build image
             BuildImageCmd buildImageCmd = client.buildImageCmd();
             buildImage.fillSettings(buildImageCmd);
-            llog.print("Pulling image... ");
+            llog.print("Building image... ");
 
             imageId = buildImageCmd.exec(new BuildImageResultCallback() {
                 public void onNext(BuildResponseItem item) {
@@ -186,7 +192,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
                     super.onNext(item);
                 }
             }).awaitImageId();
-            llog.println("Pulling done.");
+            llog.println("Build done.");
 
             if (isEmpty(imageId)) {
                 throw new AbortException("Built image is empty or null!");
@@ -202,6 +208,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
                 llog.printf("Added additional tag '%s:%s'.%n", reposTag.repos, reposTag.tag);
             }
 
+
             // push
             if (push) {
                 llog.println("Pushing all tagged images...");
@@ -209,9 +216,14 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
                     try {
                         llog.println("Pushing '" + tag + "'...");
                         PushImageCmd pushImageCmd = client.pushImageCmd(tag);
-                        if (nonNull(buildImage.getAuthConfig())) {
-                            pushImageCmd.withAuthConfig(buildImage.getAuthConfig());
+
+                        if (nonNull(buildImage.getAuthConfigurations())) {
+                            AuthConfig authConfig = getAuthConfig(tag, buildImage.getAuthConfigurations());
+                            if (nonNull(authConfig)) {
+                                pushImageCmd.withAuthConfig(authConfig);
+                            }
                         }
+
                         pushImageCmd.exec(new PushImageResultCallback() {
                             @Override
                             public void onNext(PushResponseItem item) {

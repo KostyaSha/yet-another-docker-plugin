@@ -1,16 +1,22 @@
 package com.github.kostyasha.yad.commons.cmds;
 
+import com.cloudbees.plugins.credentials.Credentials;
+import com.github.kostyasha.yad.client.ClientBuilderForConnector;
+import com.github.kostyasha.yad.credentials.DockerRegistryAuthCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfig;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfigurations;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.EqualsBuilder;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.HashCodeBuilder;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.ToStringBuilder;
+import com.github.kostyasha.yad_docker_java.org.apache.http.auth.UsernamePasswordCredentials;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
@@ -19,13 +25,18 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.File;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
 /**
@@ -48,7 +59,13 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
   private String baseDirectory;
   private String dockerfile;
 
-  private AuthConfig authConfig;
+  /**
+   * Storage for Describable.
+   * serveraddress:credentialsId
+   */
+  private Map<String, String> creds;
+
+  private AuthConfigurations authConfigurations;
 
   @DataBoundConstructor
   public DockerBuildImage() {
@@ -66,6 +83,8 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
     this.pull = that.getPull();
     this.baseDirectory = that.getBaseDirectory();
     this.dockerfile = that.getDockerfile();
+    this.creds = that.getCreds();
+    this.authConfigurations = that.getAuthConfigurations();
   }
 
   /**
@@ -95,7 +114,7 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
   }
 
   /**
-   * @see #remove
+   * @see #rm
    */
   @CheckForNull
   public Boolean getRm() {
@@ -108,7 +127,7 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
   }
 
   /**
-   * @see #remove
+   * @see #forceRm
    */
   @CheckForNull
   public Boolean getForceRm() {
@@ -185,6 +204,52 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
     return isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
   }
 
+  @CheckForNull
+  public Map<String, String> getCreds() {
+    return creds;
+  }
+
+  @DataBoundSetter
+  public void setCreds(Map<String, String> creds) {
+    this.creds = creds;
+  }
+
+  @CheckForNull
+  public AuthConfigurations getAuthConfigurations() {
+    return authConfigurations;
+  }
+
+  /**
+   * Fill additional object with resolved creds.
+   * For example before transfering object to remote.
+   */
+  public void resolveCreds() {
+    final AuthConfigurations authConfigs = new AuthConfigurations();
+
+    for (Map.Entry<String, String> entry : creds.entrySet()) {
+      final String registry = entry.getKey();
+      final String credId = entry.getValue();
+      final Credentials credentials = ClientBuilderForConnector.lookupSystemCredentials(credId);
+      if (credentials instanceof UsernamePasswordCredentials) {
+        final UsernamePasswordCredentials upCreds = (UsernamePasswordCredentials) credentials;
+        final AuthConfig authConfig = new AuthConfig()
+          .withRegistryAddress(registry)
+          .withPassword(upCreds.getPassword())
+          .withUsername(upCreds.getUserName());
+        authConfigs.addConfig(authConfig);
+      } else if (credentials instanceof DockerRegistryAuthCredentials) {
+        final DockerRegistryAuthCredentials authCredentials = (DockerRegistryAuthCredentials) credentials;
+        authConfigs.addConfig(
+          authCredentials.getAuthConfig().withRegistryAddress(registry)
+        );
+      } else if (credentials instanceof StringCredentials) {
+        final StringCredentials stringCredentials = (StringCredentials) credentials;
+        authConfigs.addConfig(new AuthConfig().withAuth(stringCredentials.getSecret().getPlainText()));
+      }
+    }
+    this.authConfigurations = authConfigs;
+  }
+
   @Nonnull
   public BuildImageCmd fillSettings(@Nonnull BuildImageCmd cmd) {
     cmd.withNoCache(noCache)
@@ -193,6 +258,10 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
       .withQuiet(quiet)
       .withPull(pull)
       .withBaseDirectory(new File(baseDirectory));
+
+    if (nonNull(authConfigurations)) {
+      cmd.withBuildAuthConfigs(authConfigurations);
+    }
 
     if (StringUtils.isNotBlank(dockerfile)) {
       cmd.withDockerfile(new File(baseDirectory, dockerfile));
@@ -216,10 +285,6 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
   @Override
   public int hashCode() {
     return HashCodeBuilder.reflectionHashCode(this);
-  }
-
-  public AuthConfig getAuthConfig() {
-    return authConfig;
   }
 
   @Extension
