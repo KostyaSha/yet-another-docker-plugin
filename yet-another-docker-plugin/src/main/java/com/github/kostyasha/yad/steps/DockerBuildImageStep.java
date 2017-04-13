@@ -2,7 +2,6 @@ package com.github.kostyasha.yad.steps;
 
 import com.github.kostyasha.yad.commons.cmds.DockerBuildImage;
 import com.github.kostyasha.yad.connector.YADockerConnector;
-import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractProject;

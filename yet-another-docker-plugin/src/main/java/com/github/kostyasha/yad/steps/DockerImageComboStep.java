@@ -34,7 +34,7 @@ import static com.github.kostyasha.yad.steps.DockerImageComboStepFileCallable.ne
  * @author Kanstantsin Shautsou
  */
 public class DockerImageComboStep extends Builder implements SimpleBuildStep {
-    private static Logger LOG = LoggerFactory.getLogger(DockerBuildImageStep.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DockerBuildImageStep.class);
 
     private YADockerConnector connector = null;
     private DockerBuildImage buildImage = null;
