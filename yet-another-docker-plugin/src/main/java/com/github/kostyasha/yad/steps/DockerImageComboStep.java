@@ -4,7 +4,6 @@ import com.github.kostyasha.yad.commons.cmds.DockerBuildImage;
 import com.github.kostyasha.yad.connector.YADockerConnector;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.BooleanUtils;
 import hudson.AbortException;
-import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
