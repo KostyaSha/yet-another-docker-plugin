@@ -16,7 +16,6 @@ import com.github.kostyasha.yad_docker_java.org.apache.http.auth.UsernamePasswor
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
-import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
@@ -239,9 +238,6 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
                 authConfigs.addConfig(
                         authCredentials.getAuthConfig().withRegistryAddress(registry)
                 );
-            } else if (credentials instanceof StringCredentials) {
-                final StringCredentials stringCredentials = (StringCredentials) credentials;
-                authConfigs.addConfig(new AuthConfig().withAuth(stringCredentials.getSecret().getPlainText()));
             }
         }
         this.authConfigurations = authConfigs;
