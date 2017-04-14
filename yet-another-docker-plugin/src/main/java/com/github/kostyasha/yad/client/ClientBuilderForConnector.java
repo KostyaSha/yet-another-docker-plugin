@@ -3,8 +3,10 @@ package com.github.kostyasha.yad.client;
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.common.CertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.kostyasha.yad.DockerConnector;
+import com.github.kostyasha.yad.credentials.DockerDaemonCerts;
+import com.github.kostyasha.yad.other.ConnectorType;
+import com.github.kostyasha.yad.other.VariableSSLConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
@@ -14,8 +16,6 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.KeystoreS
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.SSLConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
-import com.github.kostyasha.yad.other.ConnectorType;
-import com.github.kostyasha.yad.other.VariableSSLConfig;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
@@ -30,12 +30,12 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
-import java.util.Collections;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
+import static java.util.Collections.emptyList;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
@@ -161,6 +161,14 @@ public class ClientBuilderForConnector {
                 dockerCreds.getClientCertificate(),
                 dockerCreds.getServerCaCertificate()
             ));
+        } else if (credentials instanceof DockerDaemonCerts) {
+            final DockerDaemonCerts dockerCreds = (DockerDaemonCerts) credentials;
+
+            withSslConfig(new VariableSSLConfig(
+                    dockerCreds.getClientKey(),
+                    dockerCreds.getClientCertificate(),
+                    dockerCreds.getServerCaCertificate()
+            ));
         }
 
         return this;
@@ -226,9 +234,9 @@ public class ClientBuilderForConnector {
         return firstOrNull(
                 lookupCredentials(
                         Credentials.class,
-                        Jenkins.getActiveInstance(),
+                        Jenkins.getInstance(),
                         ACL.SYSTEM,
-                        Collections.<DomainRequirement>emptyList()
+                        emptyList()
                 ),
                 withId(credentialsId)
         );

@@ -33,7 +33,7 @@ import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListe
 /**
  * Wrapper that starts node and allows body execute anything in created {@link #getSlaveName()} slave.
  * Body may assign tasks by {@link hudson.model.Label} using Actions or do anything directly on it.
- * By defauld {@link com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy} is used and terminates
+ * By default {@link com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy} is used and terminates
  * slave after first execution, set other or override it with custom logic.
  *
  * @author Kanstantsin Shautsou

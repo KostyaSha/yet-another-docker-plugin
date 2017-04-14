@@ -206,6 +206,7 @@
             <groupId>com.jayway.awaitility</groupId>
             <artifactId>awaitility</artifactId>
             <version>1.7.0</version>
+            <scope>test</scope>
         </dependency>
 
         <!--<dependency>-->

@@ -16,7 +16,6 @@ import java.security.UnrecoverableKeyException;
 
 import static com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.util.CertificateUtils.createKeyStore;
 import static com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.util.CertificateUtils.createTrustStore;
-import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 /**
@@ -42,13 +41,8 @@ public class VariableSSLConfig implements SSLConfig, Serializable {
         try {
             Security.addProvider(new BouncyCastleProvider());
 
-            // properties acrobatics not needed for java > 1.6
-            String httpProtocols = System.getProperty("https.protocols");
-            System.setProperty("https.protocols", "TLSv1");
             SslConfigurator sslConfig = SslConfigurator.newInstance(true);
-            if (nonNull(httpProtocols)) {
-                System.setProperty("https.protocols", httpProtocols);
-            }
+            sslConfig.securityProtocol("TLSv1.2");
 
             // add keystore
             sslConfig.keyStore(createKeyStore(keypem, certpem));

@@ -28,6 +28,7 @@ import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
  * @author Kanstantsin Shautsou
  */
 public class DockerCloudConnectorId extends YADockerConnector {
+    private static final long serialVersionUID = 1L;
 
     private String cloudId;
 

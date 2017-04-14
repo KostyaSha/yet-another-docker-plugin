@@ -50,6 +50,7 @@ import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
  * @author Kanstantsin Shautsou
  */
 public class DockerConnector extends YADockerConnector {
+    private static final long serialVersionUID = 1L;
 
     @CheckForNull
     private String serverUrl;
@@ -57,14 +58,13 @@ public class DockerConnector extends YADockerConnector {
     @CheckForNull
     private String apiVersion;
 
-    private transient Boolean tlsVerify;
+    @CheckForNull
+    private Boolean tlsVerify;
 
     @CheckForNull
     private String credentialsId = null;
 
     @CheckForNull
-    private transient DockerClient client = null;
-
     private ConnectorType connectorType = NETTY;
 
     @CheckForNull
@@ -72,6 +72,9 @@ public class DockerConnector extends YADockerConnector {
 
     @CheckForNull
     private Integer readTimeout;
+
+    @CheckForNull
+    private transient DockerClient client = null;
 
     @DataBoundConstructor
     public DockerConnector(String serverUrl) {
