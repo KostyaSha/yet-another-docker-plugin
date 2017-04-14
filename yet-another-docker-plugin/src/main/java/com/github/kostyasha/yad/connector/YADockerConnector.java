@@ -16,6 +16,7 @@ import java.io.Serializable;
  * @author Kanstantsin Shautsou
  */
 public abstract class YADockerConnector extends AbstractDescribableImpl<YADockerConnector> implements ExtensionPoint, Serializable {
+    private static final long serialVersionUID = 1L;
 
     public abstract DockerClient getClient() throws Exception;
 

@@ -56,7 +56,8 @@ public class DockerBuildImageStep extends Builder implements SimpleBuildStep {
                     .withConnector(connector)
                     .withTaskListener(listener)
             );
-        } catch (Exception ex) {
+            llog.println(buildImages);
+        } catch (Throwable ex) {
             LOG.error("Can't build image", ex);
             throw ex;
         }

@@ -23,6 +23,8 @@ import static java.util.Objects.nonNull;
  * @author Kanstantsin Shautsou
  */
 public class DockerDaemonFileCredentials extends BaseStandardCredentials implements DockerDaemonCerts {
+    private static final long serialVersionUID = 1L;
+
     public static final Logger LOG = LoggerFactory.getLogger(DockerDaemonFileCredentials.class);
 
     private String dockerCertPath;

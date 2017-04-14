@@ -7,12 +7,14 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.Bu
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.PushImageCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfig;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfigurations;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PushResponseItem;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.PushImageResultCallback;
 import com.google.common.base.Throwables;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.model.Run;
@@ -23,6 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -56,7 +59,6 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
 
     private final TaskListener taskListener;
 
-    private transient String imageId;
 
     public DockerImageComboStepFileCallable(final YADockerConnector connector,
                                             final DockerBuildImage buildImage,
@@ -70,6 +72,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         this.taskListener = taskListener;
     }
 
+    @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
     public static class Builder {
         private YADockerConnector connector;
         private DockerBuildImage buildImage;
@@ -97,22 +100,22 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
             return resolvedVar;
         }
 
-        public Builder withConnector(YADockerConnector connector) {
+        public Builder withConnector(@Nonnull YADockerConnector connector) {
             this.connector = connector;
             return this;
         }
 
-        public Builder withBuildImage(DockerBuildImage that) {
+        public Builder withBuildImage(@Nonnull DockerBuildImage that) {
             this.buildImage = new DockerBuildImage(that);
             return this;
         }
 
-        public Builder withTaskListener(TaskListener taskListener) {
+        public Builder withTaskListener(@Nonnull TaskListener taskListener) {
             this.taskListener = taskListener;
             return this;
         }
 
-        public Builder withRun(Run run) {
+        public Builder withRun(@Nonnull Run run) {
             this.run = run;
             return this;
         }
@@ -175,6 +178,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
      */
     private void invoke(DockerClient client) throws AbortException {
         PrintStream llog = taskListener.getLogger();
+        String imageId = null;
 
         try {
             // build image
@@ -182,16 +186,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
             buildImage.fillSettings(buildImageCmd);
             llog.print("Building image... ");
 
-            imageId = buildImageCmd.exec(new BuildImageResultCallback() {
-                public void onNext(BuildResponseItem item) {
-                    String text = item.getStream();
-                    if (nonNull(text)) {
-                        llog.println(StringUtils.removeEnd(text, "\n"));
-                        LOG.debug(StringUtils.removeEnd(text, "\n"));
-                    }
-                    super.onNext(item);
-                }
-            }).awaitImageId();
+            imageId = buildImageCmd.exec(new MyBuildImageResultCallback(llog)).awaitImageId();
             llog.println("Build done.");
 
             if (isEmpty(imageId)) {
@@ -216,21 +211,16 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
                     try {
                         llog.println("Pushing '" + tag + "'...");
                         PushImageCmd pushImageCmd = client.pushImageCmd(tag);
-
-                        if (nonNull(buildImage.getAuthConfigurations())) {
-                            AuthConfig authConfig = getAuthConfig(tag, buildImage.getAuthConfigurations());
+                        final AuthConfigurations autConfigs = buildImage.getAuthConfigurations();
+                        if (nonNull(autConfigs)) {
+                            AuthConfig authConfig = getAuthConfig(tag, autConfigs);
                             if (nonNull(authConfig)) {
                                 pushImageCmd.withAuthConfig(authConfig);
                             }
                         }
 
-                        pushImageCmd.exec(new PushImageResultCallback() {
-                            @Override
-                            public void onNext(PushResponseItem item) {
-                                printResponseItemToListener(taskListener, item);
-                                super.onNext(item);
-                            }
-                        }).awaitSuccess();
+                        pushImageCmd.exec(new MyPushImageResultCallback())
+                                .awaitSuccess();
                         llog.println("Pushed '" + tag + "'.");
                     } catch (Exception ex) {
                         taskListener.error("Can't push " + tag + " " + ex.getMessage());
@@ -239,7 +229,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
                 }
             }
         } finally {
-            invokeCleanup(client);
+            invokeCleanup(client, imageId);
         }
     }
 
@@ -247,7 +237,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
     /**
      * Try to clean as much as we can without throwing errors.
      */
-    private void invokeCleanup(DockerClient client) {
+    private void invokeCleanup(DockerClient client, String imageId) {
         PrintStream llog = taskListener.getLogger();
         if (!cleanup) {
             llog.println("Skipping cleanup.");
@@ -285,10 +275,35 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
                     taskListener.error("Can't remove tagged image" + ex.getMessage());
                     //ignore as it cleanup
                 }
-            } catch (Exception ex) {
-                taskListener.error("Can't process tag " + tag + " for removal");
+            } catch (Throwable ex) {
+                taskListener.error("Can't process tag " + tag + " for removal.");
+                LOG.error("Can't process tag.", ex);
             }
         }
     }
 
+    private static class MyBuildImageResultCallback extends BuildImageResultCallback {
+        private final PrintStream llog;
+
+        MyBuildImageResultCallback(PrintStream llog) {
+            this.llog = llog;
+        }
+
+        public void onNext(BuildResponseItem item) {
+            String text = item.getStream();
+            if (nonNull(text)) {
+                llog.println(StringUtils.removeEnd(text, "\n"));
+                LOG.debug(StringUtils.removeEnd(text, "\n"));
+            }
+            super.onNext(item);
+        }
+    }
+
+    private class MyPushImageResultCallback extends PushImageResultCallback {
+        @Override
+        public void onNext(PushResponseItem item) {
+            printResponseItemToListener(taskListener, item);
+            super.onNext(item);
+        }
+    }
 }

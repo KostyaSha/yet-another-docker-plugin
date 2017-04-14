@@ -25,6 +25,7 @@ import static java.util.Objects.nonNull;
  * @author Kanstantsin Shautsou
  */
 public class CredentialsYADockerConnector extends YADockerConnector {
+    private static final long serialVersionUID = 1L;
 
     @CheckForNull
     private String serverUrl;
@@ -32,7 +33,8 @@ public class CredentialsYADockerConnector extends YADockerConnector {
     @CheckForNull
     private String apiVersion;
 
-    private transient Boolean tlsVerify;
+    @CheckForNull
+    private Boolean tlsVerify;
 
     @CheckForNull
     private Credentials credentials = null;

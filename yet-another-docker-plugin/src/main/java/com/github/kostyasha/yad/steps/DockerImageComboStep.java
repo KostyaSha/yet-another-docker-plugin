@@ -3,6 +3,7 @@ package com.github.kostyasha.yad.steps;
 import com.github.kostyasha.yad.commons.cmds.DockerBuildImage;
 import com.github.kostyasha.yad.connector.YADockerConnector;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.BooleanUtils;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -33,6 +34,7 @@ import static com.github.kostyasha.yad.steps.DockerImageComboStepFileCallable.ne
  *
  * @author Kanstantsin Shautsou
  */
+@SuppressFBWarnings(value = "REC_CATCH_EXCEPTION")
 public class DockerImageComboStep extends Builder implements SimpleBuildStep {
     private static final Logger LOG = LoggerFactory.getLogger(DockerBuildImageStep.class);
 

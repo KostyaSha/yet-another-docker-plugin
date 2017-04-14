@@ -40,7 +40,7 @@ import static org.apache.commons.lang.StringUtils.isEmpty;
  */
 @Beta
 public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> implements Serializable {
-    private static final Long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(DockerBuildImage.class);
 
     private List<String> tags;
