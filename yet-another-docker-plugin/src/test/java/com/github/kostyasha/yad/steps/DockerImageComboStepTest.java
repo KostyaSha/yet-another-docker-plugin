@@ -63,6 +63,7 @@ public class DockerImageComboStepTest {
 
     }
 
+    @Ignore
     @Test
     public void testComboBuild() throws Throwable {
         jRule.getInstance().setNumExecutors(0);
