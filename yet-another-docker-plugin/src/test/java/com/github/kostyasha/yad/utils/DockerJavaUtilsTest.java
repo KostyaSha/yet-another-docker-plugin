@@ -19,7 +19,7 @@ public class DockerJavaUtilsTest {
         final AuthConfigurations authConfigurations = new AuthConfigurations();
         authConfigurations.addConfig(
                 new AuthConfig()
-                        .withRegistryAddress("some.host.com")
+                        .withRegistryAddress("some.host.com:3233")
                         .withUsername("user")
                         .withPassword("pass")
         );
