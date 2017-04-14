@@ -15,7 +15,6 @@ import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.remoting.Callable;
 import hudson.slaves.DumbSlave;
 import org.apache.commons.io.FileUtils;
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.jenkinsci.remoting.RoleChecker;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -24,16 +23,13 @@ import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Map;
 
 import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
 import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
-import static org.junit.Assert.*;
 
 /**
  * @author Kanstantsin Shautsou
@@ -63,7 +59,7 @@ public class DockerImageComboStepTest {
         comboStep.setClean(true);
         comboStep.setPush(true);
 
-        final Map<String, Object> uninstantiate = DescribableHelper.uninstantiate(comboStep);
+//        final Map<String, Object> uninstantiate = DescribableHelper.uninstantiate(comboStep);
 
     }
 
