@@ -3,7 +3,6 @@ package com.github.kostyasha.yad;
 import com.github.kostyasha.yad.commons.AbstractCloud;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
 import com.github.kostyasha.yad.launcher.DockerComputerLauncher;
-import com.github.kostyasha.yad.launcher.DockerComputerSingleJNLPLauncher;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
@@ -404,7 +403,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
     }
 
     private static class MyLogContainerResultCallback extends LogContainerResultCallback {
-        ArrayList<String> logLines = new ArrayList<>();
+        private ArrayList<String> logLines = new ArrayList<>();
 
         @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING")
         @Override
@@ -413,6 +412,10 @@ public class DockerCloud extends AbstractCloud implements Serializable {
             logLines.add(line);
             LOG.debug("Log container: {}", line);
             super.onNext(item);
+        }
+
+        public ArrayList<String> getLogLines() {
+            return logLines;
         }
     }
 }
