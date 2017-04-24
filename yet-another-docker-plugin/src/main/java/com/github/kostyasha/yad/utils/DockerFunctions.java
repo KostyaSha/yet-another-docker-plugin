@@ -6,6 +6,7 @@ import com.github.kostyasha.yad.launcher.DockerComputerSSHLauncher;
 import com.github.kostyasha.yad.strategy.DockerCloudRetentionStrategy;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
+import hudson.Functions;
 import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.slaves.ComputerLauncher;
@@ -26,6 +27,13 @@ import static jenkins.model.Jenkins.getInstance;
  */
 public class DockerFunctions {
     private DockerFunctions() {
+    }
+
+    /**
+     * Because {@link Functions#getRetentionStrategyDescriptors()} is restricted.
+     */
+    public static List<Descriptor<RetentionStrategy<?>>> getRetentionStrategyDescriptors() {
+        return RetentionStrategy.all();
     }
 
     /**

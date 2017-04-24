@@ -3,6 +3,7 @@ package com.github.kostyasha.yad;
 import com.github.kostyasha.yad.commons.AbstractCloud;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
 import com.github.kostyasha.yad.launcher.DockerComputerLauncher;
+import com.github.kostyasha.yad.launcher.DockerComputerSingleJNLPLauncher;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
@@ -10,6 +11,8 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.In
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.DockerException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Container;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.LogContainerResultCallback;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Throwables;
 import com.github.kostyasha.yad_docker_java.javax.ws.rs.ProcessingException;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
@@ -175,8 +178,22 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         LOG.debug("Created container {}, for {}", containerId, getDisplayName());
         // start
         StartContainerCmd startCommand = getClient().startContainerCmd(containerId);
-        startCommand.exec();
-        LOG.debug("Run container {}, for {}", containerId, getDisplayName());
+        try {
+            startCommand.exec();
+            LOG.debug("Run container {}, for {}", containerId, getDisplayName());
+        } catch (Exception ex) {
+            try {
+                getClient().logContainerCmd(containerId)
+                        .withStdErr(true)
+                        .withStdOut(true)
+                        .exec(new MyLogContainerResultCallback())
+                        .awaitCompletion();
+            } catch (Throwable t) {
+                LOG.warn("Can't get logs for container start", t);
+            }
+
+            throw ex;
+        }
 
         return containerId;
     }
@@ -184,6 +201,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
     /**
      * Cloud specific container config options
      */
+
     private void appendContainerConfig(DockerSlaveTemplate slaveTemplate, CreateContainerCmd containerConfig) {
         Map<String, String> labels = containerConfig.getLabels();
         if (labels == null) {
@@ -382,6 +400,19 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         @Override
         public String getDisplayName() {
             return "Yet Another Docker";
+        }
+    }
+
+    private static class MyLogContainerResultCallback extends LogContainerResultCallback {
+        ArrayList<String> logLines = new ArrayList<>();
+
+        @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING")
+        @Override
+        public void onNext(Frame item) {
+            final String line = new String(item.getPayload()).trim();
+            logLines.add(line);
+            LOG.debug("Log container: {}", line);
+            super.onNext(item);
         }
     }
 }

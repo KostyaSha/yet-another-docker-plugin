@@ -6,6 +6,8 @@ import hudson.model.DescriptorVisibilityFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+
 import static com.github.kostyasha.yad.utils.DockerFunctions.getDockerComputerLauncherDescriptors;
 import static com.github.kostyasha.yad.utils.DockerFunctions.getDockerRetentionStrategyDescriptors;
 
@@ -19,7 +21,7 @@ public class DockerDescriptorVisibilityFilter extends DescriptorVisibilityFilter
     private static final Logger LOG = LoggerFactory.getLogger(DockerDescriptorVisibilityFilter.class);
 
     @Override
-    public boolean filter(Object context, Descriptor descriptor) {
+    public boolean filter(Object context, @Nonnull Descriptor descriptor) {
         if (getDockerComputerLauncherDescriptors().contains(descriptor) ||
                 getDockerRetentionStrategyDescriptors().contains(descriptor)) {
             LOG.trace("Filtering '{}', for '{}'.", descriptor, context);
