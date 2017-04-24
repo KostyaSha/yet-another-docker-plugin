@@ -213,6 +213,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         } catch (Exception ex) {
             listener.error("Can't execute command: " + ex.getMessage().trim());
             LOG.error("Can't execute jnlp connection command: '{}'", ex.getMessage().trim());
+            printLog(connect, listener, containerId);
             node.terminate();
             throw ex;
         }
@@ -231,6 +232,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         if (!dockerComputer.isOnline()) {
             LOG.info("Launch timeout, termintaing slave based on '{}'", containerId);
             logger.println("Launch timeout, termintaing slave.");
+            printLog(connect, listener, containerId);
             node.terminate();
             throw new IOException("Can't connect slave to jenkins");
         }
@@ -238,6 +240,19 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         LOG.info("Launched slave '{}' '{}' based on '{}'",
                 dockerComputer.getSlaveVersion(), dockerComputer.getName(), containerId);
         logger.println("Launched slave for " + containerId);
+    }
+
+    private void printLog(DockerClient client, TaskListener listener, String containerId) {
+        try {
+            client.logContainerCmd(containerId)
+                    .withStdErr(true)
+                    .withStdOut(true)
+                    .exec(new DockerComputerSingleJNLPLauncher.ListenerLogContainerResultCallback(listener))
+                    .awaitCompletion();
+        } catch (Exception ex) {
+            listener.error("Failed to get logs from container " + containerId);
+            LOG.error("failed to get logs from container {}", containerId, ex);
+        }
     }
 
     @Override
@@ -281,7 +296,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             }
 
             // wait for params
-            createContainerCmd.withCmd("/bin/sh",
+            createContainerCmd.withEntrypoint("/bin/sh",
                     "-cxe",
                     "cat << EOF >> /tmp/init.sh && chmod +x /tmp/init.sh && exec /tmp/init.sh\n" +
                             initCmd.replace("$", "\\$") + "\n" +
