@@ -14,3 +14,6 @@ ADD maven.sh /etc/profile.d/maven.sh
 RUN yum -y install which
 
 RUN yum -y install java-1.8.0-openjdk-devel
+
+ENTRYPOINT ["echo", "ENTRYPOINT from Dockerfile!"]
+CMD ["-n", "CMD from Dockerfile!"]
