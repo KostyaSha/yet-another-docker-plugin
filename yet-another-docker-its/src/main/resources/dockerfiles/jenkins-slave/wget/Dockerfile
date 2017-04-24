@@ -1,4 +1,4 @@
-FROM centos:centos7.2.1511
+FROM centos:centos7.3.1611
 MAINTAINER "Kanstantsin Shautsou" <kanstantsin.sha@gmail.com>
 
 RUN yum -y update; yum clean all;
