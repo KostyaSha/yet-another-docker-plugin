@@ -1,5 +1,9 @@
 ##
 
+## 0.1.0-rc36
+- Support more images for JNLP launcher
+- Print error logs into listener (ideally in future should be exposed to cloud-stats-plugin)
+
 ## 0.1.0-rc35
 - Non-ui image builder/pusher.
 
