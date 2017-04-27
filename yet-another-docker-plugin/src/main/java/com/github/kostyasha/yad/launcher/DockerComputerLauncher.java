@@ -2,6 +2,7 @@ package com.github.kostyasha.yad.launcher;
 
 
 import com.github.kostyasha.yad.DockerSlaveTemplate;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
@@ -38,7 +39,8 @@ public abstract class DockerComputerLauncher extends DelegatingComputerLauncher 
      * i.e. port for exposing, command to run, etc.
      */
     public abstract void appendContainerConfig(DockerSlaveTemplate dockerSlaveTemplate,
-                                               CreateContainerCmd createContainerCmd) throws IOException;
+                                               CreateContainerCmd createContainerCmd,
+                                               DockerClient dockerClient) throws IOException;
 
     /**
      * Wait until slave is up and ready for connection.
