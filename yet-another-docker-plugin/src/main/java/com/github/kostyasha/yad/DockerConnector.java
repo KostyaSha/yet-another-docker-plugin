@@ -190,6 +190,7 @@ public class DockerConnector extends YADockerConnector {
                 .append(tlsVerify, that.tlsVerify)
                 .append(connectorType, that.connectorType)
                 .append(connectTimeout, that.connectTimeout)
+                .append(readTimeout, that.readTimeout)
                 .isEquals();
     }
 
@@ -202,6 +203,7 @@ public class DockerConnector extends YADockerConnector {
                 .append(tlsVerify)
                 .append(connectorType)
                 .append(connectTimeout)
+                .append(readTimeout)
                 .toHashCode();
     }
 
