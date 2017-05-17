@@ -28,10 +28,13 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 /**
  * Configurable SSH launcher that expected ssh port to be exposed from docker container.
@@ -65,6 +68,15 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     @Override
     public void appendContainerConfig(DockerSlaveTemplate dockerSlaveTemplate, CreateContainerCmd createCmd) {
         final int sshPort = getSshConnector().port;
+        ExposedPort[] exposedPorts = createCmd.getExposedPorts();
+        // we want allow exposing not only ssh ports
+        if (nonNull(createCmd.getExposedPorts())) {
+            ArrayList<ExposedPort> ports = new ArrayList<>(Arrays.asList(exposedPorts));
+            ports.add(new ExposedPort(sshPort));
+            createCmd.withExposedPorts(ports);
+        } else {
+            createCmd.withExposedPorts(new ExposedPort(sshPort));
+        }
 
         createCmd.withPortSpecs(sshPort + "/tcp");
 
