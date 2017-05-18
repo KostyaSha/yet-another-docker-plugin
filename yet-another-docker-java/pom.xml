@@ -127,7 +127,7 @@
                     </filters>
                     <artifactSet>
                         <excludes>
-                            <exclude>org.slf4j:*</exclude>
+                            <!--<exclude>org.slf4j:*</exclude>-->
                             <exclude>log4j:*</exclude>
                             <!--<exclude>commons-logging:*</exclude>-->
                         </excludes>
