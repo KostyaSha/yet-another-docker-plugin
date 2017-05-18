@@ -63,7 +63,7 @@
         <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java</artifactId>
-            <version>3.0.8</version>
+            <version>3.0.10</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -74,8 +74,8 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jcl-over-slf4j</artifactId>
-            <version>1.7.12</version>
-            <scope>provided</scope>
+            <version>1.7.21</version>
+            <!--<scope>provided</scope>-->
         </dependency>
     </dependencies>
 
@@ -127,7 +127,7 @@
                     </filters>
                     <artifactSet>
                         <excludes>
-                            <exclude>org.slf4j:*</exclude>
+                            <!--<exclude>org.slf4j:*</exclude>-->
                             <exclude>log4j:*</exclude>
                             <!--<exclude>commons-logging:*</exclude>-->
                         </excludes>
