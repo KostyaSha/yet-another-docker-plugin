@@ -7,5 +7,12 @@ target
 work
 *.iml
 yet-another-docker-java/dependency-reduced-pom.xml
+.*.swp
+.swp
+_.sw*
 /target
+
+.classpath
+.project
+.settings/
 

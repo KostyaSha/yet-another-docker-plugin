@@ -7,6 +7,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClie
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.DockerException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Container;
@@ -225,7 +226,12 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         //pull image
         dockerContainerLifecycle.getPullImage().exec(getClient(), imageId);
 
-        LOG.info("Trying to run container for {}", imageId);
+        // set the operating system if it's not already cached
+        if (template.getOsType() == null) {
+            template.setOsType(determineOsType(imageId));
+        }
+
+        LOG.debug("Trying to run container for {}, operating system {}", imageId, template.getOsType());
         final String containerId = runContainer(template);
 
         InspectContainerResponse ir;
@@ -256,6 +262,21 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
         final ComputerLauncher launcher = computerLauncher.getPreparedLauncher(getDisplayName(), template, ir);
         return new DockerSlave(slaveName, nodeDescription, launcher, containerId, template, getDisplayName(), id);
+    }
+
+    /** Determine the operating system associated with an image. */
+    private OsType determineOsType(String imageId) {
+        InspectImageResponse ir = getClient().inspectImageCmd(imageId).exec();
+        if ("linux".equalsIgnoreCase(ir.getOs())) {
+            LOG.trace("Detected LINUX operating system for image: {}", imageId);
+            return OsType.LINUX;
+        } else if ("windows".equalsIgnoreCase(ir.getOs())) {
+            LOG.trace("Detected WINDOWS operating system for image: {}", imageId);
+            return OsType.WINDOWS;
+        } else {
+            LOG.trace("Detected OTHER operating system ({}) for image: {}", ir.getOs(), imageId);
+            return OsType.OTHER;
+        }
     }
 
     /**
