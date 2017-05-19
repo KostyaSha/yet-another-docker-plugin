@@ -4,6 +4,7 @@ import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
 import com.github.kostyasha.yad.utils.HostAndPortChecker;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.ExposedPort;
@@ -63,7 +64,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     }
 
     @Override
-    public void appendContainerConfig(DockerSlaveTemplate dockerSlaveTemplate, CreateContainerCmd createCmd) {
+    public void appendContainerConfig(DockerSlaveTemplate dockerSlaveTemplate, CreateContainerCmd createCmd, DockerClient dockerClient) {
         final int sshPort = getSshConnector().port;
 
         createCmd.withPortSpecs(sshPort + "/tcp");

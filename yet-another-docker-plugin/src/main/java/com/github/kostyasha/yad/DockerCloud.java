@@ -166,7 +166,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         dockerCreateContainer.fillContainerConfig(containerConfig);
 
         // launcher specific options
-        slaveTemplate.getLauncher().appendContainerConfig(slaveTemplate, containerConfig);
+        slaveTemplate.getLauncher().appendContainerConfig(slaveTemplate, containerConfig, getClient());
 
         // cloud specific options
         appendContainerConfig(slaveTemplate, containerConfig);
