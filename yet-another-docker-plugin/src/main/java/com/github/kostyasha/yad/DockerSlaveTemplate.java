@@ -36,6 +36,7 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
     private int maxCapacity = 10;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
+    private transient OsType osType;
 
     /**
      * Generates new unique ID for new instances.
@@ -69,6 +70,14 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
     public void setLabelString(String labelString) {
         super.setLabelString(labelString);
         this.labelSet = Label.parse(labelString);
+    }
+
+    public OsType getOsType() {
+        return this.osType;
+    }
+
+    public void setOsType(OsType osType) {
+        this.osType = osType;
     }
 
     public int getNumExecutors() {

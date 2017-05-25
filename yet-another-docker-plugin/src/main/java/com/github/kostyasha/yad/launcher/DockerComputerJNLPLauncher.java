@@ -2,6 +2,7 @@ package com.github.kostyasha.yad.launcher;
 
 import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.DockerComputer;
+import com.github.kostyasha.yad.OsType;
 import com.github.kostyasha.yad.DockerSlave;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
@@ -51,6 +52,7 @@ import static java.util.Objects.isNull;
 public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     private static final Logger LOG = LoggerFactory.getLogger(DockerComputerJNLPLauncher.class);
     private static final String NL = "\"\n";
+    private static final String WNL = "'\n";
     public static final long DEFAULT_TIMEOUT = 120L;
     public static final String DEFAULT_USER = "jenkins";
 
@@ -174,26 +176,54 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
         // exec jnlp connection in running container
         // TODO implement PID 1 replacement
-        String startCmd =
-                "cat << EOF > /tmp/config.sh.tmp && cd /tmp && mv config.sh.tmp config.sh\n" +
-                        "JENKINS_URL=\"" + rootUrl + NL +
-                        "JENKINS_USER=\"" + getUser() + NL +
-                        "JENKINS_HOME=\"" + dockerSlaveTemplate.getRemoteFs() + NL +
-                        "COMPUTER_URL=\"" + dockerComputer.getUrl() + NL +
-                        "COMPUTER_SECRET=\"" + dockerComputer.getJnlpMac() + NL +
-                        "JAVA_OPTS=\"" + getJvmOpts() + NL +
-                        "SLAVE_OPTS=\"" + getSlaveOpts() + NL +
-                        "NO_CERTIFICATE_CHECK=\"" + isNoCertificateCheck() + NL +
-                        "EOF" + "\n";
 
         try {
-            final ExecCreateCmdResponse response = connect.execCreateCmd(containerId)
-                    .withTty(true)
-                    .withAttachStdin(false)
-                    .withAttachStderr(true)
-                    .withAttachStdout(true)
-                    .withCmd("/bin/sh", "-cxe", startCmd.replace("$", "\\$"))
-                    .exec();
+            String startCmd = null;
+            ExecCreateCmdResponse response = null;
+
+            if (dockerSlaveTemplate.getOsType() == OsType.WINDOWS) {
+                startCmd =
+                        "@\"\n" +
+                                "`$JENKINS_URL='" + rootUrl + WNL +
+                                "`$JENKINS_USER='" + getUser() + WNL +
+                                "`$JENKINS_HOME='" + dockerSlaveTemplate.getRemoteFs() + WNL +
+                                "`$COMPUTER_URL='" + dockerComputer.getUrl() + WNL +
+                                "`$COMPUTER_SECRET='" + dockerComputer.getJnlpMac() + WNL +
+                                "`$JAVA_OPTS='" + getJvmOpts() + WNL +
+                                "`$SLAVE_OPTS='" + getSlaveOpts() + WNL +
+                                "`$NO_CERTIFICATE_CHECK='" + isNoCertificateCheck() + WNL +
+                                "\"@ | Out-File -FilePath c:\\config.ps1";
+
+                response = connect.execCreateCmd(containerId)
+                        .withTty(true)
+                        .withAttachStdin(false)
+                        .withAttachStderr(true)
+                        .withAttachStdout(true)
+                        .withCmd("powershell.exe", startCmd)
+                        .exec();
+
+            } else { // default is OsType.LINUX
+                startCmd =
+                        "cat << EOF > /tmp/config.sh.tmp && cd /tmp && mv config.sh.tmp config.sh\n" +
+                                "JENKINS_URL=\"" + rootUrl + NL +
+                                "JENKINS_USER=\"" + getUser() + NL +
+                                "JENKINS_HOME=\"" + dockerSlaveTemplate.getRemoteFs() + NL +
+                                "COMPUTER_URL=\"" + dockerComputer.getUrl() + NL +
+                                "COMPUTER_SECRET=\"" + dockerComputer.getJnlpMac() + NL +
+                                "JAVA_OPTS=\"" + getJvmOpts() + NL +
+                                "SLAVE_OPTS=\"" + getSlaveOpts() + NL +
+                                "NO_CERTIFICATE_CHECK=\"" + isNoCertificateCheck() + NL +
+                                "EOF" + "\n";
+
+                response = connect.execCreateCmd(containerId)
+                        .withTty(true)
+                        .withAttachStdin(false)
+                        .withAttachStderr(true)
+                        .withAttachStdout(true)
+                        .withCmd("/bin/sh", "-cxe", startCmd.replace("$", "\\$"))
+                        .exec();
+
+            }
 
             LOG.info("Starting connection command for {}", containerId);
             logger.println("Starting connection command for " + containerId);
@@ -289,19 +319,34 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     @Override
     public void appendContainerConfig(DockerSlaveTemplate dockerSlaveTemplate, CreateContainerCmd createContainerCmd)
             throws IOException {
-        try (InputStream instream = DockerComputerJNLPLauncher.class.getResourceAsStream("DockerComputerJNLPLauncher/init.sh")) {
-            final String initCmd = IOUtils.toString(instream, Charsets.UTF_8);
-            if (initCmd == null) {
-                throw new IllegalStateException("Resource file 'init.sh' not found");
-            }
 
-            // wait for params
-            createContainerCmd.withEntrypoint("/bin/sh",
-                    "-cxe",
-                    "cat << EOF >> /tmp/init.sh && chmod +x /tmp/init.sh && exec /tmp/init.sh\n" +
-                            initCmd.replace("$", "\\$") + "\n" +
-                            "EOF" + "\n"
-            );
+        if (dockerSlaveTemplate.getOsType() == OsType.WINDOWS) {
+            try (InputStream inStream = DockerComputerJNLPLauncher.class.getResourceAsStream("DockerComputerJNLPLauncher/init.ps1")) {
+                final String initCmd = IOUtils.toString(inStream, Charsets.UTF_8);
+                if (initCmd == null) {
+                    throw new IllegalStateException("Resource file 'init.ps1' not found");
+                }
+
+                createContainerCmd.withEntrypoint("powershell.exe")
+                        .withCmd("powershell.exe", "-NoLogo", "-ExecutionPolicy", "bypass", "-Command", "{@\"\n" +
+                        initCmd.replace("$", "`$") +
+                        "\n\"@ | Out-File -FilePath c:\\init.ps1 ; if($?) {c:\\init.ps1}}");
+            }
+        } else { // default is OsType.LINUX
+            try (InputStream inStream = DockerComputerJNLPLauncher.class.getResourceAsStream("DockerComputerJNLPLauncher/init.sh")) {
+                final String initCmd = IOUtils.toString(inStream, Charsets.UTF_8);
+                if (initCmd == null) {
+                    throw new IllegalStateException("Resource file 'init.sh' not found");
+                }
+
+                // wait for params
+                createContainerCmd.withEntrypoint("/bin/sh",
+                        "-cxe",
+                        "cat << EOF >> /tmp/init.sh && chmod +x /tmp/init.sh && exec /tmp/init.sh\n" +
+                                initCmd.replace("$", "\\$") + "\n" +
+                                "EOF" + "\n"
+                );
+            }
         }
 
         createContainerCmd.withTty(true);
