@@ -180,7 +180,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         StartContainerCmd startCommand = getClient().startContainerCmd(containerId);
         try {
             startCommand.exec();
-            LOG.debug("Run container {}, for {}", containerId, getDisplayName());
+            LOG.debug("Running container {}, for {}", containerId, getDisplayName());
         } catch (Exception ex) {
             try {
                 getClient().logContainerCmd(containerId)
