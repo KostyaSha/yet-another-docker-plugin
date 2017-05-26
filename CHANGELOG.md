@@ -1,5 +1,11 @@
 ##
 
+## 0.1.0-rc37
+- Support Jenkins JNLP agents on Windows-based Docker infrastructure.
+- Include readTimeout in DockerConnector equals/hashCode.
+- Use 3.0.10 docker-java.
+- Do not require the port binding for the ssh service. 
+
 ## 0.1.0-rc36
 - Support more images for JNLP launcher
 - Print error logs into listener (ideally in future should be exposed to cloud-stats-plugin)
