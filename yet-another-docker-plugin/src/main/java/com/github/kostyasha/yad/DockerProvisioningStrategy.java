@@ -1,20 +1,24 @@
 package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
+import com.github.kostyasha.yad.utils.DockerCloudLoadComparator;
 import com.google.common.annotations.VisibleForTesting;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.model.Label;
 import hudson.model.LoadStatistics.LoadStatisticsSnapshot;
-import hudson.slaves.NodeProvisioner;
 import hudson.slaves.NodeProvisioner.PlannedNode;
+import hudson.slaves.NodeProvisioner;
 import hudson.slaves.RetentionStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import javax.annotation.Nonnull;
 
+import static com.github.kostyasha.yad.utils.DockerFunctions.getAvailableDockerClouds;
 import static com.github.kostyasha.yad.utils.DockerFunctions.getDockerClouds;
 import static hudson.ExtensionList.lookup;
 import static java.util.Objects.isNull;
@@ -48,7 +52,8 @@ public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
     }
 
     /**
-     * Do asap provisioning for OnceRetention with one executor.
+     * Do asap provisioning for OnceRetention with one executor.  The
+     * provisioning strategy is to attempt to find a random least loaded cloud.
      * Some other configuration may also want such behaviour?
      */
     @Nonnull
@@ -58,7 +63,26 @@ public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
         final Label label = strategyState.getLabel();
         LoadStatisticsSnapshot snapshot = strategyState.getSnapshot();
 
-        for (DockerCloud dockerCloud : getDockerClouds()) {
+        //create a random list of docker clouds and prioritize idle clouds
+        List<DockerCloud> provisionClouds = null;
+        List<DockerCloud> availableClouds = getAvailableDockerClouds(label);
+        if (availableClouds.size() > 0) {
+            //select available clouds based on label which have potential capacity
+            LOG.debug("Picking from available clouds.");
+            provisionClouds = availableClouds;
+        } else {
+            //if there's no available clouds then fall back to original behavior
+            LOG.debug("Falling back to getting all clouds regardless of availability.");
+            provisionClouds = getDockerClouds();
+        }
+        //randomize the order of the DockerCloud list
+        Collections.shuffle(provisionClouds);
+        //sort by least loaded DockerCloud (i.e. fewest provisioned slaves)
+        Collections.sort(provisionClouds, new DockerCloudLoadComparator());
+        LOG.debug("Least loaded randomized DockerCloud: " +
+                ((provisionClouds.size() > 0) ? provisionClouds.get(0).name : "none available"));
+
+        for (DockerCloud dockerCloud : provisionClouds) {
             for (DockerSlaveTemplate template : dockerCloud.getTemplates(label)) {
                 if (notAllowedStrategy(template)) {
                     continue;
