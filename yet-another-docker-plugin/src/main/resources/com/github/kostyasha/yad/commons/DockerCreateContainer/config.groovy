@@ -4,6 +4,7 @@ import lib.FormTagLib
 import com.github.kostyasha.yad.commons.DockerCreateContainer
 
 def f = namespace(FormTagLib);
+def st = namespace("jelly:stapler")
 
 if (instance == null) {
     instance = new DockerCreateContainer()
@@ -90,4 +91,6 @@ f.advanced(title: _("Create Container settings"), align: "left") {
     f.entry(title: _("Shared Memory in bytes"), field: "shmSize") {
         f.number(clazz: "positive-number", min: 0, step: 1)
     }
+
+    f.optionalProperty(title: _("Restart Policy"), field: "restartPolicy")
 }
