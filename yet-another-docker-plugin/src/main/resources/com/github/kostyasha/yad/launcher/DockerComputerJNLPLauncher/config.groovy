@@ -36,3 +36,7 @@ f.entry(title: _("Different jenkins master URL"), field: "jenkinsUrl") {
 f.entry(title: _("Ignore certificate check"), field: "noCertificateCheck", default: false) {
     f.checkbox()
 }
+
+f.entry(title: _("Restart slave on failure / daemon restart"), field: "restartSlave", default: false) {
+    f.checkbox()
+}

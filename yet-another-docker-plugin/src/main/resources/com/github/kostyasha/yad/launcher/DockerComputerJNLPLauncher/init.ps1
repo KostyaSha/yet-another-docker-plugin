@@ -44,7 +44,10 @@ if (!$JAVA_OPTS) {
 }
 
 $RUN_CMD="$RUN_CMD -jar $JENKINS_HOME/slave.jar"
-$RUN_CMD="$RUN_CMD -noReconnect"
+
+if ($RESTART_SLAVE -ne "true") {
+   $RUN_CMD="$RUN_CMD -noReconnect"
+}
 
 if ($NO_CERTIFICATE_CHECK -eq "true") {
    $RUN_CMD="$RUN_CMD -noCertificateCheck"
@@ -73,4 +76,3 @@ try {
 } catch {
    exit 1
 }
-

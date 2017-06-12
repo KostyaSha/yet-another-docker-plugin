@@ -87,6 +87,7 @@ public class DockerCloudTest {
             launcher.setJvmOpts("-blah");
             launcher.setSlaveOpts("-more");
             launcher.setNoCertificateCheck(true);
+            launcher.setRestartSlave(false);
 
             final DockerCreateContainer createContainer = new DockerCreateContainer();
             createContainer.setBindAllPorts(true);

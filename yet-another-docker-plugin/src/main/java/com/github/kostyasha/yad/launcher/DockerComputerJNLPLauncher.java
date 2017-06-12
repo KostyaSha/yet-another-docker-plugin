@@ -11,6 +11,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.Ex
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.ExecStartResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.RestartPolicy;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.TaskListener;
@@ -68,6 +69,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     protected boolean noCertificateCheck = false;
 
+    protected boolean restartSlave = false;
+
     @DataBoundConstructor
     public DockerComputerJNLPLauncher() {
         super(null);
@@ -115,6 +118,15 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     public boolean isNoCertificateCheck() {
         return noCertificateCheck;
+    }
+
+    @DataBoundSetter
+    public void setRestartSlave(boolean restartSlave) {
+        this.restartSlave = restartSlave;
+    }
+
+    public boolean isRestartSlave() {
+        return restartSlave;
     }
 
     @DataBoundSetter
@@ -192,6 +204,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                                 "`$JAVA_OPTS='" + getJvmOpts() + WNL +
                                 "`$SLAVE_OPTS='" + getSlaveOpts() + WNL +
                                 "`$NO_CERTIFICATE_CHECK='" + isNoCertificateCheck() + WNL +
+                                "`$RESTART_SLAVE='" + isRestartSlave() + WNL +
                                 "\"@ | Out-File -FilePath c:\\config.ps1";
 
                 response = connect.execCreateCmd(containerId)
@@ -213,6 +226,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                                 "JAVA_OPTS=\"" + getJvmOpts() + NL +
                                 "SLAVE_OPTS=\"" + getSlaveOpts() + NL +
                                 "NO_CERTIFICATE_CHECK=\"" + isNoCertificateCheck() + NL +
+                                "RESTART_SLAVE=\"" + isRestartSlave() + NL +
                                 "EOF" + "\n";
 
                 response = connect.execCreateCmd(containerId)
@@ -307,6 +321,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         cloneJNLPlauncher.setSlaveOpts(getSlaveOpts());
         cloneJNLPlauncher.setJenkinsUrl(getJenkinsUrl());
         cloneJNLPlauncher.setNoCertificateCheck(isNoCertificateCheck());
+        cloneJNLPlauncher.setRestartSlave(isRestartSlave());
 
         return cloneJNLPlauncher;
     }
@@ -350,6 +365,9 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         }
 
         createContainerCmd.withTty(true);
+        if (restartSlave) {
+            createContainerCmd.withRestartPolicy(RestartPolicy.alwaysRestart());
+        }
         createContainerCmd.withStdinOpen(true);
     }
 
