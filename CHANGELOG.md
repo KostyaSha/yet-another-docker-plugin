@@ -1,5 +1,9 @@
 ##
 
+## 0.1.0-rc38
+- Fix dependency scope.
+- Use docker-java-3.0.11
+
 ## 0.1.0-rc37
 - Support Jenkins JNLP agents on Windows-based Docker infrastructure.
 - Include readTimeout in DockerConnector equals/hashCode.
