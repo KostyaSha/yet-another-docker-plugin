@@ -26,6 +26,8 @@ import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
+import hudson.util.NullStream;
+import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedPlannedNode;
@@ -224,7 +226,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         final DockerComputerLauncher computerLauncher = template.getLauncher();
 
         //pull image
-        dockerContainerLifecycle.getPullImage().exec(getClient(), imageId);
+        dockerContainerLifecycle.getPullImage().exec(getClient(), imageId, new StreamTaskListener(new NullStream()));
 
         // set the operating system if it's not already cached
         if (template.getOsType() == null) {
