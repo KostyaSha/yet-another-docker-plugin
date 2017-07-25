@@ -33,6 +33,10 @@ import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 import java.util.Collections;
 import java.util.List;
 
@@ -141,6 +145,13 @@ public class DockerConnector extends YADockerConnector {
      */
     public void setReadTimeout(Integer readTimeout) {
         this.readTimeout = readTimeout;
+    }
+
+    public DockerClient getFreshClient() throws GeneralSecurityException {
+        client = newClientBuilderForConnector()
+                .withDockerConnector(this)
+                .build();
+        return client;
     }
 
     public DockerClient getClient() {
