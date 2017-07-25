@@ -171,7 +171,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
 
         //pull image
         logger.println("Pulling image " + imageId + "...");
-        containerLifecycle.getPullImage().exec(client, imageId);
+        containerLifecycle.getPullImage().exec(client, imageId, listener);
 
         logger.println("Trying to create container for " + imageId);
         LOG.info("Trying to create container for {}", imageId);

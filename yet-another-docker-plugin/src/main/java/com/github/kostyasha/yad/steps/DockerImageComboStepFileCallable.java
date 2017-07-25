@@ -17,7 +17,6 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.P
 import com.google.common.base.Throwables;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.AbortException;
-import hudson.EnvVars;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;

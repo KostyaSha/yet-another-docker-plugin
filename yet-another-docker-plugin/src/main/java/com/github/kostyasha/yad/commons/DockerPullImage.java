@@ -10,13 +10,13 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClie
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.PullImageCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Image;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
+import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
 import org.apache.commons.lang.builder.EqualsBuilder;
@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -75,8 +76,9 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
     /**
      * Action around image with defined configuration
      */
-    public void exec(@Nonnull final DockerClient client, @Nonnull final String imageName)
+    public void exec(@Nonnull final DockerClient client, @Nonnull final String imageName, TaskListener listener)
             throws IOException {
+        PrintStream llog = listener.getLogger();
         List<Image> images = client.listImagesCmd().exec();
 
         NameParser.ReposTag repostag = NameParser.parseRepositoryTag(imageName);
@@ -93,9 +95,10 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
         if (pull) {
             LOG.info("Pulling image '{}' {}. This may take awhile...", imageName,
                     hasImage ? "again" : "since one wasn't pulled before.");
+            llog.println(String.format("Pulling image '%s' %s. This may take awhile...", imageName,
+                    hasImage ? "again" : "since one wasn't pulled before."));
 
             long startTime = System.currentTimeMillis();
-            //Identifier amiId = Identifier.fromCompoundString(ami);
             final PullImageCmd pullImageCmd = client.pullImageCmd(imageName);
             if (StringUtils.isNotBlank(credentialsId)) {
                 // hostname requirements?
@@ -107,10 +110,13 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
                 }
             }
 
-            pullImageCmd.exec(new PullImageResultCallback())
+            pullImageCmd
+                    .exec(new DockerPullImageListenerLogger(listener))
                     .awaitSuccess();
+
             long pullTime = System.currentTimeMillis() - startTime;
             LOG.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
+            llog.println(String.format("Finished pulling image '%s', took %d ms", imageName, pullTime));
         }
     }
 
