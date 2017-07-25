@@ -1,5 +1,6 @@
 package com.github.kostyasha.yad.steps;
 
+import com.github.kostyasha.yad.DockerConnector;
 import com.github.kostyasha.yad.DockerContainerLifecycle;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
 import com.github.kostyasha.yad.connector.YADockerConnector;
@@ -66,7 +67,9 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
         PrintStream llog = listener.getLogger();
         final String imageId = containerLifecycle.getImage();
 
-        try (DockerClient client = connector.getClient()) {
+        try (DockerClient client = (connector instanceof DockerConnector) ?
+                ((DockerConnector) connector).getFreshClient() :
+                connector.getClient()) {
             //pull image
             llog.println("Pulling image " + imageId + "...");
             containerLifecycle.getPullImage().exec(client, imageId, listener);
@@ -81,10 +84,11 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             // mark specific options
             appendContainerConfig(containerConfig, connector);
 
-            containerConfig.withAttachStdout(true)
-                    .withAttachStderr(true)
-                    .withStdinOpen(true)
-                    .withTty(true);
+            containerConfig
+//                    .withAttachStdout(true)
+//                    .withAttachStderr(true)
+//                    .withStdinOpen(false)
+                    .withTty(false);
 
             // create
             CreateContainerResponse createResp = containerConfig.exec();
