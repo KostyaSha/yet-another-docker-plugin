@@ -178,7 +178,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         final DockerCreateContainer createContainer = containerLifecycle.getCreateContainer();
         CreateContainerCmd containerConfig = client.createContainerCmd(imageId);
         // template specific options
-        createContainer.fillContainerConfig(containerConfig);
+        createContainer.fillContainerConfig(containerConfig, null);
 
         // cloud specific options
         appendContainerConfig(containerConfig);

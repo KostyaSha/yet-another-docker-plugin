@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
 import static com.github.kostyasha.yad.utils.BindUtils.joinToStr;
 import static com.github.kostyasha.yad.utils.BindUtils.splitAndFilterEmpty;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
@@ -126,6 +127,9 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
     @CheckForNull
     private List<String> links;
+
+    @CheckForNull
+    private String workdir;
 
     @DataBoundConstructor
     public DockerCreateContainer() {
@@ -429,6 +433,16 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         setLinks(splitAndFilterEmpty(devicesString));
     }
 
+    @CheckForNull
+    public String getWorkdir() {
+        return workdir;
+    }
+
+    @DataBoundSetter
+    public void setWorkdir(String workdir) {
+        this.workdir = workdir;
+    }
+
     /**
      * Fills user specified values
      *
@@ -436,7 +450,8 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
      * @return filled config
      */
     @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "no npe in getters")
-    public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
+    public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig,
+                                                  @CheckForNull java.util.function.Function<String, String> resolveVar) {
         if (StringUtils.isNotBlank(hostname)) {
             containerConfig.withHostName(hostname);
         }
@@ -475,6 +490,8 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             ArrayList<Bind> binds = new ArrayList<>();
 
             for (String vol : getVolumes()) {
+                if (nonNull(resolveVar)) vol = resolveVar.apply(vol);
+
                 final String[] group = vol.split(":");
                 if (group.length > 1) {
                     if (group[1].equals("/")) {
@@ -540,6 +557,10 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             containerConfig.withLinks(
                     getLinks().stream().map(Link::parse).collect(Collectors.toList())
             );
+        }
+
+        if (StringUtils.isNotBlank(getWorkdir())) {
+            containerConfig.withWorkingDir(nonNull(resolveVar) ? resolveVar.apply(workdir) : workdir);
         }
 
         return containerConfig;
