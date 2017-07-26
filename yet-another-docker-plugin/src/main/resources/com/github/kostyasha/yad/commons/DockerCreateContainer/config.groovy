@@ -16,6 +16,10 @@ f.advanced(title: _("Create Container settings"), align: "left") {
         f.textbox()
     }
 
+    f.entry(title: _("Workdir"), field: "workdir") {
+        f.textbox()
+    }
+
     f.entry(title: _("Hostname"), field: "hostname") {
         f.textbox()
     }

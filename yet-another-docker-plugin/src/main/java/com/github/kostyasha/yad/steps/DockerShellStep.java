@@ -4,6 +4,7 @@ import com.github.kostyasha.yad.DockerConnector;
 import com.github.kostyasha.yad.DockerContainerLifecycle;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
 import com.github.kostyasha.yad.connector.YADockerConnector;
+import com.github.kostyasha.yad.utils.ResolveVarFunction;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
@@ -11,6 +12,8 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.St
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.AttachContainerResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.WaitContainerResultCallback;
+import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -29,6 +32,9 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.concurrent.TimeUnit;
+
+import static java.util.Objects.isNull;
 
 /**
  * @author Kanstantsin Shautsou
@@ -79,7 +85,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             final DockerCreateContainer createContainer = containerLifecycle.getCreateContainer();
             CreateContainerCmd containerConfig = client.createContainerCmd(imageId);
             // template specific options
-            createContainer.fillContainerConfig(containerConfig);
+            createContainer.fillContainerConfig(containerConfig, new ResolveVarFunction(run, listener));
 
             // mark specific options
             appendContainerConfig(containerConfig, connector);
@@ -104,20 +110,34 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                 llog.println("Started container " + cId);
                 LOG.debug("Start container {}, for {}", cId, run.getDisplayName());
 
-                try (AttachContainerResultCallback callback = new AttachContainerResultCallback() {
+
+                AttachContainerResultCallback callback = new AttachContainerResultCallback() {
                     @Override
                     public void onNext(Frame frame) {
                         super.onNext(frame);
-                        llog.print(frame.toString());
+                        llog.println(frame.toString());
                     }
-                }) {
+                };
+                try {
                     client.attachContainerCmd(cId)
                             .withStdErr(true)
                             .withStdOut(true)
                             .withFollowStream(true)
-                            .exec(callback)
-                            .awaitCompletion();
+                            .withLogs(true)
+                            .exec(callback);
+
+                    WaitContainerResultCallback waitCallback = new WaitContainerResultCallback();
+                    client.waitContainerCmd(cId).exec(waitCallback);
+                    final Integer statusCode = waitCallback.awaitStatusCode();
+                    callback.awaitCompletion(1, TimeUnit.SECONDS);
+                    if (isNull(statusCode) || statusCode != 0) {
+                        throw new AbortException("Status code " + statusCode);
+                    }
+                } finally {
+                    callback.close();
                 }
+            } catch (AbortException ae) {
+                throw ae;
             } catch (Exception ex) {
                 llog.println("failed to start cmd");
                 throw ex;
@@ -126,13 +146,15 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                 LOG.debug("Removing container {}, for {}", cId, run.getDisplayName());
                 try {
                     containerLifecycle.getRemoveContainer().exec(client, cId);
-                    llog.println("Container is removed.");
+                    llog.println("Removed container: " + cId);
                 } catch (NotFoundException ex) {
-                    llog.println("Container is already removed.");
+                    llog.println("Already removed container: " + cId);
                 } catch (Exception ex) {
                     //ignore ex
                 }
             }
+        } catch (AbortException ae) {
+            throw ae;
         } catch (Exception ex) {
             LOG.error("", ex);
             llog.println("failed to start cmd");
