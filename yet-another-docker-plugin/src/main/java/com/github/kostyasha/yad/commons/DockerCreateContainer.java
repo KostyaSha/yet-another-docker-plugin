@@ -45,6 +45,8 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.github.kostyasha.yad.commons.DockerContainerRestartPolicyName.NO;
@@ -316,8 +318,22 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     @Nonnull
     public String[] getDockerCommandArray() {
         String[] dockerCommandArray = new String[0];
+        final ArrayList<String> commands = new ArrayList<>();
         if (StringUtils.isNotEmpty(command)) {
-            dockerCommandArray = command.split(" ");
+
+            // https://stackoverflow.com/questions/3366281/tokenizing-a-string-but-ignoring-delimiters-within-quotes
+            String regex = "[\"\']([^\"]*)[\"\']|(\\S+)";
+
+            Matcher m = Pattern.compile(regex).matcher(command);
+            while (m.find()) {
+                if (nonNull(m.group(1))) {
+                     commands.add(m.group(1));
+                } else {
+                    commands.add(m.group(2));
+                }
+            }
+
+            dockerCommandArray = commands.toArray(new String[commands.size()]);
         }
 
         return dockerCommandArray;

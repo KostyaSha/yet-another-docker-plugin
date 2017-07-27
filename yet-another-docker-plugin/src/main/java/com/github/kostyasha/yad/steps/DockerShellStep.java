@@ -8,6 +8,7 @@ import com.github.kostyasha.yad.utils.ResolveVarFunction;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
@@ -46,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.apache.commons.codec.binary.Base64.encodeBase64;
 
 /**
@@ -93,7 +95,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             containerLifecycle.getPullImage().exec(client, imageId, listener);
 
             llog.println("Trying to create container for " + imageId);
-            LOG.info("Trying to create container for {}", imageId);
+            LOG.debug("Trying to create container for {}", imageId);
             final DockerCreateContainer createContainer = containerLifecycle.getCreateContainer();
             CreateContainerCmd containerConfig = client.createContainerCmd(imageId);
             // template specific options
@@ -104,7 +106,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             appendContainerConfig(run, listener, containerConfig, connector);
 
             addRunVars(run, listener, containerConfig);
-            insertLabels(containerConfig);
+            insertLabels(containerConfig, run);
 
             containerConfig
                     .withAttachStdout(true)
@@ -118,6 +120,27 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
 
             llog.println("Created container " + cId + ", for " + run.getDisplayName());
             LOG.debug("Created container {}, for {}", cId, run.getDisplayName());
+
+            final InspectContainerResponse inspect = client.inspectContainerCmd(cId).exec();
+            llog.println("Starting container with:");
+            llog.print("CMD:");
+            final String[] cmd = inspect.getConfig().getCmd();
+            if (nonNull(cmd)) {
+                for (String command : cmd) {
+                    llog.print("'" + command + "',");
+                }
+            } else {
+                llog.print("''");
+            }
+            llog.println("\nEntrypoint:");
+            final String[] entrypoint = inspect.getConfig().getEntrypoint();
+            if (nonNull(entrypoint)) {
+                for (String entry : entrypoint) {
+                    llog.print("'" + entry + "',");
+                }
+            } else {
+                llog.print("''");
+            }
 
             try {
                 // start
@@ -234,12 +257,13 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
     /**
      * Append some tags to identify who create this container.
      */
-    protected void insertLabels(CreateContainerCmd containerConfig) {
+    protected static void insertLabels(CreateContainerCmd containerConfig, Run run) {
         // add tags
         Map<String, String> labels = containerConfig.getLabels();
         if (labels == null) labels = new HashMap<>();
 
         labels.put("YAD_PLUGIN", DockerShellStep.class.getName());
+        labels.put("JENKINS_JOB_BASE_NAME", run.getParent().getName());
         labels.put("JENKINS_INSTANCE_IDENTITY",
                 new String(encodeBase64(InstanceIdentity.get().getPublic().getEncoded()), UTF_8));
 
