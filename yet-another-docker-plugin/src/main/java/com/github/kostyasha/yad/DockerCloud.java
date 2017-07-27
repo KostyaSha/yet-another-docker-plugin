@@ -206,9 +206,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
     private void appendContainerConfig(DockerSlaveTemplate slaveTemplate, CreateContainerCmd containerConfig) {
         Map<String, String> labels = containerConfig.getLabels();
-        if (labels == null) {
-            labels = new HashMap<>();
-        }
+        if (labels == null) labels = new HashMap<>();
 
         labels.put(DOCKER_CLOUD_LABEL, getDisplayName());
         labels.put(DOCKER_TEMPLATE_LABEL, slaveTemplate.getId());
@@ -266,7 +264,9 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         return new DockerSlave(slaveName, nodeDescription, launcher, containerId, template, getDisplayName(), id);
     }
 
-    /** Determine the operating system associated with an image. */
+    /**
+     * Determine the operating system associated with an image.
+     */
     private OsType determineOsType(String imageId) {
         InspectImageResponse ir = getClient().inspectImageCmd(imageId).exec();
         if ("linux".equalsIgnoreCase(ir.getOs())) {

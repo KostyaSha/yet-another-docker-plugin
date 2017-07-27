@@ -14,16 +14,21 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Fram
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.AttachContainerResultCallback;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.WaitContainerResultCallback;
 import hudson.AbortException;
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
+import hudson.model.EnvironmentContributor;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import jenkins.model.CoreEnvironmentContributor;
+import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
@@ -32,9 +37,16 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.isNull;
+import static org.apache.commons.codec.binary.Base64.encodeBase64;
 
 /**
  * @author Kanstantsin Shautsou
@@ -87,12 +99,16 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             // template specific options
             createContainer.fillContainerConfig(containerConfig, new ResolveVarFunction(run, listener));
 
+
             // mark specific options
-            appendContainerConfig(containerConfig, connector);
+            appendContainerConfig(run, listener, containerConfig, connector);
+
+            addRunVars(run, listener, containerConfig);
+            insertLabels(containerConfig);
 
             containerConfig
-//                    .withAttachStdout(true)
-//                    .withAttachStderr(true)
+                    .withAttachStdout(true)
+                    .withAttachStderr(true)
 //                    .withStdinOpen(false)
                     .withTty(false);
 
@@ -111,14 +127,13 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                 LOG.debug("Start container {}, for {}", cId, run.getDisplayName());
 
 
-                AttachContainerResultCallback callback = new AttachContainerResultCallback() {
+                try (AttachContainerResultCallback callback = new AttachContainerResultCallback() {
                     @Override
                     public void onNext(Frame frame) {
                         super.onNext(frame);
-                        llog.println(frame.toString());
+                        llog.print(new String(frame.getPayload()));
                     }
-                };
-                try {
+                }) {
                     client.attachContainerCmd(cId)
                             .withStdErr(true)
                             .withStdOut(true)
@@ -131,10 +146,8 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                     final Integer statusCode = waitCallback.awaitStatusCode();
                     callback.awaitCompletion(1, TimeUnit.SECONDS);
                     if (isNull(statusCode) || statusCode != 0) {
-                        throw new AbortException("Status code " + statusCode);
+                        throw new AbortException("Shell execution failed. Exit code: " + statusCode);
                     }
-                } finally {
-                    callback.close();
                 }
             } catch (AbortException ae) {
                 throw ae;
@@ -162,39 +175,76 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
         }
     }
 
+    protected void appendContainerConfig(Run<?, ?> run, TaskListener listener, CreateContainerCmd containerConfig,
+                                       YADockerConnector connector) {
+    }
+
+    protected static void addRunVars(Run run, TaskListener listener,
+                                     CreateContainerCmd containerConfig) {
+        // add job vars into shell env vars
+        try {
+            final List<String> envList = isNull(containerConfig.getEnv()) ?
+                    new ArrayList<>() : Arrays.asList(containerConfig.getEnv());
+
+            final EnvVars environment = getEnvVars(run, listener);
+            // maybe something should be escaped
+            environment.forEach((k, v) -> {
+                envList.add(k + "=" + v);
+            });
+            containerConfig.withEnv(envList);
+        } catch (IOException | InterruptedException e) {
+            LOG.warn("Issues with resolving var", e);
+        }
+    }
+
+    /**
+     * Return all job related vars without executor vars.
+     * I.e. slave is running in osx, but docker image for shell is linux.
+     */
+    protected static EnvVars getEnvVars(Run run, TaskListener listener) throws IOException, InterruptedException {
+        final EnvVars envVars = run.getCharacteristicEnvVars();
+
+        // from run.getEnvironment(listener) but without computer vars
+        for (EnvironmentContributor ec : EnvironmentContributor.all().reverseView()) {
+            // job vars
+            ec.buildEnvironmentFor(run.getParent(), envVars, listener);
+
+            // build vars
+            if (ec instanceof CoreEnvironmentContributor) {
+                // exclude executor computer related vars
+                envVars.put("BUILD_DISPLAY_NAME", run.getDisplayName());
+
+                String rootUrl = Jenkins.getInstance().getRootUrl();
+                if (rootUrl != null) {
+                    envVars.put("BUILD_URL", rootUrl + run.getUrl());
+                }
+
+                // and remove useless job var from CoreEnvironmentContributor
+                envVars.remove("JENKINS_HOME");
+                envVars.remove("HUDSON_HOME");
+            } else {
+                ec.buildEnvironmentFor(run, envVars, listener); // build vars
+            }
+        }
+
+
+        return envVars;
+    }
+
     /**
      * Append some tags to identify who create this container.
      */
-    protected void appendContainerConfig(CreateContainerCmd containerConfig, YADockerConnector connector) {
-        // replace shell
+    protected void insertLabels(CreateContainerCmd containerConfig) {
         // add tags
+        Map<String, String> labels = containerConfig.getLabels();
+        if (labels == null) labels = new HashMap<>();
 
+        labels.put("YAD_PLUGIN", DockerShellStep.class.getName());
+        labels.put("JENKINS_INSTANCE_IDENTITY",
+                new String(encodeBase64(InstanceIdentity.get().getPublic().getEncoded()), UTF_8));
+
+        containerConfig.withLabels(labels);
     }
-
-//    @Override
-//    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher,
-//                        @Nonnull TaskListener listener) throws InterruptedException, IOException {
-//        PrintStream llog = listener.getLogger();
-//        final DockerShellStepFileCallable comboCallable = newDockerShellStepFileCallableBuilder()
-//                .withTaskListener(listener)
-//                .withRun(run)
-//                .withConnector(connector)
-//                .withShellScript(shellScript)
-//                .withDockerImage(dockerImage)
-//                .build();
-//        try {
-//            llog.println("Executing remote combo builder...");
-//            if (BooleanUtils.isFalse(
-//                    workspace.act(
-//                            comboCallable
-//                    ))) {
-//                throw new AbortException("Something failed");
-//            }
-//        } catch (Exception ex) {
-//            LOG.error("Can't build image", ex);
-//            throw ex;
-//        }
-//    }
 
     @Extension
     @Symbol("dockerShell")
