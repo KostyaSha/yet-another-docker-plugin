@@ -7,6 +7,7 @@ import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
 import com.github.kostyasha.yad.commons.DockerPullImage;
 import com.github.kostyasha.yad.commons.DockerRemoveContainer;
 import com.github.kostyasha.yad.commons.DockerStopContainer;
+import com.github.kostyasha.yad.commons.EnRestartPolicy;
 import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import hudson.model.Node;
@@ -87,7 +88,7 @@ public class DockerCloudTest {
             launcher.setJvmOpts("-blah");
             launcher.setSlaveOpts("-more");
             launcher.setNoCertificateCheck(true);
-            launcher.setRestartSlave(false);
+            launcher.setReconnectSlave(false);
 
             final DockerCreateContainer createContainer = new DockerCreateContainer();
             createContainer.setBindAllPorts(true);
@@ -108,6 +109,7 @@ public class DockerCloudTest {
             createContainer.setCpusetCpus("1");
             createContainer.setCpusetMems("2");
             createContainer.setLinksString("some");
+            createContainer.setRestartPolicy(EnRestartPolicy.NO);
 
             final DockerStopContainer stopContainer = new DockerStopContainer();
             stopContainer.setTimeout(100);

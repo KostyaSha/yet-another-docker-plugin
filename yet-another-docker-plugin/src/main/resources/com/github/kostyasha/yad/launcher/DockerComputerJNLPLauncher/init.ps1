@@ -45,7 +45,7 @@ if (!$JAVA_OPTS) {
 
 $RUN_CMD="$RUN_CMD -jar $JENKINS_HOME/slave.jar"
 
-if ($RESTART_SLAVE -ne "true") {
+if ($RECONNECT_SLAVE -ne "true") {
    $RUN_CMD="$RUN_CMD -noReconnect"
 }
 

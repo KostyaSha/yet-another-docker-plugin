@@ -37,6 +37,6 @@ f.entry(title: _("Ignore certificate check"), field: "noCertificateCheck", defau
     f.checkbox()
 }
 
-f.entry(title: _("Restart slave on failure / daemon restart"), field: "restartSlave", default: false) {
+f.entry(title: _("JNLP reconnect"), field: "noReconnect", default: false) {
     f.checkbox()
 }

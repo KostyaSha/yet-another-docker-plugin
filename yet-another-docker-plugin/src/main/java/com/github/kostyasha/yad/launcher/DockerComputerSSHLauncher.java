@@ -13,7 +13,6 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Port
 import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Preconditions;
 import com.github.kostyasha.yad_docker_java.com.google.common.net.HostAndPort;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.RestartPolicy;
 import hudson.Extension;
 import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHConnector;
@@ -23,7 +22,6 @@ import hudson.slaves.DelegatingComputerLauncher;
 import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,21 +42,10 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     // store real UI configuration
     protected final SSHConnector sshConnector;
 
-    protected boolean restartSlave = false;
-
     @DataBoundConstructor
     public DockerComputerSSHLauncher(SSHConnector sshConnector) {
         super(null);
         this.sshConnector = sshConnector;
-    }
-
-    @DataBoundSetter
-    public void setRestartSlave(boolean restartSlave) {
-        this.restartSlave = restartSlave;
-    }
-
-    public boolean isRestartSlave() {
-        return restartSlave;
     }
 
     public SSHConnector getSshConnector() {
@@ -80,10 +67,6 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         final int sshPort = getSshConnector().port;
 
         createCmd.withPortSpecs(sshPort + "/tcp");
-
-        if (restartSlave) {
-            createCmd.withRestartPolicy(RestartPolicy.alwaysRestart());
-        }
 
         String[] cmd = dockerSlaveTemplate.getDockerContainerLifecycle().getCreateContainer().getDockerCommandArray();
         if (cmd.length == 0) {

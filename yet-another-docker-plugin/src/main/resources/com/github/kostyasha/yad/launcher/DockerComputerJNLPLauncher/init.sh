@@ -85,7 +85,7 @@ fi
 
 RUN_CMD="$RUN_CMD -jar slave.jar"
 
-if [ "$RESTART_SLAVE" != "true" ]; then
+if [ "$RECONNECT_SLAVE" != "true" ]; then
     RUN_CMD="$RUN_CMD -noReconnect"
 fi
 

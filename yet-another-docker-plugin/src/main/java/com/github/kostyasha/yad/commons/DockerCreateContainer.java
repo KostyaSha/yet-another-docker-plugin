@@ -11,6 +11,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Link
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Volume;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.VolumesFrom;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.RestartPolicy;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Function;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Splitter;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Strings;
@@ -126,6 +127,8 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
     @CheckForNull
     private List<String> links;
+
+    private EnRestartPolicy restartPolicy = EnRestartPolicy.NO;
 
     @DataBoundConstructor
     public DockerCreateContainer() {
@@ -429,6 +432,19 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         setLinks(splitAndFilterEmpty(devicesString));
     }
 
+    @DataBoundSetter
+    public void setRestartPolicy(EnRestartPolicy restartPolicy) {
+        this.restartPolicy = restartPolicy;
+    }
+
+    public EnRestartPolicy getRestartPolicy() {
+        return restartPolicy;
+    }
+
+    public String getRestartPolicyWithRetries() {
+        return restartPolicy.toString().toLowerCase().replace("_", "-") +  ":10";
+    }
+
     /**
      * Fills user specified values
      *
@@ -541,6 +557,8 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
                     getLinks().stream().map(Link::parse).collect(Collectors.toList())
             );
         }
+
+        containerConfig.withRestartPolicy(RestartPolicy.parse(getRestartPolicyWithRetries()));
 
         return containerConfig;
     }

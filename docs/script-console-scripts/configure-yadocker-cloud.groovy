@@ -125,7 +125,6 @@ JSONArray clouds_yadocker = [
                 launch_jnlp_slave_jvm_options: '',
                 launch_jnlp_different_jenkins_master_url: '',
                 launch_jnlp_ignore_certificate_check: false,
-                launch_jnlp_ignore_reconnect_slave: false,
                 //NODE PROPERTIES
                 //environment_variables is a HashMap of key/value pairs
                 environment_variables: [:],
@@ -172,7 +171,6 @@ def selectLauncher(String launcherType, JSONObject obj) {
             dockerComputerJNLPLauncher.setJvmOpts(obj.optString('launch_jnlp_slave_jvm_options'))
             dockerComputerJNLPLauncher.setJenkinsUrl(obj.optString('launch_jnlp_different_jenkins_master_url'))
             dockerComputerJNLPLauncher.setNoCertificateCheck(obj.optBoolean('launch_jnlp_ignore_certificate_check', false))
-            dockerComputerJNLPLauncher.setRestartSlave(obj.optBoolean('launch_jnlp_ignore_reconnect_slave', false))
             return dockerComputerJNLPLauncher
         default:
             return null
