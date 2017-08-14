@@ -68,6 +68,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     protected boolean noCertificateCheck = false;
 
+    protected boolean reconnectSlave = false;
+
     @DataBoundConstructor
     public DockerComputerJNLPLauncher() {
         super(null);
@@ -115,6 +117,15 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     public boolean isNoCertificateCheck() {
         return noCertificateCheck;
+    }
+
+    @DataBoundSetter
+    public void setReconnectSlave(boolean reconnectSlave) {
+        this.reconnectSlave = reconnectSlave;
+    }
+
+    public boolean isReconnectSlave() {
+        return reconnectSlave;
     }
 
     @DataBoundSetter
@@ -192,6 +203,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                                 "`$JAVA_OPTS='" + getJvmOpts() + WNL +
                                 "`$SLAVE_OPTS='" + getSlaveOpts() + WNL +
                                 "`$NO_CERTIFICATE_CHECK='" + isNoCertificateCheck() + WNL +
+                                "`$RECONNECT_SLAVE='" + isReconnectSlave() + WNL +
                                 "\"@ | Out-File -FilePath c:\\config.ps1";
 
                 response = connect.execCreateCmd(containerId)
@@ -213,6 +225,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                                 "JAVA_OPTS=\"" + getJvmOpts() + NL +
                                 "SLAVE_OPTS=\"" + getSlaveOpts() + NL +
                                 "NO_CERTIFICATE_CHECK=\"" + isNoCertificateCheck() + NL +
+                                "RECONNECT_SLAVE=\"" + isReconnectSlave() + NL +
                                 "EOF" + "\n";
 
                 response = connect.execCreateCmd(containerId)

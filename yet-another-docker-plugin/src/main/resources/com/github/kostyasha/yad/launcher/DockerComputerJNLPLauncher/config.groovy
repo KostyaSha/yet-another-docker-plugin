@@ -36,3 +36,7 @@ f.entry(title: _("Different jenkins master URL"), field: "jenkinsUrl") {
 f.entry(title: _("Ignore certificate check"), field: "noCertificateCheck", default: false) {
     f.checkbox()
 }
+
+f.entry(title: _("JNLP reconnect"), field: "noReconnect", default: false) {
+    f.checkbox()
+}
