@@ -46,6 +46,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static com.github.kostyasha.yad.utils.BindUtils.joinToStr;
@@ -442,7 +443,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     }
 
     public String getRestartPolicyWithRetries() {
-        return restartPolicy.toString().toLowerCase().replace("_", "-") +  ":10";
+        return restartPolicy.toString().toLowerCase(Locale.ENGLISH).replace("_", "-") +  ":10";
     }
 
     /**
