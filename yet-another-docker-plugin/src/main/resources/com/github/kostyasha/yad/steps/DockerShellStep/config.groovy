@@ -29,4 +29,11 @@ f.dropdownList(name: "connector", title: _("Connection Source"),
     }
 }
 
+f.entry(title: _("Shell Script"), field: "shellScript") {
+    f.textarea(
+            //                class: "fixed-width",
+            'codemirror-mode': 'shell',
+            'codemirror-config': "mode: 'text/x-sh', lineNumbers: true")
+}
+
 f.property(field: "containerLifecycle")

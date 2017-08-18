@@ -28,6 +28,9 @@ import hudson.tasks.Builder;
 import jenkins.model.CoreEnvironmentContributor;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -35,8 +38,11 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,6 +64,8 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
 
     private YADockerConnector connector = null;
     private DockerContainerLifecycle containerLifecycle = new DockerContainerLifecycle();
+
+    private String shellScript;
 
     @DataBoundConstructor
     public DockerShellStep() {
@@ -81,6 +89,16 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
         this.containerLifecycle = containerLifecycle;
     }
 
+    @CheckForNull
+    public String getShellScript() {
+        return shellScript;
+    }
+
+    @DataBoundSetter
+    public void setShellScript(String shellScript) {
+        this.shellScript = shellScript;
+    }
+
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher,
                         @Nonnull TaskListener listener) throws InterruptedException, IOException {
@@ -101,12 +119,13 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             // template specific options
             createContainer.fillContainerConfig(containerConfig, new ResolveVarFunction(run, listener));
 
-
             // mark specific options
             appendContainerConfig(run, listener, containerConfig, connector);
 
             addRunVars(run, listener, containerConfig);
             insertLabels(containerConfig, run);
+
+            containerConfig.withEntrypoint("/bin/sh", "-ex", "/tmp/script.sh");
 
             containerConfig
                     .withAttachStdout(true)
@@ -140,6 +159,24 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                 }
             } else {
                 llog.print("''");
+            }
+
+            if (nonNull(shellScript)) {
+                // upload archive
+                try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                     TarArchiveOutputStream tarOut = new TarArchiveOutputStream(byteArrayOutputStream)) {
+                    TarArchiveEntry entry = new TarArchiveEntry("script.sh");
+                    entry.setSize(shellScript.length());
+                    tarOut.putArchiveEntry(entry);
+                    tarOut.write(shellScript.getBytes());
+                    tarOut.closeArchiveEntry();
+                    tarOut.close();
+                    try (InputStream is = new ByteArrayInputStream(byteArrayOutputStream.toByteArray())) {
+                        client.copyArchiveToContainerCmd(cId).withTarInputStream(is)
+                                .withRemotePath("/tmp")
+                                .exec();
+                    }
+                }
             }
 
             try {
@@ -185,8 +222,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                     llog.println("Removed container: " + cId);
                 } catch (NotFoundException ex) {
                     llog.println("Already removed container: " + cId);
-                } catch (Exception ex) {
-                    //ignore ex
+                } catch (Exception ignore) {
                 }
             }
         } catch (AbortException ae) {
@@ -199,7 +235,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
     }
 
     protected void appendContainerConfig(Run<?, ?> run, TaskListener listener, CreateContainerCmd containerConfig,
-                                       YADockerConnector connector) {
+                                         YADockerConnector connector) {
     }
 
     protected static void addRunVars(Run run, TaskListener listener,

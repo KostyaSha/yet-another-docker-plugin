@@ -8,6 +8,7 @@ import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.kostyasha.yad.credentials.DockerRegistryAuthCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.PullImageCmd;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Image;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
@@ -36,6 +37,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.github.kostyasha.yad.client.ClientBuilderForConnector.lookupSystemCredentials;
+import static java.util.Collections.emptyList;
+import static java.util.Objects.nonNull;
 
 /**
  * Contains docker pull image related settings:
@@ -48,8 +51,12 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
     @CheckForNull
     private DockerImagePullStrategy pullStrategy = DockerImagePullStrategy.PULL_LATEST;
 
+    @Deprecated
     @CheckForNull
     private String credentialsId;
+
+    @CheckForNull
+    private List<DockerRegistryCredential> registriesCreds;
 
     @DataBoundConstructor
     public DockerPullImage() {
@@ -64,13 +71,25 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
         this.pullStrategy = pullStrategy;
     }
 
+    @Deprecated
     public String getCredentialsId() {
         return credentialsId;
     }
 
+    @Deprecated
     @DataBoundSetter
     public void setCredentialsId(String credentialsId) {
         this.credentialsId = credentialsId;
+    }
+
+    @Nonnull
+    public List<DockerRegistryCredential> getRegistriesCreds() {
+        return nonNull(registriesCreds) ? registriesCreds : emptyList();
+    }
+
+    @DataBoundSetter
+    public void setRegistriesCreds(List<DockerRegistryCredential> registriesCreds) {
+        this.registriesCreds = registriesCreds;
     }
 
     /**
@@ -100,12 +119,23 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
 
             long startTime = System.currentTimeMillis();
             final PullImageCmd pullImageCmd = client.pullImageCmd(imageName);
+
+            final AuthConfig authConfig = pullImageCmd.getAuthConfig();
+            for (DockerRegistryCredential cred : getRegistriesCreds()) {
+                // hostname requirements?
+                Credentials credentials = lookupSystemCredentials(cred.getCredentialsId());
+                final String registryAddr = cred.getRegistryAddr();
+                if (credentials instanceof DockerRegistryAuthCredentials) {
+                    final DockerRegistryAuthCredentials authCredentials = (DockerRegistryAuthCredentials) credentials;
+                    pullImageCmd.withAuthConfig(authCredentials.getAuthConfig());
+                }
+            }
+            // Deprecated
             if (StringUtils.isNotBlank(credentialsId)) {
                 // hostname requirements?
                 Credentials credentials = lookupSystemCredentials(credentialsId);
                 if (credentials instanceof DockerRegistryAuthCredentials) {
                     final DockerRegistryAuthCredentials authCredentials = (DockerRegistryAuthCredentials) credentials;
-//                    final DockerRegistryToken token = AuthenticationTokens.convert(DockerRegistryToken.class, authCredentials);
                     pullImageCmd.withAuthConfig(authCredentials.getAuthConfig());
                 }
             }

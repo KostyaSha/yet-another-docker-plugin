@@ -70,6 +70,8 @@ public class DockerShellStepTest {
 //                        "/home/vagrant/keys"));
 
         DockerShellStep dockerShellStep = new DockerShellStep();
+        dockerShellStep.setShellScript("env && pwd");
+        dockerShellStep.setConnector(dockerConnector);
 
         FreeStyleProject project = jRule.createFreeStyleProject("test");
         project.getBuildersList().add(dockerShellStep);

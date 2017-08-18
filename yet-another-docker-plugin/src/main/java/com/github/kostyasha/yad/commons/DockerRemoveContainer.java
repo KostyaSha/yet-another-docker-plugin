@@ -10,6 +10,7 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 
 /**
@@ -19,7 +20,7 @@ import java.io.Serializable;
 public class DockerRemoveContainer extends AbstractDescribableImpl<DockerRemoveContainer> implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private boolean removeVolumes;
+    private boolean removeVolumes = true;
     private boolean force;
 
     @DataBoundConstructor
@@ -75,6 +76,7 @@ public class DockerRemoveContainer extends AbstractDescribableImpl<DockerRemoveC
 
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerRemoveContainer> {
+        @Nonnull
         @Override
         public String getDisplayName() {
             return "Docker Remove Container";
