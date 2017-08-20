@@ -68,7 +68,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     protected boolean noCertificateCheck = false;
 
-    protected boolean reconnectSlave = false;
+    protected boolean reconnect = false;
 
     @DataBoundConstructor
     public DockerComputerJNLPLauncher() {
@@ -120,12 +120,12 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @DataBoundSetter
-    public void setReconnectSlave(boolean reconnectSlave) {
-        this.reconnectSlave = reconnectSlave;
+    public void setNoReconnect(boolean noReconnect) {
+        this.reconnect = !noReconnect;
     }
 
-    public boolean isReconnectSlave() {
-        return reconnectSlave;
+    public boolean isNoReconnect() {
+        return !reconnect;
     }
 
     @DataBoundSetter
@@ -203,7 +203,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                                 "`$JAVA_OPTS='" + getJvmOpts() + WNL +
                                 "`$SLAVE_OPTS='" + getSlaveOpts() + WNL +
                                 "`$NO_CERTIFICATE_CHECK='" + isNoCertificateCheck() + WNL +
-                                "`$RECONNECT_SLAVE='" + isReconnectSlave() + WNL +
+                                "`$NO_RECONNECT_SLAVE='" + isNoReconnect() + WNL +
                                 "\"@ | Out-File -FilePath c:\\config.ps1";
 
                 response = connect.execCreateCmd(containerId)
@@ -225,7 +225,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                                 "JAVA_OPTS=\"" + getJvmOpts() + NL +
                                 "SLAVE_OPTS=\"" + getSlaveOpts() + NL +
                                 "NO_CERTIFICATE_CHECK=\"" + isNoCertificateCheck() + NL +
-                                "RECONNECT_SLAVE=\"" + isReconnectSlave() + NL +
+                                "NO_RECONNECT_SLAVE=\"" + isNoReconnect() + NL +
                                 "EOF" + "\n";
 
                 response = connect.execCreateCmd(containerId)

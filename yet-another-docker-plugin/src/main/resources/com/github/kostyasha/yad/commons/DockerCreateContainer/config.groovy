@@ -4,13 +4,10 @@ import lib.FormTagLib
 import com.github.kostyasha.yad.commons.DockerCreateContainer
 
 def f = namespace(FormTagLib);
-def st = namespace("jelly:stapler")
 
 if (instance == null) {
     instance = new DockerCreateContainer()
 }
-
-def descriptorPath = "/descriptor/" + DockerCreateContainer.class.getName()
 
 // until https://issues.jenkins-ci.org/browse/JENKINS-26407
 // all expandableTextboxes are textarea
@@ -91,9 +88,6 @@ f.advanced(title: _("Create Container settings"), align: "left") {
         f.textarea()
     }
 
-    f.entry(title: _("Restart policy"), field: "restartPolicy", help: "${descriptorPath}/help/restartSlavePolicy") {
-        f.enum() {
-            text("${my.name().toLowerCase().replace('_', '-')}")
-        }
-    }
+    f.optionalProperty(title: _("Restart Policy"), field: "restartPolicy")
+
 }

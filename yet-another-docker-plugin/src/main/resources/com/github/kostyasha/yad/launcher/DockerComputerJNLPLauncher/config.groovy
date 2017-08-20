@@ -7,7 +7,6 @@ import static com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher.DEFAU
 import static com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher.DEFAULT_USER
 
 def f = namespace(FormTagLib);
-def st = namespace("jelly:stapler")
 
 if (instance == null) {
     instance = new DockerComputerJNLPLauncher()
@@ -37,6 +36,6 @@ f.entry(title: _("Ignore certificate check"), field: "noCertificateCheck", defau
     f.checkbox()
 }
 
-f.entry(title: _("JNLP reconnect"), field: "noReconnect", default: false) {
+f.entry(title: _("Reconnect"), field: "reconnect", default: false) {
     f.checkbox()
 }

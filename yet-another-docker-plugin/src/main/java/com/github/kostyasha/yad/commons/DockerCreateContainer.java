@@ -11,7 +11,6 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Link
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Volume;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.VolumesFrom;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.RestartPolicy;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Function;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Splitter;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Strings;
@@ -49,9 +48,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+import static com.github.kostyasha.yad.commons.DockerContainerRestartPolicyName.NO_RESTART;
 import static com.github.kostyasha.yad.utils.BindUtils.joinToStr;
 import static com.github.kostyasha.yad.utils.BindUtils.splitAndFilterEmpty;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
@@ -129,7 +130,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     @CheckForNull
     private List<String> links;
 
-    private EnRestartPolicy restartPolicy = EnRestartPolicy.NO;
+    private DockerContainerRestartPolicy restartPolicy = new DockerContainerRestartPolicy(NO_RESTART, 0);
 
     @DataBoundConstructor
     public DockerCreateContainer() {
@@ -433,13 +434,13 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         setLinks(splitAndFilterEmpty(devicesString));
     }
 
-    @DataBoundSetter
-    public void setRestartPolicy(EnRestartPolicy restartPolicy) {
-        this.restartPolicy = restartPolicy;
+    public DockerContainerRestartPolicy getRestartPolicy() {
+        return restartPolicy;
     }
 
-    public EnRestartPolicy getRestartPolicy() {
-        return restartPolicy;
+    @DataBoundSetter
+    public void setRestartPolicy(DockerContainerRestartPolicy restartPolicy) {
+        this.restartPolicy = restartPolicy;
     }
 
     public String getRestartPolicyWithRetries() {
@@ -559,7 +560,9 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             );
         }
 
-        containerConfig.withRestartPolicy(RestartPolicy.parse(getRestartPolicyWithRetries()));
+        if (nonNull(restartPolicy)) {
+            containerConfig.withRestartPolicy(restartPolicy.getRestartPolicy());
+        }
 
         return containerConfig;
     }
