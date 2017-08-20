@@ -139,6 +139,7 @@ public class DockerConnector extends YADockerConnector {
     /**
      * @see ClientProperties#READ_TIMEOUT
      */
+    @DataBoundSetter
     public void setReadTimeout(Integer readTimeout) {
         this.readTimeout = readTimeout;
     }
@@ -226,7 +227,8 @@ public class DockerConnector extends YADockerConnector {
                 @QueryParameter String apiVersion,
                 @QueryParameter String credentialsId,
                 @QueryParameter ConnectorType connectorType,
-                @QueryParameter Integer connectTimeout
+                @QueryParameter Integer connectTimeout,
+                @QueryParameter Integer readTimeout
         ) throws IOException, ServletException, DockerException {
             try {
                 DefaultDockerClientConfig.Builder configBuilder = new DefaultDockerClientConfig.Builder()
@@ -238,6 +240,7 @@ public class DockerConnector extends YADockerConnector {
                         .withConnectorType(connectorType)
                         .withCredentialsId(credentialsId)
                         .withConnectTimeout(connectTimeout)
+                        .withReadTimeout(readTimeout)
                         .build();
 
                 Version verResult = testClient.versionCmd().exec();

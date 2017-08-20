@@ -89,6 +89,7 @@ public class ClientBuilderForConnector {
         withCredentialsId(connector.getCredentialsId());
         withConnectorType(connector.getConnectorType());
         withConnectTimeout(connector.getConnectTimeout());
+        withReadTimeout(connector.getReadTimeout());
 
         return forServer(connector.getServerUrl(), connector.getApiVersion());
     }

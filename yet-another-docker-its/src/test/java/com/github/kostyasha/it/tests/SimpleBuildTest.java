@@ -159,7 +159,7 @@ public class SimpleBuildTest implements Serializable {
 
         @Override
         public Boolean call() throws Throwable {
-            final Jenkins jenkins = Jenkins.getActiveInstance();
+            final Jenkins jenkins = Jenkins.getInstance();
 
             String logName = "com.github.kostyasha.yad";
             final LogRecorder logRecorder = new LogRecorder(logName);
@@ -175,14 +175,15 @@ public class SimpleBuildTest implements Serializable {
             //verify doTestConnection
             final DescriptorImpl descriptor = (DescriptorImpl) jenkins.getDescriptor(DockerConnector.class);
             checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), "",
-                    dockerServerCredentials.getId(), ConnectorType.NETTY, 10 * 1000));
+                    dockerServerCredentials.getId(), ConnectorType.NETTY, 10 * 1000, 11 * 1000));
             checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), "",
-                    dockerServerCredentials.getId(), JERSEY, 10 * 1000));
+                    dockerServerCredentials.getId(), JERSEY, 10 * 1000, 11 * 1000));
 
             // prepare Docker Cloud
             final DockerConnector dockerConnector = new DockerConnector(dockerUri.toString());
             dockerConnector.setCredentialsId(dockerServerCredentials.getId());
             dockerConnector.setConnectTimeout(10 * 1000);
+            dockerConnector.setReadTimeout(0);
             dockerConnector.setConnectorType(JERSEY);
             dockerConnector.testConnection();
 
