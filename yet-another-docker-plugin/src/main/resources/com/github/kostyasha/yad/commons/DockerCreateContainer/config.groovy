@@ -86,4 +86,8 @@ f.advanced(title: _("Create Container settings"), align: "left") {
     f.entry(title: _("Links"), field: "linksString") {
         f.textarea()
     }
+
+    f.entry(title: _("Shared Memory in bytes"), field: "shmSize") {
+        f.number(clazz: "positive-number", min: 0, step: 1)
+    }
 }

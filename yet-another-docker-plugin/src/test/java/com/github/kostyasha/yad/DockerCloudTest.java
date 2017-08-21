@@ -107,6 +107,7 @@ public class DockerCloudTest {
             createContainer.setCpusetCpus("1");
             createContainer.setCpusetMems("2");
             createContainer.setLinksString("some");
+            createContainer.setShmSize(102L);
 
             final DockerStopContainer stopContainer = new DockerStopContainer();
             stopContainer.setTimeout(100);

@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
 import static com.github.kostyasha.yad.utils.BindUtils.joinToStr;
 import static com.github.kostyasha.yad.utils.BindUtils.splitAndFilterEmpty;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
@@ -126,6 +127,9 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
     @CheckForNull
     private List<String> links;
+
+    @CheckForNull
+    private Long shmSize;
 
     @DataBoundConstructor
     public DockerCreateContainer() {
@@ -429,6 +433,15 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         setLinks(splitAndFilterEmpty(devicesString));
     }
 
+    public Long getShmSize() {
+        return shmSize;
+    }
+
+    @DataBoundSetter
+    public void setShmSize(Long shmSize) {
+        this.shmSize = shmSize;
+    }
+
     /**
      * Fills user specified values
      *
@@ -540,6 +553,10 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             containerConfig.withLinks(
                     getLinks().stream().map(Link::parse).collect(Collectors.toList())
             );
+        }
+
+        if (nonNull(shmSize)) {
+            containerConfig.getHostConfig().withShmSize(shmSize);
         }
 
         return containerConfig;
