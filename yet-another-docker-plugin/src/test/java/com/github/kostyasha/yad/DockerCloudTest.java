@@ -2,6 +2,7 @@ package com.github.kostyasha.yad;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
+import com.github.kostyasha.yad.commons.DockerContainerRestartPolicy;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
 import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
 import com.github.kostyasha.yad.commons.DockerPullImage;
@@ -11,7 +12,6 @@ import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import hudson.model.Node;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
-import hudson.slaves.JNLPLauncher;
 import org.hamcrest.Matcher;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.junit.ClassRule;
@@ -22,6 +22,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import java.util.ArrayList;
 
+import static com.github.kostyasha.yad.commons.DockerContainerRestartPolicyName.NO;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -89,6 +90,7 @@ public class DockerCloudTest {
             launcher.setJvmOpts("-blah");
             launcher.setSlaveOpts("-more");
             launcher.setNoCertificateCheck(true);
+            launcher.setNoReconnect(false);
 
             final DockerCreateContainer createContainer = new DockerCreateContainer();
             createContainer.setBindAllPorts(true);
@@ -110,6 +112,7 @@ public class DockerCloudTest {
             createContainer.setCpusetMems("2");
             createContainer.setLinksString("some");
             createContainer.setShmSize(102L);
+            createContainer.setRestartPolicy(new DockerContainerRestartPolicy(NO, 0));
 
             final DockerStopContainer stopContainer = new DockerStopContainer();
             stopContainer.setTimeout(100);

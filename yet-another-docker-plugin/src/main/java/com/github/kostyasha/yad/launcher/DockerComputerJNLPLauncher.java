@@ -68,6 +68,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     protected boolean noCertificateCheck = false;
 
+    protected boolean reconnect = false;
+
     @DataBoundConstructor
     public DockerComputerJNLPLauncher() {
         super(null);
@@ -115,6 +117,15 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     public boolean isNoCertificateCheck() {
         return noCertificateCheck;
+    }
+
+    @DataBoundSetter
+    public void setNoReconnect(boolean noReconnect) {
+        this.reconnect = !noReconnect;
+    }
+
+    public boolean isNoReconnect() {
+        return !reconnect;
     }
 
     @DataBoundSetter
@@ -192,6 +203,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                                 "`$JAVA_OPTS='" + getJvmOpts() + WNL +
                                 "`$SLAVE_OPTS='" + getSlaveOpts() + WNL +
                                 "`$NO_CERTIFICATE_CHECK='" + isNoCertificateCheck() + WNL +
+                                "`$NO_RECONNECT_SLAVE='" + isNoReconnect() + WNL +
                                 "\"@ | Out-File -FilePath c:\\config.ps1";
 
                 response = connect.execCreateCmd(containerId)
@@ -213,6 +225,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                                 "JAVA_OPTS=\"" + getJvmOpts() + NL +
                                 "SLAVE_OPTS=\"" + getSlaveOpts() + NL +
                                 "NO_CERTIFICATE_CHECK=\"" + isNoCertificateCheck() + NL +
+                                "NO_RECONNECT_SLAVE=\"" + isNoReconnect() + NL +
                                 "EOF" + "\n";
 
                 response = connect.execCreateCmd(containerId)
@@ -222,7 +235,6 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                         .withAttachStdout(true)
                         .withCmd("/bin/sh", "-cxe", startCmd.replace("$", "\\$"))
                         .exec();
-
             }
 
             LOG.info("Starting connection command for {}", containerId);
@@ -307,6 +319,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         cloneJNLPlauncher.setSlaveOpts(getSlaveOpts());
         cloneJNLPlauncher.setJenkinsUrl(getJenkinsUrl());
         cloneJNLPlauncher.setNoCertificateCheck(isNoCertificateCheck());
+        cloneJNLPlauncher.setNoReconnect(isNoReconnect());
 
         return cloneJNLPlauncher;
     }

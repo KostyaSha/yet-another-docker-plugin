@@ -46,7 +46,7 @@
         <jenkins.version>2.19.4</jenkins.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
-        <findbugs-maven-plugin.version>3.0.3</findbugs-maven-plugin.version>
+        <findbugs-maven-plugin.version>3.0.5</findbugs-maven-plugin.version>
         <maven-compiler-plugin.version>3.3</maven-compiler-plugin.version>
         <maven-javadoc-plugin.version>2.10.3</maven-javadoc-plugin.version>
         <!--<hpi-plugin.version>1.119</hpi-plugin.version>-->
@@ -164,6 +164,7 @@
                             <goals>
                                 <goal>check</goal>
                             </goals>
+                            <phase>verify</phase>
                         </execution>
                     </executions>
                 </plugin>

@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.github.kostyasha.yad.commons.DockerContainerRestartPolicyName.NO;
 import static com.github.kostyasha.yad.utils.BindUtils.joinToStr;
 import static com.github.kostyasha.yad.utils.BindUtils.splitAndFilterEmpty;
 import static java.util.Objects.isNull;
@@ -130,6 +131,9 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
     @CheckForNull
     private Long shmSize;
+
+    @CheckForNull
+    private DockerContainerRestartPolicy restartPolicy = new DockerContainerRestartPolicy(NO, 0);
 
     @DataBoundConstructor
     public DockerCreateContainer() {
@@ -433,6 +437,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         setLinks(splitAndFilterEmpty(devicesString));
     }
 
+    @CheckForNull
     public Long getShmSize() {
         return shmSize;
     }
@@ -440,6 +445,16 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     @DataBoundSetter
     public void setShmSize(Long shmSize) {
         this.shmSize = shmSize;
+    }
+
+    @CheckForNull
+    public DockerContainerRestartPolicy getRestartPolicy() {
+        return restartPolicy;
+    }
+
+    @DataBoundSetter
+    public void setRestartPolicy(DockerContainerRestartPolicy restartPolicy) {
+        this.restartPolicy = restartPolicy;
     }
 
     /**
@@ -559,6 +574,9 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             containerConfig.getHostConfig().withShmSize(shmSize);
         }
 
+        if (nonNull(restartPolicy)) {
+            containerConfig.withRestartPolicy(restartPolicy.getRestartPolicy());
+        }
         return containerConfig;
     }
 

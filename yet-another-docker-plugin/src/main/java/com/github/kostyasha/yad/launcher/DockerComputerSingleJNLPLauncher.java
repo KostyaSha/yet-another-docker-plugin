@@ -67,6 +67,8 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
 
     protected boolean noCertificateCheck = false;
 
+    protected boolean reconnect = false;
+
     private String containerId;
 
     @DataBoundSetter
@@ -96,6 +98,15 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
 
     public boolean isNoCertificateCheck() {
         return noCertificateCheck;
+    }
+
+    @DataBoundSetter
+    public void setNoReconnect(boolean noReconnect) {
+        this.reconnect = !noReconnect;
+    }
+
+    public boolean isNoReconnect() {
+        return !reconnect;
     }
 
     @DataBoundSetter
@@ -254,6 +265,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
                         "JAVA_OPTS=\"" + getJvmOpts() + NL +
                         "SLAVE_OPTS=\"" + getSlaveOpts() + NL +
                         "NO_CERTIFICATE_CHECK=\"" + isNoCertificateCheck() + NL +
+                        "NO_RECONNECT_SLAVE=\"" + isNoReconnect() + NL +
                         "EOF" + "\n";
 
         try {
