@@ -1,6 +1,11 @@
 ##
 
 ## 0.1.0-rc38
+- Reconnect JNLP agents and container restart policy options.
+- Fix timeouts for jnlp launcher save.
+- Add shmsize in container create options.
+- docker-java 3.0.13 with different fixes.
+- Do not require bash.
 - Fix dependency scope.
 - Use docker-java-3.0.11
 
