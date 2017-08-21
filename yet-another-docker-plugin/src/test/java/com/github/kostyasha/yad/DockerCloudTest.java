@@ -75,6 +75,8 @@ public class DockerCloudTest {
 
             final DockerConnector connector = new DockerConnector("http://sdfs.com:234");
             connector.setCredentialsId(dockerServerCredentials.getId());
+            connector.setConnectTimeout(1001);
+            connector.setReadTimeout(1002);
 
             final DockerPullImage pullImage = new DockerPullImage();
             pullImage.setCredentialsId("");
