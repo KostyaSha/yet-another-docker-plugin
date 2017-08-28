@@ -66,6 +66,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
     private DockerContainerLifecycle containerLifecycle = new DockerContainerLifecycle();
 
     private String shellScript;
+    private String executorScript = "exec /tmp/script.sh";
 
     @DataBoundConstructor
     public DockerShellStep() {
@@ -99,6 +100,16 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
         this.shellScript = shellScript;
     }
 
+    @CheckForNull
+    public String getExecutorScript() {
+        return executorScript;
+    }
+
+    @DataBoundSetter
+    public void setExecutorScript(String executorScript) {
+        this.executorScript = executorScript;
+    }
+
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher,
                         @Nonnull TaskListener listener) throws InterruptedException, IOException {
@@ -125,7 +136,10 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             addRunVars(run, listener, containerConfig);
             insertLabels(containerConfig, run);
 
-            containerConfig.withEntrypoint("/bin/sh", "-ex", "/tmp/script.sh");
+            if (nonNull(executorScript)) {
+                containerConfig.withEntrypoint("/bin/sh", "-ex", "/tmp/executor.sh");
+                containerConfig.withCmd("");
+            }
 
             containerConfig
                     .withAttachStdout(true)
@@ -151,7 +165,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             } else {
                 llog.print("''");
             }
-            llog.println("\nEntrypoint:");
+            llog.println("\nEntrypoint: ");
             final String[] entrypoint = inspect.getConfig().getEntrypoint();
             if (nonNull(entrypoint)) {
                 for (String entry : entrypoint) {
@@ -160,22 +174,35 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             } else {
                 llog.print("''");
             }
+            llog.println();
 
-            if (nonNull(shellScript)) {
-                // upload archive
-                try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                     TarArchiveOutputStream tarOut = new TarArchiveOutputStream(byteArrayOutputStream)) {
+            // upload archive
+            try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                 TarArchiveOutputStream tarOut = new TarArchiveOutputStream(byteArrayOutputStream)) {
+                // script.sh tar entry
+                if (nonNull(shellScript)) {
                     TarArchiveEntry entry = new TarArchiveEntry("script.sh");
                     entry.setSize(shellScript.length());
+                    entry.setMode(0755);
                     tarOut.putArchiveEntry(entry);
                     tarOut.write(shellScript.getBytes());
                     tarOut.closeArchiveEntry();
-                    tarOut.close();
-                    try (InputStream is = new ByteArrayInputStream(byteArrayOutputStream.toByteArray())) {
-                        client.copyArchiveToContainerCmd(cId).withTarInputStream(is)
-                                .withRemotePath("/tmp")
-                                .exec();
-                    }
+                }
+
+                // executor.sh tar entry
+                TarArchiveEntry entry2 = new TarArchiveEntry("executor.sh");
+                entry2.setSize(executorScript.length());
+                entry2.setMode(0755);
+                tarOut.putArchiveEntry(entry2);
+                tarOut.write(executorScript.getBytes());
+                tarOut.closeArchiveEntry();
+
+
+                tarOut.close();
+                try (InputStream is = new ByteArrayInputStream(byteArrayOutputStream.toByteArray())) {
+                    client.copyArchiveToContainerCmd(cId).withTarInputStream(is)
+                            .withRemotePath("/tmp")
+                            .exec();
                 }
             }
 
