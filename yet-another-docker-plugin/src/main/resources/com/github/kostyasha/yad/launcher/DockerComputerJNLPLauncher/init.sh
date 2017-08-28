@@ -37,7 +37,7 @@ if ! id -u "$JENKINS_USER"; then
     elif [ -x "$(command -v adduser)" ]; then
         adduser -D -h "${JENKINS_HOME}" "$JENKINS_USER"
     else
-        echo "Error: can't add user. useradd or assuser didn't found."
+        echo "Error: can't add user. useradd or adduser didn't found."
     fi
 fi
 
