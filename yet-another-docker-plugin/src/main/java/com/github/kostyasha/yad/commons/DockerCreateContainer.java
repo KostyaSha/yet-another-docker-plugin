@@ -328,7 +328,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
     @Nonnull
     public String[] getDockerCommandArray() {
-       return getCommandArray(command);
+        return getCommandArray(command);
     }
 
     @DataBoundSetter
@@ -659,7 +659,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         return HashCodeBuilder.reflectionHashCode(this);
     }
 
-    private static String[] getCommandArray(String command){
+    private static String[] getCommandArray(String command) {
         String[] dockerCommandArray = new String[0];
         final ArrayList<String> commands = new ArrayList<>();
         if (StringUtils.isNotEmpty(command)) {

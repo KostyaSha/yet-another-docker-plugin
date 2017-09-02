@@ -149,12 +149,12 @@ public class DockerSlaveConfig extends AbstractDescribableImpl<DockerSlaveConfig
 //    }
 
     @Nonnull
-    public List<? extends NodeProperty<?>> getNodeProperties() {
+    public List<? extends NodeProperty<?>> getNodePropertiesUI() {
         return nonNull(nodeProperties) ? unmodifiableList(nodeProperties) : emptyList();
     }
 
-    public void setNodeProperties(List<? extends NodeProperty<?>> nodeProperties) {
-        this.nodeProperties = nodeProperties;
+    public void setNodePropertiesUI(List<? extends NodeProperty<?>> nodePropertiesUI) {
+        this.nodeProperties = nodePropertiesUI;
     }
 
     /**

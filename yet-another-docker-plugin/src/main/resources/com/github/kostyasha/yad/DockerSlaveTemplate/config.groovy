@@ -94,7 +94,7 @@ f.section(title: _("Jenkins Slave Config")) {
     f.descriptorList(
             title: _("Node Properties"),
             descriptors: h.getNodePropertyDescriptors(Slave.class),
-            field: "nodePropertiesUI"
+            field: "nodeProperties"
     )
 
     f.entry(title: _("Remote FS Root Mapping"), field: "remoteFsMapping") {
