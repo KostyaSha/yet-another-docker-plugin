@@ -14,6 +14,7 @@ import hudson.model.FreeStyleProject;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.slaves.DumbSlave;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -28,6 +29,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 /**
  * @author Kanstantsin Shautsou
  */
+@Ignore
 public class DockerShellStepTest {
 
     @Rule
@@ -84,7 +86,5 @@ public class DockerShellStepTest {
         jRule.waitForCompletion(freeStyleBuild);
 
         jRule.assertBuildStatusSuccess(freeStyleBuild);
-
     }
-
 }

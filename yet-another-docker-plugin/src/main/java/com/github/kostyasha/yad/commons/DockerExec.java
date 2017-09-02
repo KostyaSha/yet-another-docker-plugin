@@ -16,13 +16,10 @@ import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
  */
 public class DockerExec extends AbstractDescribableImpl<DockerExec> {
 
-
-
     public void exec(@Nonnull final DockerClient client)
             throws IOException {
 
     }
-
 
     @Override
     public String toString() {

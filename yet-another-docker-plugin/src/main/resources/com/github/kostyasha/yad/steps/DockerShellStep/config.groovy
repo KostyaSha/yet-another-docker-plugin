@@ -12,6 +12,25 @@ if (instance == null) {
     instance = new DockerShellStep()
 }
 
+// prepare env
+f.entry(title: _("Executor Script"), field: "executorScript") {
+    f.textarea(
+            //                class: "fixed-width",
+            'codemirror-mode': 'shell',
+            'codemirror-config': "mode: 'text/x-sh', lineNumbers: true"
+    )
+}
+
+// script itself
+f.entry(title: _("Shell Script"), field: "shellScript") {
+    f.textarea(
+            //                class: "fixed-width",
+            'codemirror-mode': 'shell',
+            'codemirror-config': "mode: 'text/x-sh', lineNumbers: true"
+    )
+}
+
+// connection
 f.dropdownList(name: "connector", title: _("Connection Source"),
         help: descriptor.getHelpFile('connector')) {
     allDockerConnectorDescriptors().each { ld ->
@@ -33,11 +52,5 @@ f.dropdownList(name: "connector", title: _("Connection Source"),
     }
 }
 
-f.entry(title: _("Shell Script"), field: "shellScript") {
-    f.textarea(
-            //                class: "fixed-width",
-            'codemirror-mode': 'shell',
-            'codemirror-config': "mode: 'text/x-sh', lineNumbers: true")
-}
-
+// container lifecycle
 f.property(field: "containerLifecycle")
