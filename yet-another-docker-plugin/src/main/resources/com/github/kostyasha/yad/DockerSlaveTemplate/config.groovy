@@ -91,11 +91,20 @@ f.section(title: _("Jenkins Slave Config")) {
         }
     }
 
-    f.descriptorList(
-            title: _("Node Properties"),
-            descriptors: DockerFunctions.getNodePropertyDescriptors(Slave.class),
-            field: "nodeProperties"
-    )
+//    f.descriptorList(
+//            title: _("Node Properties"),
+//            descriptors: DockerFunctions.getNodePropertyDescriptors(Slave.class),
+//            field: "nodeProperties"
+//    )
+    f.entry(title: _("Node Properties")) {
+        f.hetero_list(
+                descriptors: DockerFunctions.getNodePropertyDescriptors(Slave.class),
+                items: instance.nodeProperties,
+                oneEach: true,
+                hasHeader: true,
+                name: "nodeProperties"
+        )
+    }
 
     f.entry(title: _("Remote FS Root Mapping"), field: "remoteFsMapping") {
         f.textbox()
