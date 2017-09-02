@@ -162,6 +162,7 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
 
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerPullImage> {
+        @Nonnull
         @Override
         public String getDisplayName() {
             return "Docker Pull Image";

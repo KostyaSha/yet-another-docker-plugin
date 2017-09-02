@@ -4,6 +4,10 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Pull
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import hudson.model.TaskListener;
 
+import java.io.PrintStream;
+
+import static java.util.Objects.nonNull;
+
 /**
  * @author Kanstantsin Shautsou
  */
@@ -17,6 +21,17 @@ public class DockerPullImageListenerLogger extends PullImageResultCallback {
     @Override
     public void onNext(PullResponseItem item) {
         super.onNext(item);
-        listener.getLogger().println(item.toString());
+        PrintStream llog = listener.getLogger();
+
+        if (nonNull(item.getId())) {
+            llog.print(item.getId());
+            llog.print(": ");
+        }
+
+        listener.getLogger().println(item.getStatus());
+
+        if (nonNull(item.getErrorDetail())) {
+            listener.getLogger().println(item.getErrorDetail().toString());
+        }
     }
 }

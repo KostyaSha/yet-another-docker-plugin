@@ -1,5 +1,6 @@
 package com.github.kostyasha.yad.steps.DockerShellStep
 
+import com.github.kostyasha.yad.steps.DockerShellStep
 import lib.FormTagLib
 
 import static com.github.kostyasha.yad.connector.YADockerConnector.YADockerConnectorDescriptor.allDockerConnectorDescriptors
@@ -7,6 +8,9 @@ import static com.github.kostyasha.yad.connector.YADockerConnector.YADockerConne
 def f = namespace(FormTagLib);
 def st = namespace("jelly:stapler")
 
+if (instance == null) {
+    instance = new DockerShellStep()
+}
 
 f.dropdownList(name: "connector", title: _("Connection Source"),
         help: descriptor.getHelpFile('connector')) {

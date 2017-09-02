@@ -65,7 +65,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
     private YADockerConnector connector = null;
     private DockerContainerLifecycle containerLifecycle = new DockerContainerLifecycle();
 
-    private String shellScript;
+    private String shellScript = "";
     private String executorScript = "exec /tmp/script.sh";
 
     @DataBoundConstructor
@@ -336,6 +336,12 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
     @Extension
     @Symbol("dockerShell")
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
+        @Nonnull
+        @Override
+        public String getDisplayName() {
+            return "[Experimental] Docker Shell Step";
+        }
+
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;
