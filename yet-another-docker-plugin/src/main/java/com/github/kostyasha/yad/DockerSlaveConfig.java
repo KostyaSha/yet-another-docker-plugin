@@ -139,7 +139,7 @@ public class DockerSlaveConfig extends AbstractDescribableImpl<DockerSlaveConfig
 
 //    @Nonnull
 //    @Restricted(value = NoExternalUse.class) // ancient UI jelly form
-//    public DescribableList<NodeProperty<?>, NodePropertyDescriptor> getNodePropertiesUI() throws IOException {
+//    public DescribableList<NodeProperty<?>, NodePropertyDescriptor> getNodeProperties() throws IOException {
 //        return new DescribableList<>(Jenkins.getInstance().getNodesObject(), getNodeProperties());
 //    }
 //
@@ -149,12 +149,12 @@ public class DockerSlaveConfig extends AbstractDescribableImpl<DockerSlaveConfig
 //    }
 
     @Nonnull
-    public List<? extends NodeProperty<?>> getNodePropertiesUI() {
-        return nonNull(nodeProperties) ? unmodifiableList(nodeProperties) : emptyList();
+    public List<? extends NodeProperty<?>> getNodeProperties() {
+        return nonNull(nodeProperties) ? nodeProperties : emptyList();
     }
 
-    public void setNodePropertiesUI(List<? extends NodeProperty<?>> nodePropertiesUI) {
-        this.nodeProperties = nodePropertiesUI;
+    public void setNodeProperties(List<? extends NodeProperty<?>> nodeProperties) {
+        this.nodeProperties = nodeProperties;
     }
 
     /**

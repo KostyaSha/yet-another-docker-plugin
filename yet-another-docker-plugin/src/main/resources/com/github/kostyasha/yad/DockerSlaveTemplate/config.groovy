@@ -93,7 +93,7 @@ f.section(title: _("Jenkins Slave Config")) {
 
     f.descriptorList(
             title: _("Node Properties"),
-            descriptors: h.getNodePropertyDescriptors(Slave.class),
+            descriptors: DockerFunctions.getNodePropertyDescriptors(Slave.class),
             field: "nodeProperties"
     )
 

@@ -9,11 +9,16 @@ import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
 import hudson.Functions;
 import hudson.model.Descriptor;
 import hudson.model.Label;
+import hudson.model.Node;
 import hudson.slaves.ComputerLauncher;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
+import jenkins.model.Jenkins;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -27,6 +32,18 @@ import static jenkins.model.Jenkins.getInstance;
  */
 public class DockerFunctions {
     private DockerFunctions() {
+    }
+
+    @SuppressWarnings("rawtypes")
+    public static List<NodePropertyDescriptor> getNodePropertyDescriptors(Class<? extends Node> clazz) {
+        List<NodePropertyDescriptor> result = new ArrayList<>();
+        Collection<NodePropertyDescriptor> list = (Collection) Jenkins.getInstance().getDescriptorList(NodeProperty.class);
+        for (NodePropertyDescriptor npd : list) {
+            if (npd.isApplicable(clazz)) {
+                result.add(npd);
+            }
+        }
+        return result;
     }
 
     /**
