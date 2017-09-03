@@ -46,6 +46,7 @@ if [ ! -d "$JENKINS_HOME" ]; then
     chown "$JENKINS_USER". "$JENKINS_HOME"
 fi
 
+stat "$JENKINS_HOME" || :  # for https://github.com/KostyaSha/yet-another-docker-plugin/issues/184
 cd "$JENKINS_HOME"
 
 if [ "$NO_CERTIFICATE_CHECK" = "true" ]
