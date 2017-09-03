@@ -1,5 +1,13 @@
 ##
 
+## 0.1.0-rc39
+- experimental dockerShell step
+- command arg parser
+- attempt to have list of creds (blocked by docker-java now)
+- image pulling with verbose logging
+- new fields
+- debug code for RWX issue
+
 ## 0.1.0-rc38
 - Reconnect JNLP agents and container restart policy options.
 - Fix timeouts for jnlp launcher save.
