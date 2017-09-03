@@ -45,6 +45,8 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.github.kostyasha.yad.commons.DockerContainerRestartPolicyName.NO;
@@ -68,6 +70,14 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
      */
     @CheckForNull
     private String command;
+
+    /**
+     * List variant of #command
+     */
+    private List<String> commands;
+
+    @CheckForNull
+    private String entrypoint;
 
     @CheckForNull
     private String hostname;
@@ -134,6 +144,12 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
     @CheckForNull
     private DockerContainerRestartPolicy restartPolicy = new DockerContainerRestartPolicy(NO, 0);
+
+    @CheckForNull
+    private String workdir;
+
+    @CheckForNull
+    private String user;
 
     @DataBoundConstructor
     public DockerCreateContainer() {
@@ -312,17 +328,25 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
     @Nonnull
     public String[] getDockerCommandArray() {
-        String[] dockerCommandArray = new String[0];
-        if (StringUtils.isNotEmpty(command)) {
-            dockerCommandArray = command.split(" ");
-        }
-
-        return dockerCommandArray;
+        return getCommandArray(command);
     }
 
     @DataBoundSetter
     public void setCommand(String command) {
         this.command = command;
+    }
+
+    public String getEntrypoint() {
+        return entrypoint;
+    }
+
+    public String[] getDockerEntrypointArray() {
+        return getCommandArray(entrypoint);
+    }
+
+    @DataBoundSetter
+    public void setEntrypoint(String entrypoint) {
+        this.entrypoint = entrypoint;
     }
 
     // environment
@@ -457,6 +481,26 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         this.restartPolicy = restartPolicy;
     }
 
+    @CheckForNull
+    public String getWorkdir() {
+        return workdir;
+    }
+
+    @DataBoundSetter
+    public void setWorkdir(String workdir) {
+        this.workdir = workdir;
+    }
+
+    @CheckForNull
+    public String getUser() {
+        return user;
+    }
+
+    @DataBoundSetter
+    public void setUser(String user) {
+        this.user = user;
+    }
+
     /**
      * Fills user specified values
      *
@@ -464,7 +508,8 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
      * @return filled config
      */
     @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "no npe in getters")
-    public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
+    public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig,
+                                                  @CheckForNull java.util.function.Function<String, String> resolveVar) {
         if (StringUtils.isNotBlank(hostname)) {
             containerConfig.withHostName(hostname);
         }
@@ -503,6 +548,8 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             ArrayList<Bind> binds = new ArrayList<>();
 
             for (String vol : getVolumes()) {
+                if (nonNull(resolveVar)) vol = resolveVar.apply(vol);
+
                 final String[] group = vol.split(":");
                 if (group.length > 1) {
                     if (group[1].equals("/")) {
@@ -577,6 +624,15 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         if (nonNull(restartPolicy)) {
             containerConfig.withRestartPolicy(restartPolicy.getRestartPolicy());
         }
+
+        if (StringUtils.isNotBlank(getWorkdir())) {
+            containerConfig.withWorkingDir(nonNull(resolveVar) ? resolveVar.apply(workdir) : workdir);
+        }
+
+        if (StringUtils.isNotBlank(getUser())) {
+            containerConfig.withUser(getUser());
+        }
+
         return containerConfig;
     }
 
@@ -598,6 +654,29 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     @Override
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
+    }
+
+    private static String[] getCommandArray(String command) {
+        String[] dockerCommandArray = new String[0];
+        final ArrayList<String> commands = new ArrayList<>();
+        if (StringUtils.isNotEmpty(command)) {
+
+            // https://stackoverflow.com/questions/3366281/tokenizing-a-string-but-ignoring-delimiters-within-quotes
+            String regex = "[\"\']([^\"]*)[\"\']|(\\S+)";
+
+            Matcher m = Pattern.compile(regex).matcher(command);
+            while (m.find()) {
+                if (nonNull(m.group(1))) {
+                    commands.add(m.group(1));
+                } else {
+                    commands.add(m.group(2));
+                }
+            }
+
+            dockerCommandArray = commands.toArray(new String[commands.size()]);
+        }
+
+        return dockerCommandArray;
     }
 
     @Extension
@@ -695,11 +774,11 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             );
         }
 
+        @Nonnull
         @Override
         public String getDisplayName() {
             return "Docker template base";
         }
-
 
     }
 }

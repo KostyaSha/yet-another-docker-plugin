@@ -10,19 +10,13 @@ import hudson.model.Descriptor;
 import hudson.model.Node;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
-import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
-import hudson.util.DescribableList;
 import hudson.util.FormValidation;
-import jenkins.model.Jenkins;
 import org.apache.commons.lang.builder.EqualsBuilder;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -141,17 +135,6 @@ public class DockerSlaveConfig extends AbstractDescribableImpl<DockerSlaveConfig
     @DataBoundSetter
     public void setRemoteFs(String remoteFs) {
         this.remoteFs = remoteFs;
-    }
-
-    @Nonnull
-    @Restricted(value = NoExternalUse.class) // ancient UI jelly form
-    public DescribableList<NodeProperty<?>, NodePropertyDescriptor> getNodePropertiesUI() throws IOException {
-        return new DescribableList<>(Jenkins.getActiveInstance().getNodesObject(), getNodeProperties());
-    }
-
-    @Restricted(value = NoExternalUse.class) // ancient UI jelly form
-    public void setNodePropertiesUI(DescribableList<NodeProperty<?>, NodePropertyDescriptor> nodePropertiesUI) {
-        setNodeProperties(nodePropertiesUI);
     }
 
     @Nonnull

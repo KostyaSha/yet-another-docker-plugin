@@ -144,6 +144,13 @@ public class DockerConnector extends YADockerConnector {
         this.readTimeout = readTimeout;
     }
 
+    public DockerClient getFreshClient() throws GeneralSecurityException {
+        client = newClientBuilderForConnector()
+                .withDockerConnector(this)
+                .build();
+        return client;
+    }
+
     public DockerClient getClient() {
         if (client == null) {
             try {

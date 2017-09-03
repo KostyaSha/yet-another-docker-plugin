@@ -113,6 +113,8 @@ public class DockerCloudTest {
             createContainer.setLinksString("some");
             createContainer.setShmSize(102L);
             createContainer.setRestartPolicy(new DockerContainerRestartPolicy(NO, 0));
+            createContainer.setWorkdir("workdir");
+            createContainer.setUser("user");
 
             final DockerStopContainer stopContainer = new DockerStopContainer();
             stopContainer.setTimeout(100);

@@ -182,14 +182,14 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
 
         //pull image
         logger.println("Pulling image " + imageId + "...");
-        containerLifecycle.getPullImage().exec(client, imageId);
+        containerLifecycle.getPullImage().exec(client, imageId, listener);
 
-        logger.println("Trying to run container for " + imageId);
-        LOG.info("Trying to run container for {}", imageId);
+        logger.println("Trying to create container for " + imageId);
+        LOG.info("Trying to create container for {}", imageId);
         final DockerCreateContainer createContainer = containerLifecycle.getCreateContainer();
         CreateContainerCmd containerConfig = client.createContainerCmd(imageId);
         // template specific options
-        createContainer.fillContainerConfig(containerConfig);
+        createContainer.fillContainerConfig(containerConfig, null);
 
         // cloud specific options
         appendContainerConfig(containerConfig);

@@ -26,6 +26,8 @@ import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
+import hudson.util.NullStream;
+import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedPlannedNode;
@@ -164,7 +166,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         CreateContainerCmd containerConfig = getClient().createContainerCmd(image);
 
         // template specific options
-        dockerCreateContainer.fillContainerConfig(containerConfig);
+        dockerCreateContainer.fillContainerConfig(containerConfig, null);
 
         // launcher specific options
         slaveTemplate.getLauncher().appendContainerConfig(slaveTemplate, containerConfig);
@@ -180,7 +182,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         StartContainerCmd startCommand = getClient().startContainerCmd(containerId);
         try {
             startCommand.exec();
-            LOG.debug("Run container {}, for {}", containerId, getDisplayName());
+            LOG.debug("Running container {}, for {}", containerId, getDisplayName());
         } catch (Exception ex) {
             try {
                 getClient().logContainerCmd(containerId)
@@ -204,9 +206,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
     private void appendContainerConfig(DockerSlaveTemplate slaveTemplate, CreateContainerCmd containerConfig) {
         Map<String, String> labels = containerConfig.getLabels();
-        if (labels == null) {
-            labels = new HashMap<>();
-        }
+        if (labels == null) labels = new HashMap<>();
 
         labels.put(DOCKER_CLOUD_LABEL, getDisplayName());
         labels.put(DOCKER_TEMPLATE_LABEL, slaveTemplate.getId());
@@ -224,7 +224,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         final DockerComputerLauncher computerLauncher = template.getLauncher();
 
         //pull image
-        dockerContainerLifecycle.getPullImage().exec(getClient(), imageId);
+        dockerContainerLifecycle.getPullImage().exec(getClient(), imageId, new StreamTaskListener(new NullStream()));
 
         // set the operating system if it's not already cached
         if (template.getOsType() == null) {
@@ -264,7 +264,9 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         return new DockerSlave(slaveName, nodeDescription, launcher, containerId, template, getDisplayName(), id);
     }
 
-    /** Determine the operating system associated with an image. */
+    /**
+     * Determine the operating system associated with an image.
+     */
     private OsType determineOsType(String imageId) {
         InspectImageResponse ir = getClient().inspectImageCmd(imageId).exec();
         if ("linux".equalsIgnoreCase(ir.getOs())) {

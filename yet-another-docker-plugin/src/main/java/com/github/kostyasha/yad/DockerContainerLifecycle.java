@@ -13,6 +13,8 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import javax.annotation.Nonnull;
+
 import static java.util.Objects.nonNull;
 
 /**
@@ -132,6 +134,7 @@ public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerCont
 
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerContainerLifecycle> {
+        @Nonnull
         @Override
         public String getDisplayName() {
             return "All Docker Container Settings";

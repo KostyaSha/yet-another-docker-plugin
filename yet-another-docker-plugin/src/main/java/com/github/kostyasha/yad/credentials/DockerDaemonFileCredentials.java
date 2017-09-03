@@ -76,9 +76,7 @@ public class DockerDaemonFileCredentials extends BaseStandardCredentials impleme
 
     @Extension
     public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
-        public DescriptorImpl() {
-        }
-
+        @Nonnull
         public String getDisplayName() {
             return "Docker Host Certificate Authentication (remote)";
         }

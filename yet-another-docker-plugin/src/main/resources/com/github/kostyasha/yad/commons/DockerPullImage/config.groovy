@@ -15,3 +15,13 @@ f.entry(title: _("Pull strategy"), field: "pullStrategy") {
 f.entry(title: _("Registry Credentials"), field: "credentialsId") {
     c.select()
 }
+
+f.section(title: "Docker Registry credentials") {
+    f.block() {
+        f.repeatableHeteroProperty(
+                field: "registriesCreds",
+                hasHeader: true,
+                honorOrder: true
+        )
+    }
+}

@@ -2,6 +2,7 @@ package com.github.kostyasha.yad.steps;
 
 import com.github.kostyasha.yad.commons.cmds.DockerBuildImage;
 import com.github.kostyasha.yad.connector.YADockerConnector;
+import com.github.kostyasha.yad.utils.VariableUtils;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.PushImageCmd;
@@ -16,7 +17,6 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.P
 import com.google.common.base.Throwables;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.AbortException;
-import hudson.EnvVars;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
@@ -85,21 +85,6 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         public Builder() {
         }
 
-        /**
-         * Resolve on remoting side during execution.
-         * Because node may have some specific node vars.
-         */
-        private String resolveVar(String var) {
-            String resolvedVar = var;
-            try {
-                final EnvVars envVars = run.getEnvironment(taskListener);
-                resolvedVar = envVars.expand(var);
-            } catch (IOException | InterruptedException e) {
-                LOG.warn("Can't resolve variable {}", var, e);
-            }
-            return resolvedVar;
-        }
-
         public Builder withConnector(@Nonnull YADockerConnector connector) {
             this.connector = connector;
             return this;
@@ -138,7 +123,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
             final List<String> tags = buildImage.getTags();
             final ArrayList<String> expandedTags = new ArrayList<>(tags.size());
             for (String tag : tags) {
-                expandedTags.add(resolveVar(tag));
+                expandedTags.add(VariableUtils.resolveVar(tag, run, taskListener));
             }
             buildImage.setTags(expandedTags);
 
