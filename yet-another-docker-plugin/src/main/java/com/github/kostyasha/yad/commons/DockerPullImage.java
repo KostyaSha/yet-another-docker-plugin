@@ -8,7 +8,6 @@ import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.kostyasha.yad.credentials.DockerRegistryAuthCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.PullImageCmd;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Image;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
@@ -120,13 +119,14 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
             long startTime = System.currentTimeMillis();
             final PullImageCmd pullImageCmd = client.pullImageCmd(imageName);
 
-            final AuthConfig authConfig = pullImageCmd.getAuthConfig();
+//            final AuthConfig authConfig = pullImageCmd.getAuthConfig();
             for (DockerRegistryCredential cred : getRegistriesCreds()) {
                 // hostname requirements?
                 Credentials credentials = lookupSystemCredentials(cred.getCredentialsId());
-                final String registryAddr = cred.getRegistryAddr();
+//                final String registryAddr = cred.getRegistryAddr();
                 if (credentials instanceof DockerRegistryAuthCredentials) {
                     final DockerRegistryAuthCredentials authCredentials = (DockerRegistryAuthCredentials) credentials;
+                    // TODO update docker-java for multiple entries
                     pullImageCmd.withAuthConfig(authCredentials.getAuthConfig());
                 }
             }

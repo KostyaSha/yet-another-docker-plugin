@@ -10,10 +10,12 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.Cr
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.DockerException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.AttachContainerResultCallback;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.WaitContainerResultCallback;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -110,6 +112,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
         this.executorScript = executorScript;
     }
 
+    @SuppressFBWarnings("REC_CATCH_EXCEPTION")
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher,
                         @Nonnull TaskListener listener) throws InterruptedException, IOException {
@@ -185,7 +188,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                     entry.setSize(shellScript.length());
                     entry.setMode(0755);
                     tarOut.putArchiveEntry(entry);
-                    tarOut.write(shellScript.getBytes());
+                    tarOut.write(shellScript.getBytes("UTF-8"));
                     tarOut.closeArchiveEntry();
                 }
 
@@ -194,7 +197,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                 entry2.setSize(executorScript.length());
                 entry2.setMode(0755);
                 tarOut.putArchiveEntry(entry2);
-                tarOut.write(executorScript.getBytes());
+                tarOut.write(executorScript.getBytes("UTF-8"));
                 tarOut.closeArchiveEntry();
 
 
@@ -213,14 +216,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                 llog.println("Started container " + cId);
                 LOG.debug("Start container {}, for {}", cId, run.getDisplayName());
 
-
-                try (AttachContainerResultCallback callback = new AttachContainerResultCallback() {
-                    @Override
-                    public void onNext(Frame frame) {
-                        super.onNext(frame);
-                        llog.print(new String(frame.getPayload()));
-                    }
-                }) {
+                try (AttachContainerResultCallback callback = new MyAttachContainerResultCallback(llog)) {
                     client.attachContainerCmd(cId)
                             .withStdErr(true)
                             .withStdOut(true)
@@ -239,7 +235,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             } catch (AbortException ae) {
                 throw ae;
             } catch (Exception ex) {
-                llog.println("failed to start cmd");
+                llog.println("Failed to start cmd.");
                 throw ex;
             } finally {
                 llog.println("Removing container " + cId);
@@ -249,7 +245,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                     llog.println("Removed container: " + cId);
                 } catch (NotFoundException ex) {
                     llog.println("Already removed container: " + cId);
-                } catch (Exception ignore) {
+                } catch (DockerException ignore) {
                 }
             }
         } catch (AbortException ae) {
@@ -345,6 +341,20 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;
+        }
+    }
+
+    public static class MyAttachContainerResultCallback extends AttachContainerResultCallback {
+        private final PrintStream llog;
+
+        public MyAttachContainerResultCallback(PrintStream llog) {
+            this.llog = llog;
+        }
+
+        @Override
+        public void onNext(Frame frame) {
+            super.onNext(frame);
+            llog.print(new String(frame.getPayload(), UTF_8).trim());
         }
     }
 }
