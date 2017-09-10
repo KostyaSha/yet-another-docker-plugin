@@ -61,6 +61,8 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
      */
     private Map<String, String> creds;
 
+    private Map<String, String> buildArgs;
+
     private AuthConfigurations authConfigurations;
 
     @DataBoundConstructor
@@ -70,17 +72,18 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
     /**
      * clone
      */
-    public DockerBuildImage(DockerBuildImage that) {
-        this.tags = that.getTags();
-        this.noCache = that.getNoCache();
-        this.rm = that.getRm();
-        this.forceRm = that.getForceRm();
-        this.quiet = that.getQuiet();
-        this.pull = that.getPull();
-        this.baseDirectory = that.getBaseDirectory();
-        this.dockerfile = that.getDockerfile();
-        this.creds = that.getCreds();
-        this.authConfigurations = that.getAuthConfigurations();
+    public DockerBuildImage(DockerBuildImage cloneMe) {
+        this.tags = cloneMe.getTags();
+        this.noCache = cloneMe.getNoCache();
+        this.rm = cloneMe.getRm();
+        this.forceRm = cloneMe.getForceRm();
+        this.quiet = cloneMe.getQuiet();
+        this.pull = cloneMe.getPull();
+        this.baseDirectory = cloneMe.getBaseDirectory();
+        this.dockerfile = cloneMe.getDockerfile();
+        this.creds = cloneMe.getCreds();
+        this.authConfigurations = cloneMe.getAuthConfigurations();
+        this.buildArgs = cloneMe.getBuildArgs();
     }
 
     /**
@@ -94,6 +97,15 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
     @DataBoundSetter
     public void setTags(List<String> tags) {
         this.tags = tags;
+    }
+
+    @CheckForNull
+    public Map<String, String> getBuildArgs() {
+        return buildArgs;
+    }
+
+    public void setBuildArgs(Map<String, String> buildArgs) {
+        this.buildArgs = buildArgs;
     }
 
     /**
@@ -251,6 +263,11 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
                 .withQuiet(quiet)
                 .withPull(pull)
                 .withBaseDirectory(new File(baseDirectory));
+        if (nonNull(buildArgs)) {
+            for (Map.Entry<String, String> entry : buildArgs.entrySet()) {
+                cmd.withBuildArg(entry.getKey(), entry.getValue());
+            }
+        }
 
         if (nonNull(authConfigurations)) {
             cmd.withBuildAuthConfigs(authConfigurations);
@@ -282,6 +299,7 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
 
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerBuildImage> {
+        @Nonnull
         @Override
         public String getDisplayName() {
             return "Docker Build Image";
