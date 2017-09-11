@@ -179,7 +179,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         final DockerSlaveTemplate dockerSlaveTemplate = node.getDockerSlaveTemplate();
         final DockerComputerJNLPLauncher launcher = (DockerComputerJNLPLauncher) dockerSlaveTemplate.getLauncher();
 
-        final String rootUrl = launcher.getJenkinsUrl(Jenkins.getActiveInstance().getRootUrl());
+        final String rootUrl = launcher.getJenkinsUrl(Jenkins.getInstance().getRootUrl());
 //        Objects.requireNonNull(rootUrl, "Jenkins root url is not specified!");
         if (isNull(rootUrl)) {
             throw new NullPointerException("Jenkins root url is not specified!");
@@ -289,7 +289,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             client.logContainerCmd(containerId)
                     .withStdErr(true)
                     .withStdOut(true)
-                    .exec(new DockerComputerSingleJNLPLauncher.ListenerLogContainerResultCallback(listener))
+                    .exec(new ListenerLogContainerResultCallback(listener))
                     .awaitCompletion();
         } catch (Exception ex) {
             listener.error("Failed to get logs from container " + containerId);

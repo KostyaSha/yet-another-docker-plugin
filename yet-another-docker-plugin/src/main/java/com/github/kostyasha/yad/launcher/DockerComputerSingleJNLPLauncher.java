@@ -11,12 +11,9 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.Ex
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.ExecStartResultCallback;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.LogContainerResultCallback;
 import com.github.kostyasha.yad_docker_java.javax.ws.rs.ProcessingException;
 import com.google.common.base.Throwables;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.slaves.JNLPLauncher;
@@ -227,16 +224,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         if (!running) {
             listener.error("Failed to run container for %s, clean-up container", imageId);
             LOG.error("Failed to run container for {}, clean-up container", imageId);
-            try {
-                client.logContainerCmd(cId)
-                        .withStdErr(true)
-                        .withStdOut(true)
-                        .exec(new ListenerLogContainerResultCallback(listener))
-                        .awaitCompletion();
-            } catch (Exception ex) {
-                listener.error("Failed to get logs from container " + cId);
-                LOG.error("failed to get logs from container {}", cId, ex);
-            }
+            printLog(client, listener, cId);
             throw new IllegalStateException("Container is not running!");
         }
 
@@ -311,7 +299,8 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         if (computer.isReallyOffline()) {
             LOG.info("Launch timeout, terminating slave based on '{}'", cId);
             logger.println("Launch timeout, terminating slave.");
-            throw new IOException("Can't connect slave to jenkins");
+            printLog(client, listener, cId);
+            throw new IllegalStateException("Agent didn't connect after timeout.");
         }
 
         LOG.info("Launched slave '{}' '{}' based on '{}'",
@@ -340,18 +329,17 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         createContainerCmd.withStdinOpen(true);
     }
 
-    public static class ListenerLogContainerResultCallback extends LogContainerResultCallback {
-        private final TaskListener listener;
-
-        public ListenerLogContainerResultCallback(TaskListener listener) {
-            this.listener = listener;
-        }
-
-        @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING")
-        @Override
-        public void onNext(Frame item) {
-            listener.getLogger().println(new String(item.getPayload()).trim());
-            super.onNext(item);
+    private void printLog(DockerClient client, TaskListener listener, String containerId) {
+        try {
+            client.logContainerCmd(containerId)
+                    .withStdErr(true)
+                    .withStdOut(true)
+                    .exec(new ListenerLogContainerResultCallback(listener))
+                    .awaitCompletion();
+        } catch (Exception ex) {
+            listener.error("Failed to get logs from container " + containerId);
+            LOG.error("failed to get logs from container {}", containerId, ex);
         }
     }
+
 }
