@@ -1,5 +1,8 @@
 ##
 
+## 0.1.0-rc40
+- No visible updates to user (buildArgs in comboimage, log print for single slave)
+
 ## 0.1.0-rc39
 - experimental dockerShell step
 - command arg parser
