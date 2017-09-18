@@ -309,7 +309,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
      * Clone object.
      */
     @Override
-    public ComputerLauncher getPreparedLauncher(String cloudId, DockerSlaveTemplate template,
+    public DockerComputerLauncher getPreparedLauncher(String cloudId, DockerSlaveTemplate template,
                                                 InspectContainerResponse containerInspectResponse) {
         final DockerComputerJNLPLauncher cloneJNLPlauncher = new DockerComputerJNLPLauncher();
 

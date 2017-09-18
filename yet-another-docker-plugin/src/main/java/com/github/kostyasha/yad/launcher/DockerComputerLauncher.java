@@ -2,6 +2,7 @@ package com.github.kostyasha.yad.launcher;
 
 
 import com.github.kostyasha.yad.DockerSlaveTemplate;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
@@ -27,9 +28,14 @@ public abstract class DockerComputerLauncher extends DelegatingComputerLauncher 
     }
 
     /**
+     * Called after container was created. DockerSlave is not created atm.
+     */
+    public void afterCreate(DockerClient client, String containerId) throws IOException {}
+
+    /**
      * Return valid configured launcher that will be used for launching slave
      */
-    public abstract ComputerLauncher getPreparedLauncher(String cloudId,
+    public abstract DockerComputerLauncher getPreparedLauncher(String cloudId,
                                                          DockerSlaveTemplate dockerSlaveTemplate,
                                                          InspectContainerResponse ir);
 

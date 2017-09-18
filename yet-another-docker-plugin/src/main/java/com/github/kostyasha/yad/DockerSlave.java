@@ -149,7 +149,12 @@ public class DockerSlave extends AbstractCloudSlave implements TrackedItem {
     }
 
     @Override
-    protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
+    public synchronized void terminate() throws InterruptedException, IOException {
+        super.terminate();
+    }
+
+    @Override
+    protected synchronized void _terminate(TaskListener listener) throws IOException, InterruptedException {
         final DockerContainerLifecycle dockerContainerLifecycle = dockerSlaveTemplate.getDockerContainerLifecycle();
         try {
             LOG.info("Requesting disconnect for computer: '{}'", name);

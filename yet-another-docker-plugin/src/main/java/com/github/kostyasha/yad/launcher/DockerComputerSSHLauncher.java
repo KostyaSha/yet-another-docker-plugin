@@ -55,7 +55,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         return sshConnector;
     }
 
-    public ComputerLauncher getPreparedLauncher(String cloudId, DockerSlaveTemplate dockerSlaveTemplate,
+    public DockerComputerLauncher getPreparedLauncher(String cloudId, DockerSlaveTemplate dockerSlaveTemplate,
                                                 InspectContainerResponse inspect) {
         // don't care, we need only launcher
         final DockerComputerSSHLauncher prepLauncher = new DockerComputerSSHLauncher(null);

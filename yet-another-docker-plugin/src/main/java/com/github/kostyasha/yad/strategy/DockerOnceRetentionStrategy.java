@@ -119,8 +119,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
             terminating = true;
         }
 
-        final Future<?> submit = Computer.threadPoolForRemoting.submit(() ->
-                Queue.withLock(() -> {
+        final Future<?> submit = Computer.threadPoolForRemoting.submit(() -> {
                     try {
                         AbstractCloudSlave node = c.getNode();
                         if (node != null) {
@@ -132,7 +131,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
                             terminating = false;
                         }
                     }
-                })
+                }
         );
     }
 
