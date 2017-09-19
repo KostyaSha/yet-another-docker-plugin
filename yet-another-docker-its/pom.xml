@@ -143,6 +143,12 @@
             <groupId>org.jenkins-ci.lib</groupId>
             <artifactId>lib-jenkins-maven-embedder</artifactId>
             <version>3.11</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.sonatype.sisu</groupId>
+                    <artifactId>sisu-guice</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.ant</groupId>
