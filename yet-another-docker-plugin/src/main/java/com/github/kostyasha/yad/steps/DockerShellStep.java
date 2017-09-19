@@ -140,7 +140,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             insertLabels(containerConfig, run);
 
             if (nonNull(executorScript)) {
-                containerConfig.withEntrypoint("/bin/sh", "-ex", "/tmp/executor.sh");
+                containerConfig.withEntrypoint("/bin/sh /tmp/executor.sh");
                 containerConfig.withCmd("");
             }
 
