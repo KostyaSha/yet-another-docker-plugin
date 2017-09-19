@@ -138,6 +138,18 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- was removed from test-harness TODO review -->
+        <dependency>
+            <groupId>org.jenkins-ci.lib</groupId>
+            <artifactId>lib-jenkins-maven-embedder</artifactId>
+            <version>3.11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.ant</groupId>
+            <artifactId>ant</artifactId>
+            <version>1.9.2</version>
+        </dependency>
+        <!-- end of TODO -->
 
         <!-- tests logging -->
         <dependency>
