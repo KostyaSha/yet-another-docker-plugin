@@ -143,12 +143,12 @@
             <groupId>org.jenkins-ci.lib</groupId>
             <artifactId>lib-jenkins-maven-embedder</artifactId>
             <version>3.11</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.sonatype.sisu</groupId>
-                    <artifactId>sisu-guice</artifactId>
-                </exclusion>
-            </exclusions>
+            <!--<exclusions>-->
+                <!--<exclusion>-->
+                    <!--<groupId>org.sonatype.sisu</groupId>-->
+                    <!--<artifactId>sisu-guice</artifactId>-->
+                <!--</exclusion>-->
+            <!--</exclusions>-->
         </dependency>
         <dependency>
             <groupId>org.apache.ant</groupId>
@@ -309,6 +309,23 @@
 
     <build>
         <plugins>
+            <plugin>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>display-info</id>
+                        <configuration>
+                            <rules>
+                                <enforceBytecodeVersion>
+                                    <excludes combine.children="append">
+                                        <exclude>org.sonatype.sisu:sisu-guice</exclude>
+                                    </excludes>
+                                </enforceBytecodeVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <!-- version specified in grandparent pom -->
