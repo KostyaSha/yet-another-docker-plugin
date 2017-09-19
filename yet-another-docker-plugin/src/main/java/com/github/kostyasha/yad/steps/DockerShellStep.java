@@ -140,7 +140,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             insertLabels(containerConfig, run);
 
             if (nonNull(executorScript)) {
-                containerConfig.withEntrypoint("/bin/sh", "-ex", "/tmp/executor.sh");
+                containerConfig.withEntrypoint("/bin/sh /tmp/executor.sh");
                 containerConfig.withCmd("");
             }
 
@@ -186,7 +186,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                 if (nonNull(shellScript)) {
                     TarArchiveEntry entry = new TarArchiveEntry("script.sh");
                     entry.setSize(shellScript.length());
-                    entry.setMode(0755);
+                    entry.setMode(0777);
                     tarOut.putArchiveEntry(entry);
                     tarOut.write(shellScript.getBytes("UTF-8"));
                     tarOut.closeArchiveEntry();
@@ -195,7 +195,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                 // executor.sh tar entry
                 TarArchiveEntry entry2 = new TarArchiveEntry("executor.sh");
                 entry2.setSize(executorScript.length());
-                entry2.setMode(0755);
+                entry2.setMode(0777);
                 tarOut.putArchiveEntry(entry2);
                 tarOut.write(executorScript.getBytes("UTF-8"));
                 tarOut.closeArchiveEntry();
@@ -230,6 +230,8 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                     callback.awaitCompletion(1, TimeUnit.SECONDS);
                     if (isNull(statusCode) || statusCode != 0) {
                         throw new AbortException("Shell execution failed. Exit code: " + statusCode);
+                    } else {
+                        llog.println("Container stopped with exit code: " + statusCode);
                     }
                 }
             } catch (AbortException ae) {
@@ -354,7 +356,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
         @Override
         public void onNext(Frame frame) {
             super.onNext(frame);
-            llog.print(new String(frame.getPayload(), UTF_8).trim());
+            llog.println(new String(frame.getPayload(), UTF_8).trim());
         }
     }
 }
