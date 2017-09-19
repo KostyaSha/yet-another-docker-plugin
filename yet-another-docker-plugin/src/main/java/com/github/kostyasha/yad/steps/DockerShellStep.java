@@ -230,6 +230,8 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                     callback.awaitCompletion(1, TimeUnit.SECONDS);
                     if (isNull(statusCode) || statusCode != 0) {
                         throw new AbortException("Shell execution failed. Exit code: " + statusCode);
+                    } else {
+                        llog.println("Container stopped with exit code: " + statusCode);
                     }
                 }
             } catch (AbortException ae) {
