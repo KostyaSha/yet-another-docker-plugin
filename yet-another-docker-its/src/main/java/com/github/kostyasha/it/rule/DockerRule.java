@@ -181,7 +181,7 @@ public class DockerRule extends ExternalResource {
 
         dockerCmdExecFactory = new JerseyDockerCmdExecFactory()
                 .withConnectTimeout(10 * 1000)
-                .withReadTimeout(10 * 1000);
+                .withReadTimeout(100 * 1000);
 
         dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)
@@ -284,10 +284,12 @@ public class DockerRule extends ExternalResource {
         OUTER:
         for (Image image : images) {
             final String[] repoTags = image.getRepoTags();
-            for (String repoTag : repoTags) {
-                if (repoTag.equals(imageName)) {
-                    existedDataImage = image.getId();
-                    break OUTER;
+            if (nonNull(repoTags)) {
+                for (String repoTag : repoTags) {
+                    if (repoTag.equals(imageName)) {
+                        existedDataImage = image.getId();
+                        break OUTER;
+                    }
                 }
             }
         }
