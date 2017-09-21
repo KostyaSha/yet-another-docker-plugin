@@ -391,6 +391,7 @@ public class DockerRule extends ExternalResource {
         final File buildHomePath = new File(buildDir, JenkinsDockerImage.JENKINS_DEFAULT.homePath);
         final File jenkinsConfig = new File(buildHomePath, "config.xml");
         DockerHPIContainerUtil.copyResourceFromClass(DockerHPIContainerUtil.class, "config.xml", jenkinsConfig);
+        DockerHPIContainerUtil.copyResourceFromClass(DockerHPIContainerUtil.class, "jenkins.install.UpgradeWizard.state", jenkinsConfig);
 
         final File pluginDir = new File(buildHomePath, "/plugins/");
         if (!pluginDir.mkdirs()) {
