@@ -148,7 +148,12 @@ public class DockerRule extends ExternalResource {
         // if image was specified without tag, then treat as latest
         final String fullImageName = repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
 
-        boolean hasImage = Iterables.any(images, image -> Arrays.asList(image.getRepoTags()).contains(fullImageName));
+        boolean hasImage = Iterables.any(
+                images, image ->
+                    nonNull(image.getRepoTags()) &&
+                    Arrays.asList(image.getRepoTags()).contains(fullImageName)
+
+        );
 
         boolean pull = hasImage ?
                 pullStrategy.pullIfExists(imageName) :

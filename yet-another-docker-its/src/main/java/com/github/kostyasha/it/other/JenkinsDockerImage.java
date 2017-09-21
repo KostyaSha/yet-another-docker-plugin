@@ -16,7 +16,11 @@ public class JenkinsDockerImage {
             "jenkins", "1.625.3", "/usr/share/jenkins/ref/", 8080, 48000, 50000
     );
 
-    public static final JenkinsDockerImage JENKINS_DEFAULT = JENKINS_1_625_3;
+    public static final JenkinsDockerImage JENKINS_2_19_4 = new JenkinsDockerImage(
+            "jenkins", "2.19.4", "/usr/share/jenkins/ref/", 8080, 48000, 50000
+    );
+
+    public static final JenkinsDockerImage JENKINS_DEFAULT = JENKINS_2_19_4;
 
     public final String name;
     public final String tag;
