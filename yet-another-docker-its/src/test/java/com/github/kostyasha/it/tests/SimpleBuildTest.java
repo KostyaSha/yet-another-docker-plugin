@@ -15,6 +15,7 @@ import com.github.kostyasha.yad.commons.DockerRemoveContainer;
 import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import hudson.Plugin;
 import hudson.cli.DockerCLI;
 import hudson.logging.LogRecorder;
@@ -102,6 +103,8 @@ public class SimpleBuildTest implements Serializable {
 
         @Override
         protected void before() throws Throwable {
+            d.getDockerCli().pullImageCmd(slaveJnlpImage).exec(new PullImageResultCallback()).awaitSuccess();
+
             jenkinsId = d.runFreshJenkinsContainer(PULL_LATEST, false);
             cli = d.createCliForContainer(jenkinsId);
             LOG.trace("CLI prepared, preparing cloud");
@@ -252,7 +255,7 @@ public class SimpleBuildTest implements Serializable {
     private static class FreestyleProjectBuildCallable extends BCallable {
         @Override
         public Boolean call() throws Throwable {
-            final Jenkins jenkins = Jenkins.getActiveInstance();
+            final Jenkins jenkins = Jenkins.getInstance();
 
             // prepare job
             final FreeStyleProject project = jenkins.createProject(FreeStyleProject.class, "freestyle-project");
