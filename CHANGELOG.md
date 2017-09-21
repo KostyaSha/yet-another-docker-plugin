@@ -1,5 +1,9 @@
 ##
 
+## 0.1.0-rc41
+- Update plugin-pom and ITs.
+- dockerShell step updates after testing.
+
 ## 0.1.0-rc40
 - No visible updates to user (buildArgs in comboimage, log print for single slave)
 
