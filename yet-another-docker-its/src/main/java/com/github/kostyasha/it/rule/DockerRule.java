@@ -27,11 +27,11 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.P
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.codec.digest.DigestUtils;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import hudson.cli.CLI;
 import hudson.cli.CLIConnectionFactory;
 import hudson.cli.DockerCLI;
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.settings.building.SettingsBuildingException;
 import org.hamcrest.MatcherAssert;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
@@ -61,6 +61,7 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.io.FileUtils.writeStringToFile;
 import static org.codehaus.plexus.util.FileUtils.copyFile;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -379,7 +380,7 @@ public class DockerRule extends ExternalResource {
 //        final File tempDirectory = TempFileHelper.createTempDirectory("build-image", targetDir().toPath());
         final File buildDir = new File(targetDir().getAbsolutePath() + "/docker-it/build-image");
         if (buildDir.exists()) {
-            FileUtils.deleteDirectory(buildDir);
+            deleteDirectory(buildDir);
         }
         if (!buildDir.mkdirs()) {
             throw new IllegalStateException("Can't create temp directory " + buildDir.getAbsolutePath());
@@ -387,7 +388,7 @@ public class DockerRule extends ExternalResource {
 
         final String dockerfile = generateDockerfileFor(plugins);
         final File dockerfileFile = new File(buildDir, "Dockerfile");
-        FileUtils.writeStringToFile(dockerfileFile, dockerfile);
+        writeStringToFile(dockerfileFile, dockerfile);
 
         final File buildHomePath = new File(buildDir, JenkinsDockerImage.JENKINS_DEFAULT.homePath);
         final File jenkinsConfig = new File(buildHomePath, "config.xml");
