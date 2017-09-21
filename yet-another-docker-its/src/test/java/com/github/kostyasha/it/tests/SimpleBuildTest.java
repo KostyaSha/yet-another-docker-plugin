@@ -60,6 +60,7 @@ import static java.util.Objects.requireNonNull;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.jvnet.hudson.test.JenkinsRule.getLog;
 import static org.mockito.Matchers.isNull;
@@ -249,7 +250,11 @@ public class SimpleBuildTest implements Serializable {
 
     @Test
     public void freestyleProjectBuilds() throws Throwable {
-        dJenkins.call(new FreestyleProjectBuildCallable());
+        try {
+            dJenkins.call(new FreestyleProjectBuildCallable());
+        } catch (Exception ex) {
+            throw ex;
+        }
     }
 
     private static class FreestyleProjectBuildCallable extends BCallable {
@@ -271,7 +276,7 @@ public class SimpleBuildTest implements Serializable {
             waitUntilNoActivityUpTo(jenkins, 10 * 60 * 1000);
 
             final FreeStyleBuild lastBuild = project.getLastBuild();
-            assertThat(lastBuild, not(isNull()));
+            assertThat(lastBuild, not(nullValue()));
             assertThat(lastBuild.getResult(), is(Result.SUCCESS));
 
             assertThat(getLog(lastBuild), Matchers.containsString(TEST_VALUE));
