@@ -28,10 +28,10 @@ public class DockerPullImageListenerLogger extends PullImageResultCallback {
             llog.print(": ");
         }
 
-        listener.getLogger().println(item.getStatus());
+        llog.println(item.getStatus());
 
         if (nonNull(item.getErrorDetail())) {
-            listener.getLogger().println(item.getErrorDetail().toString());
+            llog.println(item.getErrorDetail().toString());
         }
     }
 }
