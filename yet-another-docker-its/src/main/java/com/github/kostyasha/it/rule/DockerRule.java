@@ -27,11 +27,11 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.P
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.codec.digest.DigestUtils;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import hudson.cli.CLI;
 import hudson.cli.CLIConnectionFactory;
 import hudson.cli.DockerCLI;
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.settings.building.SettingsBuildingException;
 import org.hamcrest.MatcherAssert;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
@@ -61,6 +61,8 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.FileUtils.writeStringToFile;
 import static org.codehaus.plexus.util.FileUtils.copyFile;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -148,7 +150,12 @@ public class DockerRule extends ExternalResource {
         // if image was specified without tag, then treat as latest
         final String fullImageName = repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
 
-        boolean hasImage = Iterables.any(images, image -> Arrays.asList(image.getRepoTags()).contains(fullImageName));
+        boolean hasImage = Iterables.any(
+                images, image ->
+                    nonNull(image.getRepoTags()) &&
+                    Arrays.asList(image.getRepoTags()).contains(fullImageName)
+
+        );
 
         boolean pull = hasImage ?
                 pullStrategy.pullIfExists(imageName) :
@@ -176,7 +183,7 @@ public class DockerRule extends ExternalResource {
 
         dockerCmdExecFactory = new JerseyDockerCmdExecFactory()
                 .withConnectTimeout(10 * 1000)
-                .withReadTimeout(10 * 1000);
+                .withReadTimeout(100 * 1000);
 
         dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)
@@ -279,10 +286,12 @@ public class DockerRule extends ExternalResource {
         OUTER:
         for (Image image : images) {
             final String[] repoTags = image.getRepoTags();
-            for (String repoTag : repoTags) {
-                if (repoTag.equals(imageName)) {
-                    existedDataImage = image.getId();
-                    break OUTER;
+            if (nonNull(repoTags)) {
+                for (String repoTag : repoTags) {
+                    if (repoTag.equals(imageName)) {
+                        existedDataImage = image.getId();
+                        break OUTER;
+                    }
                 }
             }
         }
@@ -371,7 +380,7 @@ public class DockerRule extends ExternalResource {
 //        final File tempDirectory = TempFileHelper.createTempDirectory("build-image", targetDir().toPath());
         final File buildDir = new File(targetDir().getAbsolutePath() + "/docker-it/build-image");
         if (buildDir.exists()) {
-            FileUtils.deleteDirectory(buildDir);
+            deleteDirectory(buildDir);
         }
         if (!buildDir.mkdirs()) {
             throw new IllegalStateException("Can't create temp directory " + buildDir.getAbsolutePath());
@@ -379,11 +388,13 @@ public class DockerRule extends ExternalResource {
 
         final String dockerfile = generateDockerfileFor(plugins);
         final File dockerfileFile = new File(buildDir, "Dockerfile");
-        FileUtils.writeStringToFile(dockerfileFile, dockerfile);
+        writeStringToFile(dockerfileFile, dockerfile);
 
         final File buildHomePath = new File(buildDir, JenkinsDockerImage.JENKINS_DEFAULT.homePath);
         final File jenkinsConfig = new File(buildHomePath, "config.xml");
         DockerHPIContainerUtil.copyResourceFromClass(DockerHPIContainerUtil.class, "config.xml", jenkinsConfig);
+        writeStringToFile(new File(buildHomePath, "jenkins.install.UpgradeWizard.state"), "2.19.4");
+        writeStringToFile(new File(buildHomePath, "jenkins.install.InstallUtil.lastExecVersion"), "2.19.4");
 
         final File pluginDir = new File(buildHomePath, "/plugins/");
         if (!pluginDir.mkdirs()) {

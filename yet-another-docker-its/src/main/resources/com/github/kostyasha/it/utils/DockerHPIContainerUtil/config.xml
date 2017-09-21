@@ -2,4 +2,8 @@
 <hudson>
     <!-- https://github.com/jenkinsci/jenkins/commit/653fbdb65024b1b528e21f682172885f7111bba9 -->
     <slaveAgentPort>48000</slaveAgentPort>
+    <useSecurity>false</useSecurity>
+    <authorizationStrategy class="hudson.security.AuthorizationStrategy$Unsecured"/>
+    <securityRealm class="hudson.security.SecurityRealm$None"/>
+
 </hudson>

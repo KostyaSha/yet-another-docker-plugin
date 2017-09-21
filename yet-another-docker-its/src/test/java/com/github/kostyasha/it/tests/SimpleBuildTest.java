@@ -15,6 +15,8 @@ import com.github.kostyasha.yad.commons.DockerRemoveContainer;
 import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
+import hudson.Plugin;
 import hudson.cli.DockerCLI;
 import hudson.logging.LogRecorder;
 import hudson.model.FreeStyleBuild;
@@ -54,9 +56,11 @@ import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.caller;
 import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.waitUntilNoActivityUpTo;
 import static com.github.kostyasha.yad.commons.DockerImagePullStrategy.PULL_LATEST;
 import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
+import static java.util.Objects.requireNonNull;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.jvnet.hudson.test.JenkinsRule.getLog;
 import static org.mockito.Matchers.isNull;
@@ -100,6 +104,8 @@ public class SimpleBuildTest implements Serializable {
 
         @Override
         protected void before() throws Throwable {
+            d.getDockerCli().pullImageCmd(slaveJnlpImage).exec(new PullImageResultCallback()).awaitSuccess();
+
             jenkinsId = d.runFreshJenkinsContainer(PULL_LATEST, false);
             cli = d.createCliForContainer(jenkinsId);
             LOG.trace("CLI prepared, preparing cloud");
@@ -244,13 +250,17 @@ public class SimpleBuildTest implements Serializable {
 
     @Test
     public void freestyleProjectBuilds() throws Throwable {
-        dJenkins.call(new FreestyleProjectBuildCallable());
+        try {
+            dJenkins.call(new FreestyleProjectBuildCallable());
+        } catch (Exception ex) {
+            throw ex;
+        }
     }
 
     private static class FreestyleProjectBuildCallable extends BCallable {
         @Override
         public Boolean call() throws Throwable {
-            final Jenkins jenkins = Jenkins.getActiveInstance();
+            final Jenkins jenkins = Jenkins.getInstance();
 
             // prepare job
             final FreeStyleProject project = jenkins.createProject(FreeStyleProject.class, "freestyle-project");
@@ -266,7 +276,7 @@ public class SimpleBuildTest implements Serializable {
             waitUntilNoActivityUpTo(jenkins, 10 * 60 * 1000);
 
             final FreeStyleBuild lastBuild = project.getLastBuild();
-            assertThat(lastBuild, not(isNull()));
+            assertThat(lastBuild, not(nullValue()));
             assertThat(lastBuild.getResult(), is(Result.SUCCESS));
 
             assertThat(getLog(lastBuild), Matchers.containsString(TEST_VALUE));
