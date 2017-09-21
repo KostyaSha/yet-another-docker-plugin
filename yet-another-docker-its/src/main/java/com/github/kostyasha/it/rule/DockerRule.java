@@ -61,6 +61,7 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.commons.io.FileUtils.writeStringToFile;
 import static org.codehaus.plexus.util.FileUtils.copyFile;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -391,7 +392,8 @@ public class DockerRule extends ExternalResource {
         final File buildHomePath = new File(buildDir, JenkinsDockerImage.JENKINS_DEFAULT.homePath);
         final File jenkinsConfig = new File(buildHomePath, "config.xml");
         DockerHPIContainerUtil.copyResourceFromClass(DockerHPIContainerUtil.class, "config.xml", jenkinsConfig);
-        DockerHPIContainerUtil.copyResourceFromClass(DockerHPIContainerUtil.class, "jenkins.install.UpgradeWizard.state", jenkinsConfig);
+        writeStringToFile(new File(jenkinsConfig, "jenkins.install.UpgradeWizard.state"), "2.19.4");
+        writeStringToFile(new File(jenkinsConfig, "jenkins.install.InstallUtil.lastExecVersion"), "2.19.4");
 
         final File pluginDir = new File(buildHomePath, "/plugins/");
         if (!pluginDir.mkdirs()) {
