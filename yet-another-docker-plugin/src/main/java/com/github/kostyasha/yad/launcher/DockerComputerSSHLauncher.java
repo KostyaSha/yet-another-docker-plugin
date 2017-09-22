@@ -65,6 +65,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     @Override
     public void appendContainerConfig(DockerSlaveTemplate dockerSlaveTemplate, CreateContainerCmd createCmd) {
         final int sshPort = getSshConnector().port;
+        createCmd.withExposedPorts(new ExposedPort(sshPort));
 
         createCmd.withPortSpecs(sshPort + "/tcp");
 
