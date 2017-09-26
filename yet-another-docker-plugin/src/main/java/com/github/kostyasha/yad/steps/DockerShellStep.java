@@ -140,7 +140,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             insertLabels(containerConfig, run);
 
             if (nonNull(executorScript)) {
-                containerConfig.withEntrypoint("/bin/sh /tmp/executor.sh");
+                containerConfig.withEntrypoint("/bin/sh", "/tmp/executor.sh");
                 containerConfig.withCmd("");
             }
 
@@ -192,14 +192,15 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                     tarOut.closeArchiveEntry();
                 }
 
-                // executor.sh tar entry
-                TarArchiveEntry entry2 = new TarArchiveEntry("executor.sh");
-                entry2.setSize(executorScript.length());
-                entry2.setMode(0777);
-                tarOut.putArchiveEntry(entry2);
-                tarOut.write(executorScript.getBytes("UTF-8"));
-                tarOut.closeArchiveEntry();
-
+                if (nonNull(executorScript)) {
+                    // executor.sh tar entry
+                    TarArchiveEntry entry2 = new TarArchiveEntry("executor.sh");
+                    entry2.setSize(executorScript.length());
+                    entry2.setMode(0777);
+                    tarOut.putArchiveEntry(entry2);
+                    tarOut.write(executorScript.getBytes("UTF-8"));
+                    tarOut.closeArchiveEntry();
+                }
 
                 tarOut.close();
                 try (InputStream is = new ByteArrayInputStream(byteArrayOutputStream.toByteArray())) {
