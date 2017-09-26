@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
@@ -90,12 +91,11 @@ public final class JenkinsRuleHelpers implements Serializable {
         }
     }
 
-    public static void caller(DockerCLI cli, Callable<Boolean, Throwable> callable) throws Throwable {
+    public static Boolean caller(DockerCLI cli, Callable<Boolean, Throwable> callable) throws Throwable {
         LOG.trace("Calling callable '{}'.", callable);
         assertThat(cli.getChannel(), notNullValue());
-        assertThat(
-                cli.getChannel().call(callable),
-                equalTo(true)
-        );
+        Boolean call = cli.getChannel().call(callable);
+        assertThat(call, is(true));
+        return call;
     }
 }
