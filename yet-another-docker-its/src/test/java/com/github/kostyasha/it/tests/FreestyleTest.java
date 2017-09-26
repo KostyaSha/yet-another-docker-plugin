@@ -303,7 +303,7 @@ public class FreestyleTest implements Serializable {
             DockerShellStep dockerShellStep = new DockerShellStep();
             dockerShellStep.setShellScript("env && pwd");
             dockerShellStep.setConnector(new CloudNameDockerConnector(DOCKER_CLOUD_NAME));
-            project.getBuilders().add(dockerShellStep);
+            project.getBuildersList().add(dockerShellStep);
 
 //            project.setAssignedLabel(new LabelAtom(DOCKER_CLOUD_LABEL));
             project.save();
