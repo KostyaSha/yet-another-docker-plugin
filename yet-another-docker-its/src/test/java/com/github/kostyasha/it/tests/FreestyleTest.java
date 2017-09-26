@@ -74,7 +74,7 @@ public class FreestyleTest implements Serializable {
     private static final String DOCKER_CLOUD_NAME = "docker-cloud";
     private static final String TEST_VALUE = "2323re23e";
 
-    @Parameterized.Parameters
+    @Parameterized.Parameters(name = "{0}")
     public static Iterable<String> data() {
         return Arrays.asList(
                 DockerRule.SLAVE_IMAGE_JNLP,
@@ -285,15 +285,21 @@ public class FreestyleTest implements Serializable {
 
     @Test
     public void dockerShell() throws Throwable {
-        Boolean result = dJenkins.call(new DockerShellCallable());
+        Boolean result = dJenkins.call(new DockerShellCallable(slaveJnlpImage));
         assertThat(result, is(true));
     }
 
     private static class DockerShellCallable extends BCallable {
+        private String image;
+
+        public DockerShellCallable(String image) {
+            this.image = image;
+        }
 
         @Override
         public Boolean call() throws Throwable {
             final Jenkins jenkins = Jenkins.getInstance();
+            assertThat(image, notNullValue());
 
             // prepare job
             final FreeStyleProject project = jenkins.createProject(FreeStyleProject.class, "freestyle-dockerShell");
@@ -302,6 +308,7 @@ public class FreestyleTest implements Serializable {
 
             DockerShellStep dockerShellStep = new DockerShellStep();
             dockerShellStep.setShellScript("env && pwd");
+            dockerShellStep.getContainerLifecycle().setImage(image);
             dockerShellStep.setConnector(new CloudNameDockerConnector(DOCKER_CLOUD_NAME));
             project.getBuildersList().add(dockerShellStep);
 
@@ -318,7 +325,7 @@ public class FreestyleTest implements Serializable {
             assertThat(lastBuild, not(nullValue()));
             assertThat(lastBuild.getResult(), is(Result.SUCCESS));
 
-            assertThat(getLog(lastBuild), Matchers.containsString(TEST_VALUE));
+            assertThat(getLog(lastBuild), Matchers.containsString("exit code: 0"));
 
             return true;
         }
