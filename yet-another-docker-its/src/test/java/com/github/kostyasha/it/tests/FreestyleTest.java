@@ -67,8 +67,8 @@ import static org.mockito.Matchers.isNull;
  * @author Kanstantsin Shautsou
  */
 @RunWith(Parameterized.class)
-public class FreestyleIT implements Serializable {
-    public static final Logger LOG = LoggerFactory.getLogger(FreestyleIT.class);
+public class FreestyleTest implements Serializable {
+    public static final Logger LOG = LoggerFactory.getLogger(FreestyleTest.class);
     private static final long serialVersionUID = 1L;
     private static final String DOCKER_CLOUD_LABEL = "docker-label";
     private static final String DOCKER_CLOUD_NAME = "docker-cloud";
