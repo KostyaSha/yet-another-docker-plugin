@@ -9,7 +9,6 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.CheckForNull;
@@ -27,28 +26,24 @@ import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
  *
  * @author Kanstantsin Shautsou
  */
-public class DockerCloudConnectorId extends YADockerConnector {
+public class CloudNameDockerConnector extends YADockerConnector {
     private static final long serialVersionUID = 1L;
 
-    private String cloudId;
+    private String cloudName;
 
     @DataBoundConstructor
-    public DockerCloudConnectorId() {
+    public CloudNameDockerConnector(String cloudName) {
+        this.cloudName = cloudName;
     }
 
     public String getCloudId() {
-        return cloudId;
-    }
-
-    @DataBoundSetter
-    public void setCloudId(String cloudId) {
-        this.cloudId = cloudId;
+        return cloudName;
     }
 
     @CheckForNull
     @Override
     public DockerClient getClient() {
-        final Cloud cloud = Jenkins.getInstance().getCloud(cloudId);
+        final Cloud cloud = Jenkins.getInstance().getCloud(cloudName);
         if (cloud instanceof DockerCloud) {
             final DockerCloud dockerCloud = (DockerCloud) cloud;
             return dockerCloud.getClient();
@@ -58,23 +53,23 @@ public class DockerCloudConnectorId extends YADockerConnector {
 
     @Extension
     public static class DescriptorImpl extends YADockerConnectorDescriptor {
-        public FormValidation doCheckCloudId(@QueryParameter String cloudId) {
+        public FormValidation doCheckCloudName(@QueryParameter String cloudName) {
             try {
-                final Cloud cloud = Jenkins.getInstance().getCloud(cloudId);
+                final Cloud cloud = Jenkins.getInstance().getCloud(cloudName);
                 if (cloud instanceof DockerCloud) {
                     final DockerCloud dockerCloud = (DockerCloud) cloud;
                     Version verResult = dockerCloud.getConnector().getClient().versionCmd().exec();
 
                     return ok(reflectionToString(verResult, MULTI_LINE_STYLE));
                 } else {
-                    return FormValidation.error("cloudId '" + cloudId + "' isn't DockerCloud");
+                    return FormValidation.error("cloudId '" + cloudName + "' isn't DockerCloud");
                 }
             } catch (Throwable t) {
                 return error(t, "error");
             }
         }
 
-        public ListBoxModel doFillCloudIdItems() {
+        public ListBoxModel doFillCloudNameItems() {
             ListBoxModel items = new ListBoxModel();
             Jenkins.getInstance().clouds.getAll(DockerCloud.class)
                 .forEach(dockerCloud ->

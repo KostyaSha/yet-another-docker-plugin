@@ -30,7 +30,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
  * @author Kanstantsin Shautsou
  */
 @Ignore
-public class DockerShellStepTest {
+public class DockerShellStepIT {
 
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
