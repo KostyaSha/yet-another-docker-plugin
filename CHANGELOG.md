@@ -1,5 +1,9 @@
 ##
 
+## 0.1.0-rc42
+- Automatically add exposed port for ssh launcher.
+- IT for dockerShell.
+
 ## 0.1.0-rc41
 - Update plugin-pom and ITs.
 - dockerShell step updates after testing.
