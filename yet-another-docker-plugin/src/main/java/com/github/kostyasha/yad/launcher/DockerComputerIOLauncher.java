@@ -15,6 +15,8 @@ import com.google.common.base.Throwables;
 import hudson.Extension;
 import hudson.model.Slave;
 import hudson.model.TaskListener;
+import hudson.remoting.Channel;
+import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.SlaveComputer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -42,7 +44,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
     }
 
     @Override
-    public void afterCreate(DockerClient client, String containerId) throws IOException {
+    public void afterContainerCreate(DockerClient client, String containerId) throws IOException {
         // upload archive
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
              TarArchiveOutputStream tarOut = new TarArchiveOutputStream(byteArrayOutputStream)) {
@@ -104,11 +106,11 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
         }
 
         PipedOutputStream out = new PipedOutputStream();
-        PipedInputStream inputStream = new PipedInputStream(out);
+        PipedInputStream inputStream = new PipedInputStream(out, 4096);
 
         IOCallback callback = new IOCallback(listener, out);
 
-        PipedInputStream pipedInputStream = new PipedInputStream();
+        PipedInputStream pipedInputStream = new PipedInputStream(4096);
         PipedOutputStream outputStream = new PipedOutputStream(pipedInputStream);
         llog.println("Attaching to container...");
 
@@ -117,7 +119,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
                 .withAttachStdin(true)
                 .withAttachStdout(true)
                 .withTty(false)
-                .withCmd("/bin/bash", "-c", "java -jar /tmp/slave.jar")
+                .withCmd("/bin/bash", "-c", "java -Dfile.encoding=UTF-8 -jar /tmp/slave.jar")
                 .withUser("root")
                 .exec();
 
@@ -134,7 +136,16 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
 
         // container stdout is InputStream ... in.read()
         // container stdin is  out.write()
-        computer.setChannel(inputStream, outputStream, listener.getLogger(), null);
+        computer.setChannel(inputStream, outputStream, listener.getLogger(), new Channel.Listener() {
+            @Override
+            public void onClosed(Channel channel, IOException cause) {
+                try {
+                    callback.close();
+                } catch (IOException e) {
+                    Throwables.propagate(e);
+                }
+            }
+        });
     }
 
     private static final class IOCallback extends AttachContainerResultCallback {
@@ -179,11 +190,17 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
     public void appendContainerConfig(DockerSlaveTemplate dockerSlaveTemplate,
                                       CreateContainerCmd createContainerCmd) throws IOException {
 //        createContainerCmd.withEntrypoint("/bin/bash", "-c", "java -jar /tmp/slave.jar");
-        createContainerCmd.withEntrypoint("sleep", "infinity");
-        createContainerCmd.withCmd("");
+        createContainerCmd.withEntrypoint("sleep");
+        createContainerCmd.withCmd("infinity");
         createContainerCmd.withTty(false);
 //        createContainerCmd.withLogConfig(new LogConfig(NONE));
         createContainerCmd.withStdinOpen(true);
+    }
+
+
+    @Override
+    public ComputerLauncher getLauncher() {
+        return this;
     }
 
     @Extension
@@ -192,7 +209,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
         @Nonnull
         @Override
         public String getDisplayName() {
-            return "Docker IO computer launcher";
+            return "[Experimental] Docker IO computer launcher";
         }
     }
 }

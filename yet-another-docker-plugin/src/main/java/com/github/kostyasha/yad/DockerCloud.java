@@ -2,6 +2,7 @@ package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.commons.AbstractCloud;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
+import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
 import com.github.kostyasha.yad.launcher.DockerComputerLauncher;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
@@ -23,7 +24,6 @@ import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.slaves.Cloud;
-import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
 import hudson.util.NullStream;
@@ -179,7 +179,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         String containerId = response.getId();
         LOG.debug("Created container {}, for {}", containerId, getDisplayName());
 
-        slaveTemplate.getLauncher().afterCreate(getClient(), containerId);
+        slaveTemplate.getLauncher().afterContainerCreate(getClient(), containerId);
 
         // start
         StartContainerCmd startCommand = getClient().startContainerCmd(containerId);
@@ -258,9 +258,9 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         String slaveName = String.format("%s-%s", getDisplayName(), containerId.substring(0, 12));
 
         if (computerLauncher.waitUp(getDisplayName(), template, ir)) {
-            LOG.debug("Container {} is ready for ssh slave connection", containerId);
+            LOG.debug("Container {} is ready for slave connection", containerId);
         } else {
-            LOG.error("Container {} is not ready for ssh slave connection.", containerId);
+            LOG.error("Container {} is not ready for slave connection.", containerId);
         }
 
         final DockerComputerLauncher launcher = computerLauncher.getPreparedLauncher(getDisplayName(), template, ir);
