@@ -37,6 +37,7 @@ import java.util.List;
 
 import static com.github.kostyasha.yad.client.ClientBuilderForConnector.lookupSystemCredentials;
 import static java.util.Collections.emptyList;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 /**
@@ -61,8 +62,9 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
     public DockerPullImage() {
     }
 
+    @Nonnull
     public DockerImagePullStrategy getPullStrategy() {
-        return pullStrategy;
+        return isNull(pullStrategy) ? DockerImagePullStrategy.PULL_LATEST : pullStrategy;
     }
 
     @DataBoundSetter
@@ -97,24 +99,10 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
     public void exec(@Nonnull final DockerClient client, @Nonnull final String imageName, TaskListener listener)
             throws IOException {
         PrintStream llog = listener.getLogger();
-        List<Image> images = client.listImagesCmd().exec();
 
-        NameParser.ReposTag repostag = NameParser.parseRepositoryTag(imageName);
-        // if image was specified without tag, then treat as latest
-        final String fullImageName = repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
-
-        boolean hasImage = Iterables.any(images, image ->
-                image.getRepoTags() != null && Arrays.asList(image.getRepoTags()).contains(fullImageName));
-
-        boolean pull = hasImage ?
-                getPullStrategy().pullIfExists(imageName) :
-                getPullStrategy().pullIfNotExists(imageName);
-
-        if (pull) {
-            LOG.info("Pulling image '{}' {}. This may take awhile...", imageName,
-                    hasImage ? "again" : "since one wasn't pulled before.");
-            llog.println(String.format("Pulling image '%s' %s. This may take awhile...", imageName,
-                    hasImage ? "again" : "since one wasn't pulled before."));
+        if (shouldPullImage(client, imageName)) {
+            LOG.info("Pulling image '{}'. This may take awhile...", imageName);
+            llog.println(String.format("Pulling image '%s'. This may take awhile...", imageName));
 
             long startTime = System.currentTimeMillis();
             final PullImageCmd pullImageCmd = client.pullImageCmd(imageName);
@@ -148,6 +136,36 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
             LOG.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
             llog.println(String.format("Finished pulling image '%s', took %d ms", imageName, pullTime));
         }
+    }
+
+    protected boolean shouldPullImage(DockerClient client, String imageName) {
+        NameParser.ReposTag repostag = NameParser.parseRepositoryTag(imageName);
+
+        // if image was specified without tag, then treat as latest
+        final String fullImageName = repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
+
+        // simply check without asking docker
+        if (getPullStrategy().pullIfExists(fullImageName) && getPullStrategy().pullIfNotExists(fullImageName)) {
+            return true;
+        }
+
+        if (!getPullStrategy().pullIfExists(fullImageName) && !getPullStrategy().pullIfNotExists(fullImageName)) {
+            return false;
+        }
+
+        List<Image> images = client.listImagesCmd().exec();
+
+        boolean hasImage = images.stream().anyMatch(image ->
+            nonNull(image.getRepoTags()) &&
+                    Arrays.stream(image.getRepoTags())
+                            .anyMatch(repoTag ->
+                                    repoTag.contains(fullImageName) || repoTag.contains("docker.io/" + fullImageName)
+                            )
+        );
+
+        return hasImage ?
+                getPullStrategy().pullIfExists(imageName) :
+                getPullStrategy().pullIfNotExists(imageName);
     }
 
     @Override
