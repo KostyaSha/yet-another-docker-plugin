@@ -245,7 +245,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             try (ExecStartResultCallback exec = connect
                     .execStartCmd(response.getId())
                     .withDetach(true)
-                    .withTty(false)
+                    .withTty(true)
                     .exec(new ExecStartResultCallback(logger, logger))
             ) {
                 exec.awaitCompletion();
@@ -269,13 +269,13 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         final long launchTime = System.currentTimeMillis();
         while (!dockerComputer.isOnline() &&
                 TimeUnit2.SECONDS.toMillis(launchTimeout) > System.currentTimeMillis() - launchTime) {
-            InspectContainerResponse inspect = dockerCloud.getClient().inspectContainerCmd(containerId).exec();
-            if (nonNull(inspect) && !Boolean.TRUE.equals(inspect.getState().getRunning())) {
-                logger.println("Container is not running: " + inspect.getState().getRunning());
-                break;
-            }
             logger.println("Waiting slave connection...");
             Thread.sleep(1000);
+        }
+
+        InspectContainerResponse inspect = dockerCloud.getClient().inspectContainerCmd(containerId).exec();
+        if (nonNull(inspect) && !Boolean.TRUE.equals(inspect.getState().getRunning())) {
+            logger.println("Container is not running: " + inspect.getState().getRunning());
         }
 
         if (!dockerComputer.isOnline()) {
