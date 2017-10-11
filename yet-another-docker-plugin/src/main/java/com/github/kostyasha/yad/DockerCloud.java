@@ -2,7 +2,6 @@ package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.commons.AbstractCloud;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
-import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
 import com.github.kostyasha.yad.launcher.DockerComputerLauncher;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
