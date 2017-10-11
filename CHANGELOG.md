@@ -1,5 +1,10 @@
 ##
 
+## 0.1.0-rc43
+- Don't call daemon and exclude redundant pull for LATEST pulling strategy.
+- [criritical] Remove Queue lock delay and potential queue lock out.
+- Experimental IO launcher.
+
 ## 0.1.0-rc42
 - Automatically add exposed port for ssh launcher.
 - IT for dockerShell.
