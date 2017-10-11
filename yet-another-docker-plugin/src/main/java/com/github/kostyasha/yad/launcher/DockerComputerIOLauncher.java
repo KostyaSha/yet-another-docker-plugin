@@ -32,9 +32,11 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.util.Objects;
 
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 public class DockerComputerIOLauncher extends DockerComputerLauncher {
 
@@ -100,8 +102,9 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
         if (isNull(node)) {
             throw new NullPointerException("Node can't be null");
         }
-        InspectContainerResponse inspectContainerResponse = client.inspectContainerCmd(containerId).exec();
-        if (!Boolean.valueOf(inspectContainerResponse.getState().getRunning())) {
+        InspectContainerResponse inspect = client.inspectContainerCmd(containerId).exec();
+        if (nonNull(inspect) && nonNull(inspect.getState().getRunning()) &&
+                !inspect.getState().getRunning()) {
             throw new IllegalStateException("Container is not running!");
         }
 
@@ -166,7 +169,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
         @Override
         public void onNext(Frame item) {
             if (item.getStreamType() == StreamType.STDERR) {
-                listener.error(new String(item.getPayload()));
+                listener.error(new String(item.getPayload(), Charset.forName("UTF-8")));
             } else if (item.getStreamType() == StreamType.STDOUT) {
                 try {
                     outputStream.write(item.getPayload());
