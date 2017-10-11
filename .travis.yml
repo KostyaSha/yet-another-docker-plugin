@@ -21,7 +21,7 @@ env:
     - COVERITY_SCAN_BRANCH_PATTERN="master"
     - COVERITY_SCAN_NOTIFICATION_EMAIL="kanstantsin.sha@gmail.com"
   matrix:
-    - repo="main" DOCKER_VERSION="17.05.0~ce-0~ubuntu-trusty" CODECOV=true
+    - repo="main" DOCKER_VERSION="17.05.0~ce-0~ubuntu-trusty" CODECOV=true COVERITY=true
     - repo="main" DOCKER_VERSION="1.13.1-0~ubuntu-trusty" CODECOV=true
     - repo="main" DOCKER_VERSION="1.12.6-0~ubuntu-trusty" CODECOV=true
     - repo="main" DOCKER_VERSION="1.11.2-0~trusty" CODECOV=true
