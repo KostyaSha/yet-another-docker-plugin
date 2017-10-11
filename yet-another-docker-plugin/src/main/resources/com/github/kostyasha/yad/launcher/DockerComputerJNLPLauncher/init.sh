@@ -76,7 +76,10 @@ else
     echo "Error: no wget or curl for fetching slave.jar."
 fi
 
+echo "Dumping env"
 env # debug
+
+echo "Getting Java version."
 java -version
 
 RUN_CMD="java"
@@ -109,5 +112,5 @@ if [ "$(id -nu)" != "$JENKINS_USER" ]; then
         RUN_CMD="su - $JENKINS_USER -c '$RUN_CMD'"
     fi
 fi
-sleep 10
+
 eval "$RUN_CMD"

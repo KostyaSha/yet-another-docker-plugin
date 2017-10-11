@@ -329,7 +329,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         createContainerCmd.withStdinOpen(true);
     }
 
-    public static void printLog(DockerClient client, TaskListener listener, String containerId) {
+    private void printLog(DockerClient client, TaskListener listener, String containerId) {
         try {
             client.logContainerCmd(containerId)
                     .withStdErr(true)

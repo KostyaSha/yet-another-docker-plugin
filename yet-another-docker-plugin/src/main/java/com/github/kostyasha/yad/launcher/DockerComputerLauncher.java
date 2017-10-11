@@ -30,14 +30,15 @@ public abstract class DockerComputerLauncher extends DelegatingComputerLauncher 
     /**
      * Called after container was created. DockerSlave is not created atm.
      */
-    public void afterContainerCreate(DockerClient client, String containerId) throws IOException {}
+    public void afterContainerCreate(DockerClient client, String containerId) throws IOException {
+    }
 
     /**
      * Return valid configured launcher that will be used for launching slave
      */
     public abstract DockerComputerLauncher getPreparedLauncher(String cloudId,
-                                                         DockerSlaveTemplate dockerSlaveTemplate,
-                                                         InspectContainerResponse ir);
+                                                               DockerSlaveTemplate dockerSlaveTemplate,
+                                                               InspectContainerResponse ir);
 
     /**
      * Contribute container parameters needed for launcher.
