@@ -39,6 +39,7 @@ import java.util.Objects;
 import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils.isNotEmpty;
 import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils.trimToEmpty;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 /**
  * JNLP launcher. Doesn't require open ports on docker host.
@@ -191,6 +192,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         try {
             String startCmd = null;
             ExecCreateCmdResponse response = null;
+            logger.println("Creating exec command...");
 
             if (dockerSlaveTemplate.getOsType() == OsType.WINDOWS) {
                 startCmd =
@@ -237,24 +239,24 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                         .exec();
             }
 
-            LOG.info("Starting connection command for {}", containerId);
+            LOG.info("Starting connection command for {}...", containerId);
             logger.println("Starting connection command for " + containerId);
 
             try (ExecStartResultCallback exec = connect
                     .execStartCmd(response.getId())
                     .withDetach(true)
                     .withTty(true)
-                    .exec(new ExecStartResultCallback())
+                    .exec(new ExecStartResultCallback(logger, logger))
             ) {
                 exec.awaitCompletion();
             } catch (NotFoundException ex) {
-                listener.error("Can't execute command: " + ex.getMessage().trim());
-                LOG.error("Can't execute jnlp connection command: '{}'", ex.getMessage().trim());
+                listener.error("Can't execute JNLP command: " + ex.getMessage().trim());
+                LOG.error("Can't execute JNLP command: '{}'", ex.getMessage().trim());
                 throw ex;
             }
         } catch (Exception ex) {
-            listener.error("Can't execute command: " + ex.getMessage().trim());
-            LOG.error("Can't execute jnlp connection command: '{}'", ex.getMessage().trim());
+            listener.error("Can't execute JNLP connection command: " + ex.getMessage().trim());
+            LOG.error("Can't execute JNLP connection command: '{}'", ex.getMessage().trim());
             printLog(connect, listener, containerId);
             node.terminate();
             throw ex;
@@ -271,9 +273,14 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             Thread.sleep(1000);
         }
 
+        InspectContainerResponse inspect = dockerCloud.getClient().inspectContainerCmd(containerId).exec();
+        if (nonNull(inspect) && !Boolean.TRUE.equals(inspect.getState().getRunning())) {
+            logger.println("Container is not running: " + inspect.getState().getRunning());
+        }
+
         if (!dockerComputer.isOnline()) {
-            LOG.info("Launch timeout, termintaing slave based on '{}'", containerId);
-            logger.println("Launch timeout, termintaing slave.");
+            LOG.info("Launch timeout, terminating slave based on '{}'", containerId);
+            logger.println("Launch timeout, terminating slave.");
             printLog(connect, listener, containerId);
             node.terminate();
             throw new IOException("Can't connect slave to jenkins");
@@ -309,7 +316,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
      * Clone object.
      */
     @Override
-    public ComputerLauncher getPreparedLauncher(String cloudId, DockerSlaveTemplate template,
+    public DockerComputerLauncher getPreparedLauncher(String cloudId, DockerSlaveTemplate template,
                                                 InspectContainerResponse containerInspectResponse) {
         final DockerComputerJNLPLauncher cloneJNLPlauncher = new DockerComputerJNLPLauncher();
 

@@ -1,6 +1,7 @@
 package com.github.kostyasha.yad.utils;
 
 import com.github.kostyasha.yad.DockerCloud;
+import com.github.kostyasha.yad.launcher.DockerComputerIOLauncher;
 import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.launcher.DockerComputerSSHLauncher;
 import com.github.kostyasha.yad.strategy.DockerCloudRetentionStrategy;
@@ -61,6 +62,7 @@ public class DockerFunctions {
 
         launchers.add(getInstance().getDescriptor(DockerComputerSSHLauncher.class));
         launchers.add(getInstance().getDescriptor(DockerComputerJNLPLauncher.class));
+        launchers.add(getInstance().getDescriptor(DockerComputerIOLauncher.class));
 
         return launchers;
     }
@@ -73,6 +75,7 @@ public class DockerFunctions {
 
         strategies.add(getInstance().getDescriptor(DockerOnceRetentionStrategy.class));
         strategies.add(getInstance().getDescriptor(DockerCloudRetentionStrategy.class));
+        strategies.add(getInstance().getDescriptor(DockerComputerIOLauncher.class));
 
         return strategies;
     }

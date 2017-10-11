@@ -76,7 +76,11 @@ else
     echo "Error: no wget or curl for fetching slave.jar."
 fi
 
+echo "Dumping env"
 env # debug
+
+echo "Getting Java version."
+java -version
 
 RUN_CMD="java"
 

@@ -17,7 +17,6 @@ import hudson.Extension;
 import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHConnector;
 import hudson.plugins.sshslaves.SSHLauncher;
-import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.AncestorInPath;
@@ -55,7 +54,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         return sshConnector;
     }
 
-    public ComputerLauncher getPreparedLauncher(String cloudId, DockerSlaveTemplate dockerSlaveTemplate,
+    public DockerComputerLauncher getPreparedLauncher(String cloudId, DockerSlaveTemplate dockerSlaveTemplate,
                                                 InspectContainerResponse inspect) {
         // don't care, we need only launcher
         final DockerComputerSSHLauncher prepLauncher = new DockerComputerSSHLauncher(null);
