@@ -152,7 +152,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
         private TaskListener listener;
         private OutputStream outputStream;
 
-        public IOCallback(TaskListener listener, OutputStream outputStream) {
+        IOCallback(TaskListener listener, OutputStream outputStream) {
             this.listener = listener;
             this.outputStream = outputStream;
         }

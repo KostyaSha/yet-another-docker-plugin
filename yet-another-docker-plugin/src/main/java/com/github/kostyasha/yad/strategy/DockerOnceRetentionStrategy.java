@@ -120,18 +120,18 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
         }
 
         final Future<?> submit = Computer.threadPoolForRemoting.submit(() -> {
-                    try {
-                        AbstractCloudSlave node = c.getNode();
-                        if (node != null) {
-                            node.terminate();
-                        }
-                    } catch (InterruptedException | IOException e) {
-                        LOG.warn("Failed to terminate " + c.getName(), e);
-                        synchronized (DockerOnceRetentionStrategy.this) {
-                            terminating = false;
-                        }
+                try {
+                    AbstractCloudSlave node = c.getNode();
+                    if (node != null) {
+                        node.terminate();
+                    }
+                } catch (InterruptedException | IOException e) {
+                    LOG.warn("Failed to terminate " + c.getName(), e);
+                    synchronized (DockerOnceRetentionStrategy.this) {
+                        terminating = false;
                     }
                 }
+            }
         );
     }
 

@@ -17,7 +17,6 @@ import hudson.Extension;
 import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHConnector;
 import hudson.plugins.sshslaves.SSHLauncher;
-import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.AncestorInPath;
