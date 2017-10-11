@@ -149,11 +149,6 @@ public class DockerSlave extends AbstractCloudSlave implements TrackedItem {
     }
 
     @Override
-    public void terminate() throws InterruptedException, IOException {
-        super.terminate();
-    }
-
-    @Override
     protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
         final DockerContainerLifecycle dockerContainerLifecycle = dockerSlaveTemplate.getDockerContainerLifecycle();
         try {
