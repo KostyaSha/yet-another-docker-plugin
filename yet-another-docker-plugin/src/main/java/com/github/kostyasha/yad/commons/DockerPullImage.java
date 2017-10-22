@@ -7,7 +7,10 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.kostyasha.yad.credentials.DockerRegistryAuthCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.PullImageCmd;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.DockerClientException;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Image;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
@@ -127,9 +130,21 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
                 }
             }
 
-            pullImageCmd
-                    .exec(new DockerPullImageListenerLogger(listener))
-                    .awaitSuccess();
+            try {
+                pullImageCmd
+                        .exec(new DockerPullImageListenerLogger(listener))
+                        .awaitSuccess();
+            } catch (DockerClientException exception) {
+                if (exception.getMessage().contains("Could not pull image: Digest:")) {
+                    try {
+                        client.inspectImageCmd(imageName).exec();
+                    } catch (NotFoundException notFoundEx) {
+                        throw exception;
+                    }
+                } else {
+                    throw exception;
+                }
+            }
 
             long pullTime = System.currentTimeMillis() - startTime;
             LOG.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
