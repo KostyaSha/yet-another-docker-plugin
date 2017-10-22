@@ -30,7 +30,7 @@ import static java.util.Objects.isNull;
 @Extension(ordinal = 10)
 public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
     private static final Logger LOG = LoggerFactory.getLogger(DockerProvisioningStrategy.class);
-    public static DockerCloudOrder DEFAULT = new AsIsDockerCloudOrder();
+    public static final DockerCloudOrder DEFAULT = new AsIsDockerCloudOrder();
 
     /**
      * For groovy.
