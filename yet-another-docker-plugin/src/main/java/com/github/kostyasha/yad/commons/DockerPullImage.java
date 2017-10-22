@@ -135,7 +135,9 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
                         .exec(new DockerPullImageListenerLogger(listener))
                         .awaitSuccess();
             } catch (DockerClientException exception) {
-                if (exception.getMessage().contains("Could not pull image: Digest:")) {
+                String exMsg = exception.getMessage();
+                if (exMsg.contains("Could not pull image: Digest:") ||
+                        exMsg.contains(": downloaded")) {
                     try {
                         client.inspectImageCmd(imageName).exec();
                     } catch (NotFoundException notFoundEx) {
@@ -170,11 +172,11 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
         List<Image> images = client.listImagesCmd().exec();
 
         boolean hasImage = images.stream().anyMatch(image ->
-            nonNull(image.getRepoTags()) &&
-                    Arrays.stream(image.getRepoTags())
-                            .anyMatch(repoTag ->
-                                    repoTag.contains(fullImageName) || repoTag.contains("docker.io/" + fullImageName)
-                            )
+                nonNull(image.getRepoTags()) &&
+                        Arrays.stream(image.getRepoTags())
+                                .anyMatch(repoTag ->
+                                        repoTag.contains(fullImageName) || repoTag.contains("docker.io/" + fullImageName)
+                                )
         );
 
         return hasImage ?
