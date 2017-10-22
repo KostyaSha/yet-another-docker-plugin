@@ -34,6 +34,8 @@ public class DockerPullImageTest {
         return Arrays.asList(new Object[][]{
                 {"docker.io/kostyasha/yet-another-docker-plugin:wget-master",
                         "kostyasha/yet-another-docker-plugin:wget-master", PULL_LATEST, false},
+                {"kostyasha/yet-another-docker-plugin:wget-master",
+                        "kostyasha/yet-another-docker-plugin:wget-master", PULL_LATEST, false},
                 {"", "repo/name", PULL_LATEST, true},
                 {"repo/name:latest", "repo/name", PULL_LATEST, true},
                 {"", "repo/name:latest", PULL_LATEST, true},
@@ -47,6 +49,7 @@ public class DockerPullImageTest {
                 {"repo/name:latest", "repo/name:latest", PULL_ALWAYS, true},
                 {"", "repo/name:1.0", PULL_ALWAYS, true},
                 {"repo/name:1.0", "repo/name:1.0", PULL_ALWAYS, true},
+
 
                 {"", "repo/name", PULL_NEVER, false},
                 {"repo/name:latest", "repo/name", PULL_NEVER, false},
