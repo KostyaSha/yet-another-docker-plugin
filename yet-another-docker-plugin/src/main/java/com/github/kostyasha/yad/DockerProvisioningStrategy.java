@@ -1,7 +1,8 @@
 package com.github.kostyasha.yad;
 
+import com.github.kostyasha.yad.other.cloudorder.AsIsDockerCloudOrder;
+import com.github.kostyasha.yad.other.cloudorder.DockerCloudOrder;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
-import com.github.kostyasha.yad.utils.DockerCloudLoadComparator;
 import com.google.common.annotations.VisibleForTesting;
 import hudson.Extension;
 import hudson.ExtensionList;
@@ -14,12 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
 
-import static com.github.kostyasha.yad.utils.DockerFunctions.getAvailableDockerClouds;
-import static com.github.kostyasha.yad.utils.DockerFunctions.getDockerClouds;
+import static com.github.kostyasha.yad.DockerGlobalConfiguration.dockerGlobalConfig;
 import static hudson.ExtensionList.lookup;
 import static java.util.Objects.isNull;
 
@@ -31,6 +30,7 @@ import static java.util.Objects.isNull;
 @Extension(ordinal = 10)
 public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
     private static final Logger LOG = LoggerFactory.getLogger(DockerProvisioningStrategy.class);
+    public static DockerCloudOrder DEFAULT = new AsIsDockerCloudOrder();
 
     /**
      * For groovy.
@@ -63,24 +63,13 @@ public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
         final Label label = strategyState.getLabel();
         LoadStatisticsSnapshot snapshot = strategyState.getSnapshot();
 
-        //create a random list of docker clouds and prioritize idle clouds
-        List<DockerCloud> provisionClouds = null;
-        List<DockerCloud> availableClouds = getAvailableDockerClouds(label);
-        if (availableClouds.size() > 0) {
-            //select available clouds based on label which have potential capacity
-            LOG.debug("Picking from available clouds.");
-            provisionClouds = availableClouds;
+        List<DockerCloud> provisionClouds;
+        DockerCloudOrder cloudOrder = dockerGlobalConfig().getCloudOrder();
+        if (isNull(cloudOrder)) {
+            provisionClouds = DEFAULT.getDockerClouds(label);
         } else {
-            //if there's no available clouds then fall back to original behavior
-            LOG.debug("Falling back to getting all clouds regardless of availability.");
-            provisionClouds = getDockerClouds();
+            provisionClouds = cloudOrder.getDockerClouds(label);
         }
-        //randomize the order of the DockerCloud list
-        Collections.shuffle(provisionClouds);
-        //sort by least loaded DockerCloud (i.e. fewest provisioned slaves)
-        Collections.sort(provisionClouds, new DockerCloudLoadComparator());
-        LOG.debug("Least loaded randomized DockerCloud: " +
-                ((provisionClouds.size() > 0) ? provisionClouds.get(0).name : "none available"));
 
         for (DockerCloud dockerCloud : provisionClouds) {
             for (DockerSlaveTemplate template : dockerCloud.getTemplates(label)) {

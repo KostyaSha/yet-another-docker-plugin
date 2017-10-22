@@ -84,7 +84,7 @@ public class DockerFunctions {
      * @return the list as a LinkedList of DockerCloud
      */
     @Nonnull
-    public static synchronized List<DockerCloud> getDockerClouds() {
+    public static List<DockerCloud> getAllDockerClouds() {
         return getInstance().clouds.stream()
                 .filter(Objects::nonNull)
                 .filter(DockerCloud.class::isInstance)
@@ -107,30 +107,5 @@ public class DockerFunctions {
         }
     }
 
-    /**
-     * Get a list of available DockerCloud clouds which are not at max
-     * capacity.
-     *
-     * @param label A label expression of a Job Run requiring an executor.
-     * @return A list of available DockerCloud clouds.
-     */
-    public static List<DockerCloud> getAvailableDockerClouds(Label label) {
-        return getDockerClouds().stream()
-            .filter(cloud ->
-                    cloud.canProvision(label) &&
-                    (countCurrentDockerSlaves(cloud) >= 0) &&
-                    (countCurrentDockerSlaves(cloud) < cloud.getContainerCap()))
-            .collect(Collectors.toList());
-    }
 
-    public static DockerCloud anyCloudForLabel(Label label) {
-        return getDockerClouds().stream()
-                .filter(cloud -> cloud.canProvision(label))
-                .findFirst()
-                .orElse(null);
-    }
-
-    public static DockerCloud firstDockerCloudByName(final String serverName) {
-        return Iterables.find(getDockerClouds(), input -> serverName.equals(input.getDisplayName()));
-    }
 }
