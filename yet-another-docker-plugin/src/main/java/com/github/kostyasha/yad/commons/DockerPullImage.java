@@ -7,7 +7,6 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.kostyasha.yad.credentials.DockerRegistryAuthCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.PullImageCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.DockerClientException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
