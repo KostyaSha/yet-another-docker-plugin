@@ -1,5 +1,11 @@
 ##
 
+## 0.1.0-rc44
+- Workaround pulling issues.
+- Switch to finally released maven-shade-plugin with relaxed maven-enforcer requirements.
+- docker-java 3.0.14.
+- Update groovy script.
+
 ## 0.1.0-rc43
 - Don't call daemon and exclude redundant pull for LATEST pulling strategy.
 - [criritical] Remove Queue lock delay and potential queue lock out.
