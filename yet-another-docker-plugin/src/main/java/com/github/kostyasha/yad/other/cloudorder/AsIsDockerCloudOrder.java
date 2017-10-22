@@ -3,6 +3,7 @@ package com.github.kostyasha.yad.other.cloudorder;
 import com.github.kostyasha.yad.DockerCloud;
 import hudson.Extension;
 import hudson.model.Label;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -12,6 +13,11 @@ import java.util.stream.Collectors;
 import static jenkins.model.Jenkins.getInstance;
 
 public class AsIsDockerCloudOrder extends DockerCloudOrder {
+
+    @DataBoundConstructor
+    public AsIsDockerCloudOrder() {
+    }
+
     @Nonnull
     @Override
     public List<DockerCloud> getDockerClouds(Label label) {

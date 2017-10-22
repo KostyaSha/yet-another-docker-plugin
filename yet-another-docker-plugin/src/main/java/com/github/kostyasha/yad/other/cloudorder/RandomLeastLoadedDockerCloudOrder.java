@@ -3,8 +3,8 @@ package com.github.kostyasha.yad.other.cloudorder;
 import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.utils.DockerCloudLoadComparator;
 import hudson.Extension;
-import hudson.model.Descriptor;
 import hudson.model.Label;
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +18,10 @@ import static com.github.kostyasha.yad.utils.DockerFunctions.getAllDockerClouds;
 
 public class RandomLeastLoadedDockerCloudOrder extends DockerCloudOrder {
     private static final Logger LOG = LoggerFactory.getLogger(RandomLeastLoadedDockerCloudOrder.class);
+
+    @DataBoundConstructor
+    public RandomLeastLoadedDockerCloudOrder() {
+    }
 
     @Nonnull
     public List<DockerCloud> getDockerClouds(Label label) {
@@ -63,7 +67,7 @@ public class RandomLeastLoadedDockerCloudOrder extends DockerCloudOrder {
     }
 
     @Extension
-    public static class DescriptorImpl extends Descriptor {
+    public static class DescriptorImpl extends DockerCloudOrderDescriptor {
         @Nonnull
         @Override
         public String getDisplayName() {
