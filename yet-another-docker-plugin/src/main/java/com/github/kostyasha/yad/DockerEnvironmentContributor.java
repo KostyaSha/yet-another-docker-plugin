@@ -14,6 +14,8 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
+import static java.util.Objects.isNull;
+
 /**
  * Contribute docker related vars in build.
  * will be more generic solution
@@ -31,8 +33,13 @@ public class DockerEnvironmentContributor extends EnvironmentContributor {
         final Executor executor = run.getExecutor();
         if (executor != null && executor.getOwner() instanceof DockerComputer) {
             final DockerComputer dockerComputer = (DockerComputer) executor.getOwner();
+            DockerSlave node = dockerComputer.getNode();
+            if (isNull(node)) {
+                LOG.debug("{} is missing it's node, skipping...", dockerComputer.getName());
+                return;
+            }
 
-            final DockerNodeProperty dProp = dockerComputer.getNode().getNodeProperties().get(DockerNodeProperty.class);
+            final DockerNodeProperty dProp = .getNodeProperties().get(DockerNodeProperty.class);
             if (dProp == null) {
                 return;
             }
