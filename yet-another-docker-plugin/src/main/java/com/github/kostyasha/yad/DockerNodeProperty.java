@@ -12,7 +12,7 @@ import javax.annotation.Nonnull;
 /**
  * @author Kanstantsin Shautsou
  */
-public class DockerNodeProperty extends NodeProperty {
+public class DockerNodeProperty extends NodeProperty<Node> {
 
     private String containerId = "DOCKER_CONTAINER_ID";
     private boolean containerIdCheck = true;
@@ -83,8 +83,7 @@ public class DockerNodeProperty extends NodeProperty {
     public static class DescriptorImpl extends NodePropertyDescriptor {
         @Override
         public boolean isApplicable(Class<? extends Node> targetType) {
-            return targetType.isAssignableFrom(DockerSlave.class) ||
-                    targetType.isAssignableFrom(DockerSlaveSingle.class);
+            return targetType.isAssignableFrom(DockerSlave.class);
         }
 
         @Nonnull
