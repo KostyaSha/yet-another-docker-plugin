@@ -12,7 +12,7 @@ import javax.annotation.Nonnull;
 /**
  * @author Kanstantsin Shautsou
  */
-public class DockerNodeProperty extends NodeProperty<Node> {
+public class DockerNodeProperty extends NodeProperty {
 
     private String containerId = "DOCKER_CONTAINER_ID";
     private boolean containerIdCheck = true;

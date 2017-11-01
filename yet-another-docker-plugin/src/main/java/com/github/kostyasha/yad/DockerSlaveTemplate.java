@@ -61,7 +61,7 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
      * FIXME DescribableList doesn't work with DBS https://gist.github.com/KostyaSha/3414f4f453ea7c7406b4
      */
     @DataBoundConstructor
-    public DockerSlaveTemplate(@Nonnull String id, List<? extends NodeProperty<?>> nodeProperties)
+    public DockerSlaveTemplate(@Nonnull String id, List<NodeProperty<?>> nodeProperties)
             throws FormException {
         this(id);
         setNodeProperties(nodeProperties);
