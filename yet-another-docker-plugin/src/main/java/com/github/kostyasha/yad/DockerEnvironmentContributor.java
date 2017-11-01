@@ -39,7 +39,7 @@ public class DockerEnvironmentContributor extends EnvironmentContributor {
                 return;
             }
 
-            final DockerNodeProperty dProp = .getNodeProperties().get(DockerNodeProperty.class);
+            final DockerNodeProperty dProp = node.getNodeProperties().get(DockerNodeProperty.class);
             if (dProp == null) {
                 return;
             }
