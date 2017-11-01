@@ -4,12 +4,15 @@ import hudson.Extension;
 import hudson.model.Node;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodePropertyDescriptor;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import javax.annotation.Nonnull;
 
 /**
  * @author Kanstantsin Shautsou
  */
-public class DockerNodeProperty<T extends Node> extends NodeProperty {
+public class DockerNodeProperty extends NodeProperty<Node> {
 
     private String containerId = "DOCKER_CONTAINER_ID";
     private boolean containerIdCheck = true;
@@ -75,13 +78,16 @@ public class DockerNodeProperty<T extends Node> extends NodeProperty {
         return dockerHostCheck;
     }
 
+    @Symbol("dockerEnvVars")
     @Extension
     public static class DescriptorImpl extends NodePropertyDescriptor {
         @Override
         public boolean isApplicable(Class<? extends Node> targetType) {
-            return targetType.isAssignableFrom(DockerSlave.class);
+            return targetType.isAssignableFrom(DockerSlave.class) ||
+                    targetType.isAssignableFrom(DockerSlaveSingle.class);
         }
 
+        @Nonnull
         @Override
         public String getDisplayName() {
             return "Docker variables";

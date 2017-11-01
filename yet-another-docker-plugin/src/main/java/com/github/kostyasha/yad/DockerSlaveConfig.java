@@ -57,7 +57,7 @@ public class DockerSlaveConfig extends AbstractDescribableImpl<DockerSlaveConfig
      */
     protected DockerContainerLifecycle dockerContainerLifecycle = new DockerContainerLifecycle();
 
-    private List<? extends NodeProperty<?>> nodeProperties = emptyList();
+    protected List<? extends NodeProperty> nodeProperties = emptyList();
 
     public DockerSlaveConfig() {
         this.id = randomUUID().toString();
@@ -138,7 +138,7 @@ public class DockerSlaveConfig extends AbstractDescribableImpl<DockerSlaveConfig
     }
 
     @Nonnull
-    public List<? extends NodeProperty<?>> getNodeProperties() {
+    public List<? extends NodeProperty> getNodeProperties() {
         return nonNull(nodeProperties) ? unmodifiableList(nodeProperties) : emptyList();
     }
 
