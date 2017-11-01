@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -32,6 +33,7 @@ import static java.util.Objects.isNull;
  */
 public class DockerSlaveTemplate extends DockerSlaveConfig {
     private static final Logger LOG = LoggerFactory.getLogger(DockerSlaveTemplate.class);
+    private int configVersion = 1;
 
     private int maxCapacity = 10;
 
@@ -59,7 +61,7 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
      * FIXME DescribableList doesn't work with DBS https://gist.github.com/KostyaSha/3414f4f453ea7c7406b4
      */
     @DataBoundConstructor
-    public DockerSlaveTemplate(@Nonnull String id, List<? extends NodeProperty<?>> nodeProperties)
+    public DockerSlaveTemplate(@Nonnull String id, List<NodeProperty<?>> nodeProperties)
             throws FormException {
         this(id);
         setNodeProperties(nodeProperties);
@@ -123,6 +125,12 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
      */
     @SuppressWarnings("unused")
     public Object readResolve() {
+        if (configVersion < 1) {
+            if (isNull(nodeProperties)) nodeProperties = new ArrayList<>();
+            nodeProperties.add(new DockerNodeProperty("DOCKER_CONTAINER_ID", "JENKINS_CLOUD_ID", "DOCKER_HOST"));
+            configVersion = 1;
+        }
+
         // real @Nonnull
         if (mode == null) {
             mode = Node.Mode.NORMAL;

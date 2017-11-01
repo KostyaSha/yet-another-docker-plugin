@@ -14,12 +14,14 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
+import static java.util.Objects.isNull;
+
 /**
  * Contribute docker related vars in build.
- * TODO seems this will never satisfy all use cases and dumping inspect json into WS
  * will be more generic solution
  *
  * @author Kanstantsin Shautsou
+ * @see DockerNodeProperty
  */
 @Extension
 public class DockerEnvironmentContributor extends EnvironmentContributor {
@@ -31,24 +33,44 @@ public class DockerEnvironmentContributor extends EnvironmentContributor {
         final Executor executor = run.getExecutor();
         if (executor != null && executor.getOwner() instanceof DockerComputer) {
             final DockerComputer dockerComputer = (DockerComputer) executor.getOwner();
-            listener.getLogger().println("[YAD-PLUGIN] Injecting DOCKER_CONTAINER_ID variable.");
-            envs.put("DOCKER_CONTAINER_ID", dockerComputer.getContainerId());
-            listener.getLogger().println("[YAD-PLUGIN] Injecting JENKINS_CLOUD_ID variable.");
-            envs.put("JENKINS_CLOUD_ID", dockerComputer.getCloudId());
-            try {
-                //replace http:// and https:// from docker-java to tcp://
-                final DockerCloud cloud = dockerComputer.getCloud(); // checkfornull
-                if (cloud != null && cloud.getConnector() != null) {
-                    final URIBuilder uriBuilder = new URIBuilder(cloud.getConnector().getServerUrl());
-                    if (!uriBuilder.getScheme().equals("unix")) {
-                        uriBuilder.setScheme("tcp");
+            DockerSlave node = dockerComputer.getNode();
+            if (isNull(node)) {
+                LOG.debug("{} is missing it's node, skipping...", dockerComputer.getName());
+                return;
+            }
+
+            final DockerNodeProperty dProp = node.getNodeProperties().get(DockerNodeProperty.class);
+            if (dProp == null) {
+                return;
+            }
+
+            if (dProp.isContainerIdCheck()) {
+                listener.getLogger().println("[YAD-PLUGIN] Injecting variable: " + dProp.getContainerId());
+                envs.put(dProp.getContainerId(), dockerComputer.getContainerId());
+            }
+
+            if (dProp.isCloudIdCheck()) {
+                listener.getLogger().println("[YAD-PLUGIN] Injecting variable: " + dProp.getCloudId());
+                envs.put(dProp.getCloudId(), dockerComputer.getCloudId());
+            }
+
+            if (dProp.isDockerHostCheck()) {
+                try {
+                    //replace http:// and https:// from docker-java to tcp://
+                    final DockerCloud cloud = dockerComputer.getCloud(); // checkfornull
+                    if (cloud != null && cloud.getConnector() != null) {
+                        final URIBuilder uriBuilder = new URIBuilder(cloud.getConnector().getServerUrl());
+                        if (!uriBuilder.getScheme().equals("unix")) {
+                            uriBuilder.setScheme("tcp");
+                        }
+
+                        listener.getLogger().println("[YAD-PLUGIN] Injecting variable: " + dProp.getDockerHost());
+                        envs.put(dProp.getDockerHost(), uriBuilder.toString());
                     }
-                    listener.getLogger().println("[YAD-PLUGIN] DOCKER_HOST variable.");
-                    envs.put("DOCKER_HOST", uriBuilder.toString());
+                } catch (URISyntaxException e) {
+                    listener.error("Can't make variable: %s", dProp.getDockerHost(), e);
+                    LOG.error("Can't make '{}' variable: {}", dProp.getDockerHost(), e);
                 }
-            } catch (URISyntaxException e) {
-                listener.error("Can't build 'DOCKER_HOST' variable: {}", e.getMessage());
-                LOG.error("Can't build 'DOCKER_HOST' var: {}", e.getMessage());
             }
         }
     }

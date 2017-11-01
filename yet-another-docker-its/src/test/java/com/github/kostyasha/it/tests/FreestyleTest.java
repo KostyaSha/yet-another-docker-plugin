@@ -9,6 +9,7 @@ import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.DockerConnector;
 import com.github.kostyasha.yad.DockerConnector.DescriptorImpl;
 import com.github.kostyasha.yad.DockerContainerLifecycle;
+import com.github.kostyasha.yad.DockerNodeProperty;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad.commons.DockerPullImage;
 import com.github.kostyasha.yad.commons.DockerRemoveContainer;
@@ -73,6 +74,9 @@ public class FreestyleTest implements Serializable {
     private static final String DOCKER_CLOUD_LABEL = "docker-label";
     private static final String DOCKER_CLOUD_NAME = "docker-cloud";
     private static final String TEST_VALUE = "2323re23e";
+    private static final String CONTAINER_ID = "CONTAINER_ID";
+    private static final String CLOUD_ID = "CLOUD_ID";
+    private static final String DOCKER_HOST = "SOME_HOST";
 
     @Parameterized.Parameters(name = "{0}")
     public static Iterable<String> data() {
@@ -212,8 +216,11 @@ public class FreestyleTest implements Serializable {
             //template
             final Entry entry = new Entry("super-key", TEST_VALUE);
             final EnvironmentVariablesNodeProperty nodeProperty = new EnvironmentVariablesNodeProperty(entry);
+
             final ArrayList<NodeProperty<?>> nodeProperties = new ArrayList<>();
             nodeProperties.add(nodeProperty);
+            nodeProperties.add(new DockerNodeProperty(CONTAINER_ID, CLOUD_ID, DOCKER_HOST));
+
 
             final DockerSlaveTemplate slaveTemplate = new DockerSlaveTemplate();
             slaveTemplate.setMaxCapacity(4);
@@ -278,6 +285,7 @@ public class FreestyleTest implements Serializable {
             assertThat(lastBuild.getResult(), is(Result.SUCCESS));
 
             assertThat(getLog(lastBuild), Matchers.containsString(TEST_VALUE));
+            assertThat(getLog(lastBuild), Matchers.containsString(CLOUD_ID + "=" + DOCKER_CLOUD_NAME));
 
             return true;
         }
