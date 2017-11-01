@@ -54,6 +54,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.codec.binary.Base64.encodeBase64;
@@ -140,6 +141,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             insertLabels(containerConfig, run);
 
             if (nonNull(executorScript)) {
+                containerConfig.withUser("root");
                 containerConfig.withEntrypoint("/bin/sh", "/tmp/executor.sh");
                 containerConfig.withCmd("");
             }
@@ -269,7 +271,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
         // add job vars into shell env vars
         try {
             final List<String> envList = isNull(containerConfig.getEnv()) ?
-                    new ArrayList<>() : Arrays.asList(containerConfig.getEnv());
+                    new ArrayList<>() : new ArrayList<>(Arrays.asList(containerConfig.getEnv()));
 
             final EnvVars environment = getEnvVars(run, listener);
             // maybe something should be escaped

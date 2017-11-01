@@ -364,8 +364,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                         "-cxe",
                         "cat << EOF >> /tmp/init.sh && chmod +x /tmp/init.sh && exec /tmp/init.sh\n" +
                                 initCmd.replace("$", "\\$") + "\n" +
-                                "EOF" + "\n"
-                );
+                                "EOF" + "\n")
+                        .withUser("root");
             }
         }
 
