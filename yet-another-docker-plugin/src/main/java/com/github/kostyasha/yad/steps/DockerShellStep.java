@@ -269,8 +269,10 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                                      CreateContainerCmd containerConfig) {
         // add job vars into shell env vars
         try {
-            final List<String> envList = isNull(containerConfig.getEnv()) ?
-                    new ArrayList<>() : new ArrayList<>(Arrays.asList(containerConfig.getEnv()));
+            final List<String> envList = new ArrayList<>();
+            if (nonNull(containerConfig.getEnv())) {
+                envList.addAll(Arrays.asList(containerConfig.getEnv()));
+            }
 
             final EnvVars environment = getEnvVars(run, listener);
             // maybe something should be escaped
