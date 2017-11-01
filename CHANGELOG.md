@@ -1,5 +1,9 @@
 ##
 
+## 0.1.0-rc45
+- Make slave variables optional
+- Execute init scripts under roor (in case Dockerfile had redefined default user)
+
 ## 0.1.0-rc44
 - Workaround pulling issues.
 - Switch to finally released maven-shade-plugin with relaxed maven-enforcer requirements.
