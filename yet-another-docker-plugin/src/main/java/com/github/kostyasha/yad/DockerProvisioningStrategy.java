@@ -1,21 +1,24 @@
 package com.github.kostyasha.yad;
 
+import com.github.kostyasha.yad.other.cloudorder.AsIsDockerCloudOrder;
+import com.github.kostyasha.yad.other.cloudorder.DockerCloudOrder;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import com.google.common.annotations.VisibleForTesting;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.model.Label;
 import hudson.model.LoadStatistics.LoadStatisticsSnapshot;
-import hudson.slaves.NodeProvisioner;
 import hudson.slaves.NodeProvisioner.PlannedNode;
+import hudson.slaves.NodeProvisioner;
 import hudson.slaves.RetentionStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.util.Collection;
+import java.util.List;
+import javax.annotation.Nonnull;
 
-import static com.github.kostyasha.yad.utils.DockerFunctions.getDockerClouds;
+import static com.github.kostyasha.yad.DockerGlobalConfiguration.dockerGlobalConfig;
 import static hudson.ExtensionList.lookup;
 import static java.util.Objects.isNull;
 
@@ -27,6 +30,7 @@ import static java.util.Objects.isNull;
 @Extension(ordinal = 10)
 public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
     private static final Logger LOG = LoggerFactory.getLogger(DockerProvisioningStrategy.class);
+    public static final DockerCloudOrder DEFAULT = new AsIsDockerCloudOrder();
 
     /**
      * For groovy.
@@ -48,7 +52,8 @@ public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
     }
 
     /**
-     * Do asap provisioning for OnceRetention with one executor.
+     * Do asap provisioning for OnceRetention with one executor.  The
+     * provisioning strategy is to attempt to find a random least loaded cloud.
      * Some other configuration may also want such behaviour?
      */
     @Nonnull
@@ -58,7 +63,15 @@ public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
         final Label label = strategyState.getLabel();
         LoadStatisticsSnapshot snapshot = strategyState.getSnapshot();
 
-        for (DockerCloud dockerCloud : getDockerClouds()) {
+        List<DockerCloud> provisionClouds;
+        DockerCloudOrder cloudOrder = dockerGlobalConfig().getCloudOrder();
+        if (isNull(cloudOrder)) {
+            provisionClouds = DEFAULT.getDockerClouds(label);
+        } else {
+            provisionClouds = cloudOrder.getDockerClouds(label);
+        }
+
+        for (DockerCloud dockerCloud : provisionClouds) {
             for (DockerSlaveTemplate template : dockerCloud.getTemplates(label)) {
                 if (notAllowedStrategy(template)) {
                     continue;

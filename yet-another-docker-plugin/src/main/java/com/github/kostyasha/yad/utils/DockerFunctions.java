@@ -6,10 +6,8 @@ import com.github.kostyasha.yad.launcher.DockerComputerJNLPLauncher;
 import com.github.kostyasha.yad.launcher.DockerComputerSSHLauncher;
 import com.github.kostyasha.yad.strategy.DockerCloudRetentionStrategy;
 import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
-import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
 import hudson.Functions;
 import hudson.model.Descriptor;
-import hudson.model.Label;
 import hudson.model.Node;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
@@ -87,7 +85,7 @@ public class DockerFunctions {
      * @return the list as a LinkedList of DockerCloud
      */
     @Nonnull
-    public static synchronized List<DockerCloud> getDockerClouds() {
+    public static List<DockerCloud> getAllDockerClouds() {
         return getInstance().clouds.stream()
                 .filter(Objects::nonNull)
                 .filter(DockerCloud.class::isInstance)
@@ -95,14 +93,20 @@ public class DockerFunctions {
                 .collect(Collectors.toList());
     }
 
-    public static DockerCloud anyCloudForLabel(Label label) {
-        return getDockerClouds().stream()
-                .filter(cloud -> cloud.canProvision(label))
-                .findFirst()
-                .orElse(null);
+    /**
+     * Count the number of current docker slaves for a given DockerCloud.
+     *
+     * @param cloud A DockerCloud.
+     * @return The number of slaves provisioned by the DockerCloud.
+     */
+    public static int countCurrentDockerSlaves(DockerCloud cloud) {
+        try {
+            return cloud.countCurrentDockerSlaves(null);
+        } catch (Exception e) {
+            //an exception was thrown so return an invalid count for current docker slaves
+            return -1;
+        }
     }
 
-    public static DockerCloud firstDockerCloudByName(final String serverName) {
-        return Iterables.find(getDockerClouds(), input -> serverName.equals(input.getDisplayName()));
-    }
+
 }
