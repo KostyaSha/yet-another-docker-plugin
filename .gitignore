@@ -15,4 +15,4 @@ _.sw*
 .classpath
 .project
 .settings/
-
+yet-another-docker-plugin/src/main/resources/rebel.xml
