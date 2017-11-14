@@ -1,5 +1,9 @@
 ##
 
+## 0.1.0-rc46
+- Added provisioning strategies across DockerClouds. Old and new random least loaded.
+- Improved help message for Links and Network mode fields
+
 ## 0.1.0-rc45
 - Make slave variables optional
 - Execute init scripts under roor (in case Dockerfile had redefined default user)
