@@ -71,11 +71,6 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     @CheckForNull
     private String command;
 
-    /**
-     * List variant of #command
-     */
-    private List<String> commands;
-
     @CheckForNull
     private String entrypoint;
 
@@ -517,6 +512,11 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         String[] cmd = getDockerCommandArray();
         if (cmd.length > 0) {
             containerConfig.withCmd(cmd);
+        }
+
+        String[] entry = getDockerEntrypointArray();
+        if (entry.length > 0) {
+            containerConfig.withEntrypoint(entry);
         }
 
         containerConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
