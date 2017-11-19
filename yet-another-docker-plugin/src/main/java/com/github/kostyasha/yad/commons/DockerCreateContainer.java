@@ -71,6 +71,11 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     @CheckForNull
     private String command;
 
+    /**
+     * List variant of #command
+     */
+    private List<String> commands;
+
     @CheckForNull
     private String entrypoint;
 
