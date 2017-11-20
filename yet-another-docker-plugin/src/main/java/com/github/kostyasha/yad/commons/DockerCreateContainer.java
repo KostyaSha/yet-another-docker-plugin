@@ -519,11 +519,6 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             containerConfig.withCmd(cmd);
         }
 
-        String[] entry = getDockerEntrypointArray();
-        if (entry.length > 0) {
-            containerConfig.withEntrypoint(entry);
-        }
-
         containerConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
 
         if (BooleanUtils.isTrue(getBindAllPorts())) {

@@ -18,12 +18,6 @@ f.advanced(title: _("Create Container settings"), align: "left") {
                 'codemirror-config': "mode: 'text/x-sh', lineNumbers: true")
     }
 
-    f.entry(title: _("Docker Entrypoint"), field: "entrypoint") {
-        f.textarea(name: "entrypoint",
-                'codemirror-mode': 'shell',
-                'codemirror-config': "mode: 'text/x-sh', lineNumbers: true")
-    }
-
     f.entry(title: _("Workdir"), field: "workdir") {
         f.textbox()
     }
