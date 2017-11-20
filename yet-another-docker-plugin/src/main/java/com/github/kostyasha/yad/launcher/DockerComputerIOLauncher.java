@@ -227,6 +227,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
                                                       InspectContainerResponse ir) {
         final DockerComputerIOLauncher launcher = new DockerComputerIOLauncher();
         launcher.setJavaPath(getJavaPath());
+        launcher.setJvmOpts(getJvmOpts());
         return launcher;
     }
 
