@@ -60,7 +60,6 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
         return trimToEmpty(javaPath);
     }
 
-
     @Override
     public void afterContainerCreate(DockerClient client, String containerId) throws IOException {
         // upload archive
@@ -203,6 +202,13 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
         }
     }
 
+    @Override
+    public void afterDisconnect(SlaveComputer computer, TaskListener listener) {
+    }
+
+    @Override
+    public void beforeDisconnect(SlaveComputer computer, TaskListener listener) {
+    }
 
     @Override
     public DockerComputerLauncher getPreparedLauncher(String cloudId, DockerSlaveTemplate dockerSlaveTemplate,
