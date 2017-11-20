@@ -45,6 +45,8 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
 
     protected String javaPath = "";
 
+    protected String jvmOpts = "";
+
     @DataBoundConstructor
     public DockerComputerIOLauncher() {
         super(null);
@@ -58,6 +60,16 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
     @Nonnull
     public String getJavaPath() {
         return trimToEmpty(javaPath);
+    }
+
+    @DataBoundSetter
+    public void setJvmOpts(String jvmOpts) {
+        this.jvmOpts = trimToEmpty(jvmOpts);
+    }
+
+    @Nonnull
+    public String getJvmOpts() {
+        return trimToEmpty(jvmOpts);
     }
 
     @Override
@@ -143,7 +155,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
                 .withAttachStdin(true)
                 .withAttachStdout(true)
                 .withTty(false)
-                .withCmd("/bin/sh", "-c", java + " -Dfile.encoding=UTF-8 -jar /tmp/slave.jar")
+                .withCmd("/bin/sh", "-c", java + " " + getJvmOpts() + " -Dfile.encoding=UTF-8 -jar /tmp/slave.jar")
                 .exec();
 
         client.execStartCmd(cmdResponse.getId())

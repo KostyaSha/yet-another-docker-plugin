@@ -14,3 +14,7 @@ if (instance == null) {
 f.entry(title: _("Java path"), field: "javaPath") {
     f.textbox()
 }
+
+f.entry(title: _("JVM Options"), field: "jvmOpts") {
+    f.textbox()
+}
