@@ -11,6 +11,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.In
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.StreamType;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.AttachContainerResultCallback;
+import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import com.google.common.base.Throwables;
 import hudson.Extension;
 import hudson.model.Slave;
@@ -23,6 +24,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
@@ -35,15 +37,29 @@ import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.Objects;
 
+import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils.trimToEmpty;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 public class DockerComputerIOLauncher extends DockerComputerLauncher {
 
+    protected String javaPath = "";
+
     @DataBoundConstructor
     public DockerComputerIOLauncher() {
         super(null);
     }
+
+    @DataBoundSetter
+    public void setJavaPath(String javaPath) {
+        this.javaPath = trimToEmpty(javaPath);
+    }
+
+    @Nonnull
+    public String getJavaPath() {
+        return trimToEmpty(javaPath);
+    }
+
 
     @Override
     public void afterContainerCreate(DockerClient client, String containerId) throws IOException {
@@ -117,13 +133,18 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
         PipedOutputStream outputStream = new PipedOutputStream(pipedInputStream);
         llog.println("Attaching to container...");
 
+        String java = getJavaPath();
+
+        if (StringUtils.isEmpty(java)) {
+            java = "java";
+        }
+
         ExecCreateCmdResponse cmdResponse = client.execCreateCmd(containerId)
                 .withAttachStderr(true)
                 .withAttachStdin(true)
                 .withAttachStdout(true)
                 .withTty(false)
-                .withCmd("/bin/bash", "-c", "java -Dfile.encoding=UTF-8 -jar /tmp/slave.jar")
-                .withUser("root")
+                .withCmd("/bin/sh", "-c", java + " -Dfile.encoding=UTF-8 -jar /tmp/slave.jar")
                 .exec();
 
         client.execStartCmd(cmdResponse.getId())
@@ -186,15 +207,16 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
     @Override
     public DockerComputerLauncher getPreparedLauncher(String cloudId, DockerSlaveTemplate dockerSlaveTemplate,
                                                       InspectContainerResponse ir) {
-        return new DockerComputerIOLauncher();
+        final DockerComputerIOLauncher launcher = new DockerComputerIOLauncher();
+        launcher.setJavaPath(getJavaPath());
+        return launcher;
     }
 
     @Override
     public void appendContainerConfig(DockerSlaveTemplate dockerSlaveTemplate,
                                       CreateContainerCmd createContainerCmd) throws IOException {
 //        createContainerCmd.withEntrypoint("/bin/bash", "-c", "java -jar /tmp/slave.jar");
-        createContainerCmd.withEntrypoint("sleep");
-        createContainerCmd.withCmd("infinity");
+        createContainerCmd.withCmd("cat");
         createContainerCmd.withTty(false);
 //        createContainerCmd.withLogConfig(new LogConfig(NONE));
         createContainerCmd.withStdinOpen(true);
