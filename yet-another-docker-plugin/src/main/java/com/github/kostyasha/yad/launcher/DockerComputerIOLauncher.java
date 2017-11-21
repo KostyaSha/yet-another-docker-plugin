@@ -205,6 +205,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
             } else if (item.getStreamType() == StreamType.STDOUT) {
                 try {
                     outputStream.write(item.getPayload());
+                    outputStream.flush();
                 } catch (IOException e) {
                     listener.error("Can't write container stdout to channel");
                     Throwables.propagate(e);
