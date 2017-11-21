@@ -45,7 +45,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
 
     protected String javaPath = "";
 
-    protected String jvmOpts = "";
+    protected String jvmOpts = "-Dfile.encoding=UTF-8";
 
     @DataBoundConstructor
     public DockerComputerIOLauncher() {
@@ -92,7 +92,6 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
             tarOut.putArchiveEntry(entry);
             tarOut.write(slaveJar);
             tarOut.closeArchiveEntry();
-
 
             tarOut.close();
             try (InputStream is = new ByteArrayInputStream(byteArrayOutputStream.toByteArray())) {
@@ -155,7 +154,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
                 .withAttachStdin(true)
                 .withAttachStdout(true)
                 .withTty(false)
-                .withCmd("/bin/sh", "-c", java + " " + getJvmOpts() + " -Dfile.encoding=UTF-8 -jar /tmp/slave.jar")
+                .withCmd("/bin/sh", "-c", java + " " + getJvmOpts() + " -jar /tmp/slave.jar")
                 .exec();
 
         client.execStartCmd(cmdResponse.getId())
