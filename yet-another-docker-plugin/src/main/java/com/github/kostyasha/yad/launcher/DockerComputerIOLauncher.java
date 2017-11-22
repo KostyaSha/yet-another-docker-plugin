@@ -4,6 +4,7 @@ import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.DockerComputer;
 import com.github.kostyasha.yad.DockerSlave;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
+import com.github.kostyasha.yad.OsType;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.ExecCreateCmdResponse;
@@ -42,7 +43,6 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 public class DockerComputerIOLauncher extends DockerComputerLauncher {
-
     protected String javaPath = "";
 
     protected String jvmOpts = "-Dfile.encoding=UTF-8";
@@ -86,7 +86,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
 //            }
             byte[] slaveJar = new Slave.JnlpJar("slave.jar").readFully();
 
-            TarArchiveEntry entry = new TarArchiveEntry("slave.jar");
+            TarArchiveEntry entry = new TarArchiveEntry("/tmp/slave.jar");
             entry.setSize(slaveJar.length);
             entry.setMode(0664);
             tarOut.putArchiveEntry(entry);
@@ -97,7 +97,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
             try (InputStream is = new ByteArrayInputStream(byteArrayOutputStream.toByteArray())) {
                 client.copyArchiveToContainerCmd(containerId)
                         .withTarInputStream(is)
-                        .withRemotePath("/tmp")
+                        .withRemotePath("/")
                         .exec();
             }
         }
@@ -118,7 +118,6 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
 
         final String containerId = dockerComputer.getContainerId();
         final DockerCloud dockerCloud = dockerComputer.getCloud();
-//        Objects.requireNonNull(dockerCloud, "Cloud not found for computer " + computer.getName());
         if (isNull(dockerCloud)) {
             listener.error("Cloud not found for computer " + computer.getName());
             throw new NullPointerException("Cloud not found for computer " + computer.getName());
@@ -154,22 +153,16 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
                 .withAttachStdin(true)
                 .withAttachStdout(true)
                 .withTty(false)
-                .withCmd("/bin/sh", "-c", java + " " + getJvmOpts() + " -jar /tmp/slave.jar")
+                .withCmd(
+                        node.getDockerSlaveTemplate().getOsType() == OsType.WINDOWS ? "cmd" : "/bin/sh",
+                        node.getDockerSlaveTemplate().getOsType() == OsType.WINDOWS ? "/c" : "-c",
+                        java + " " + getJvmOpts() + " -jar /tmp/slave.jar")
                 .exec();
 
         client.execStartCmd(cmdResponse.getId())
                 .withStdIn(pipedInputStream)
                 .exec(callback);
 
-//        client.attachContainerCmd(containerId)
-//                .withStdErr(true)
-//                .withStdOut(true)
-//                .withFollowStream(true)
-//                .withStdIn(pipedInputStream)
-//                .exec(callback);
-
-        // container stdout is InputStream ... in.read()
-        // container stdin is  out.write()
         computer.setChannel(inputStream, outputStream, listener.getLogger(), new Channel.Listener() {
             @Override
             public void onClosed(Channel channel, IOException cause) {
@@ -234,13 +227,12 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
     @Override
     public void appendContainerConfig(DockerSlaveTemplate dockerSlaveTemplate,
                                       CreateContainerCmd createContainerCmd) throws IOException {
-//        createContainerCmd.withEntrypoint("/bin/bash", "-c", "java -jar /tmp/slave.jar");
-        createContainerCmd.withCmd("cat");
+        if (createContainerCmd.getCmd() == null || createContainerCmd.getCmd().length == 0) {
+            createContainerCmd.withCmd("cat");
+        }
         createContainerCmd.withTty(false);
-//        createContainerCmd.withLogConfig(new LogConfig(NONE));
         createContainerCmd.withStdinOpen(true);
     }
-
 
     @Override
     public ComputerLauncher getLauncher() {
