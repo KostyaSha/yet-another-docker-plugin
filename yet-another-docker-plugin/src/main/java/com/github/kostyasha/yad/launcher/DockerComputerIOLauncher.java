@@ -148,14 +148,16 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
             java = "java";
         }
 
+        OsType osType = node.getDockerSlaveTemplate().getOsType();
+
         ExecCreateCmdResponse cmdResponse = client.execCreateCmd(containerId)
                 .withAttachStderr(true)
                 .withAttachStdin(true)
                 .withAttachStdout(true)
                 .withTty(false)
                 .withCmd(
-                        node.getDockerSlaveTemplate().getOsType() == OsType.WINDOWS ? "cmd" : "/bin/sh",
-                        node.getDockerSlaveTemplate().getOsType() == OsType.WINDOWS ? "/c" : "-c",
+                        osType == OsType.WINDOWS ? "cmd" : "/bin/sh",
+                        osType == OsType.WINDOWS ? "/c" : "-c",
                         java + " " + getJvmOpts() + " -jar /tmp/slave.jar")
                 .exec();
 
