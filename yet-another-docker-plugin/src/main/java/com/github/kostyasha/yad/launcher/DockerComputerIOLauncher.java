@@ -47,6 +47,8 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
 
     protected String jvmOpts = "-Dfile.encoding=UTF-8";
 
+    private static final String SLAVE_JAR = "/tmp/slave.jar";
+
     @DataBoundConstructor
     public DockerComputerIOLauncher() {
         super(null);
@@ -86,14 +88,14 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
 //            }
             byte[] slaveJar = new Slave.JnlpJar("slave.jar").readFully();
 
-            TarArchiveEntry entry = new TarArchiveEntry("/tmp/slave.jar");
+            TarArchiveEntry entry = new TarArchiveEntry(SLAVE_JAR);
             entry.setSize(slaveJar.length);
             entry.setMode(0664);
             tarOut.putArchiveEntry(entry);
             tarOut.write(slaveJar);
             tarOut.closeArchiveEntry();
-
             tarOut.close();
+
             try (InputStream is = new ByteArrayInputStream(byteArrayOutputStream.toByteArray())) {
                 client.copyArchiveToContainerCmd(containerId)
                         .withTarInputStream(is)
@@ -158,7 +160,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
                 .withCmd(
                         osType == OsType.WINDOWS ? "cmd" : "/bin/sh",
                         osType == OsType.WINDOWS ? "/c" : "-c",
-                        java + " " + getJvmOpts() + " -jar /tmp/slave.jar")
+                        java + " " + getJvmOpts() + " -jar " + SLAVE_JAR)
                 .exec();
 
         client.execStartCmd(cmdResponse.getId())
