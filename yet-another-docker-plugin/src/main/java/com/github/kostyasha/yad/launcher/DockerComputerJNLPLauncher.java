@@ -169,13 +169,15 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         final DockerCloud dockerCloud = dockerComputer.getCloud();
 //        Objects.requireNonNull(dockerCloud, "Cloud not found for computer " + computer.getName());
         if (isNull(dockerCloud)) {
-            listener.error("Cloud not found for computer " + computer.getName());
-            throw new NullPointerException("Cloud not found for computer " + computer.getName());
+            listener.error("Cloud not found cloud for computer " + computer.getName());
+            throw new IllegalStateException("Cloud not found cloud for computer " + computer.getName());
         }
-        final DockerClient connect = dockerCloud.getClient();
+        final DockerClient client = dockerCloud.getClient();
         final DockerSlave node = dockerComputer.getNode();
         if (isNull(node)) {
-            throw new NullPointerException("Node can't be null");
+            listener.error("Failed to run container for %s", computer.getName());
+            printLog(client, listener, containerId);
+            throw new IllegalStateException("Node can't be null, probably remote node disappeared.");
         }
         final DockerSlaveTemplate dockerSlaveTemplate = node.getDockerSlaveTemplate();
         final DockerComputerJNLPLauncher launcher = (DockerComputerJNLPLauncher) dockerSlaveTemplate.getLauncher();
@@ -183,7 +185,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         final String rootUrl = launcher.getJenkinsUrl(Jenkins.getInstance().getRootUrl());
 //        Objects.requireNonNull(rootUrl, "Jenkins root url is not specified!");
         if (isNull(rootUrl)) {
-            throw new NullPointerException("Jenkins root url is not specified!");
+            throw new IllegalStateException("Jenkins root url is not specified!");
         }
 
         // exec jnlp connection in running container
@@ -208,7 +210,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                                 "`$NO_RECONNECT_SLAVE='" + isNoReconnect() + WNL +
                                 "\"@ | Out-File -FilePath c:\\config.ps1";
 
-                response = connect.execCreateCmd(containerId)
+                response = client.execCreateCmd(containerId)
                         .withTty(true)
                         .withAttachStdin(false)
                         .withAttachStderr(true)
@@ -230,7 +232,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                                 "NO_RECONNECT_SLAVE=\"" + isNoReconnect() + NL +
                                 "EOF" + "\n";
 
-                response = connect.execCreateCmd(containerId)
+                response = client.execCreateCmd(containerId)
                         .withTty(true)
                         .withAttachStdin(false)
                         .withAttachStderr(true)
@@ -242,7 +244,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             LOG.info("Starting connection command for {}...", containerId);
             logger.println("Starting connection command for " + containerId);
 
-            try (ExecStartResultCallback exec = connect
+            try (ExecStartResultCallback exec = client
                     .execStartCmd(response.getId())
                     .withDetach(true)
                     .withTty(true)
@@ -257,7 +259,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         } catch (Exception ex) {
             listener.error("Can't execute JNLP connection command: " + ex.getMessage().trim());
             LOG.error("Can't execute JNLP connection command: '{}'", ex.getMessage().trim());
-            printLog(connect, listener, containerId);
+            printLog(client, listener, containerId);
             node.terminate();
             throw ex;
         }
@@ -281,7 +283,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         if (!dockerComputer.isOnline()) {
             LOG.info("Launch timeout, terminating slave based on '{}'", containerId);
             logger.println("Launch timeout, terminating slave.");
-            printLog(connect, listener, containerId);
+            printLog(client, listener, containerId);
             node.terminate();
             throw new IOException("Can't connect slave to jenkins");
         }
