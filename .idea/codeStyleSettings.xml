@@ -5,9 +5,6 @@
       <value>
         <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="9999" />
         <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="9999" />
-        <MarkdownNavigatorCodeStyleSettings>
-          <option name="RIGHT_MARGIN" value="72" />
-        </MarkdownNavigatorCodeStyleSettings>
       </value>
     </option>
     <option name="USE_PER_PROJECT_SETTINGS" value="true" />

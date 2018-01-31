@@ -236,9 +236,13 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
             containerLifecycle.getRemoveContainer().exec(client, cId);
             throw new IllegalStateException("Jenkins root url is not specified!");
         }
+
         final DockerSlaveSingle node = computer.getNode();
         if (isNull(node)) {
-            throw new NullPointerException("Node can't be null for " + computer.getName());
+            listener.error("Failed to run container for %s", imageId);
+            printLog(client, listener, containerId);
+            throw new IllegalStateException("Node for computer: '" + computer.getName() +
+                    "' can't be null, probably remote node disappeared.");
         }
 
         // exec jnlp connection in running container
