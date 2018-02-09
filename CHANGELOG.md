@@ -1,5 +1,8 @@
 ##
 
+## 0.1.0-rc47
+- Print log when container started, but node is null.
+
 ## 0.1.0-rc46
 - Added provisioning strategies across DockerClouds. Old and new random least loaded.
 - Improved help message for Links and Network mode fields
