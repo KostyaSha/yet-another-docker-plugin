@@ -67,6 +67,13 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
         setNodeProperties(nodeProperties);
     }
 
+
+    @DataBoundSetter
+    public void setLabelString(String labelString) {
+        super.setLabelString(labelString);
+        this.labelSet = Label.parse(labelString);
+    }
+
     public OsType getOsType() {
         return this.osType;
     }
