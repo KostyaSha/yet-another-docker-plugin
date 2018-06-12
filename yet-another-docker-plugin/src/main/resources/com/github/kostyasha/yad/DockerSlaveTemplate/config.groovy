@@ -22,6 +22,11 @@ f.entry(title: _("Max Instances"), field: "maxCapacity") {
     f.number()
 }
 
+f.entry(title: _("Custom docker Labels"), field: "customDockerLabels",
+        help: descriptorPath + "/help/dockerCustomLabels") {
+    f.textbox()
+}
+
 f.section(title: _("Docker Container Lifecycle")) {
     f.block() {
         f.property(field: "dockerContainerLifecycle")

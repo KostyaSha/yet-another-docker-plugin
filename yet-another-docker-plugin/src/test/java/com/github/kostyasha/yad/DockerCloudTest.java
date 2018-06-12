@@ -141,6 +141,7 @@ public class DockerCloudTest {
             dockerSlaveTemplate.setRemoteFs("/remotefs");
             dockerSlaveTemplate.setNumExecutors(1); // need to be verified with other retention strategy
             dockerSlaveTemplate.setRetentionStrategy(new DockerOnceRetentionStrategy(30));
+            dockerSlaveTemplate.setCustomDockerLabels("");
 
             final ArrayList<DockerSlaveTemplate> dockerSlaveTemplates = new ArrayList<>();
             dockerSlaveTemplates.add(dockerSlaveTemplate);
