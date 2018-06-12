@@ -47,6 +47,10 @@ f.advanced(title: _("Create Container settings"), align: "left") {
         f.textarea()
     }
 
+    f.entry(title: _("Docker Labels"), field: "dockerLabelString") {
+        f.textarea()
+    }
+
     f.entry(title: _("Port bindings"), field: "bindPorts") {
         f.textbox()
     }

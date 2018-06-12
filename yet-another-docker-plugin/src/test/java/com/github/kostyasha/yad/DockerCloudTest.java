@@ -115,6 +115,7 @@ public class DockerCloudTest {
             createContainer.setRestartPolicy(new DockerContainerRestartPolicy(NO, 0));
             createContainer.setWorkdir("workdir");
             createContainer.setUser("user");
+            createContainer.setDockerLabels(singletonList("testlabel=testvalue"));
 
             final DockerStopContainer stopContainer = new DockerStopContainer();
             stopContainer.setTimeout(100);
@@ -141,7 +142,6 @@ public class DockerCloudTest {
             dockerSlaveTemplate.setRemoteFs("/remotefs");
             dockerSlaveTemplate.setNumExecutors(1); // need to be verified with other retention strategy
             dockerSlaveTemplate.setRetentionStrategy(new DockerOnceRetentionStrategy(30));
-            dockerSlaveTemplate.setCustomDockerLabels("");
 
             final ArrayList<DockerSlaveTemplate> dockerSlaveTemplates = new ArrayList<>();
             dockerSlaveTemplates.add(dockerSlaveTemplate);
