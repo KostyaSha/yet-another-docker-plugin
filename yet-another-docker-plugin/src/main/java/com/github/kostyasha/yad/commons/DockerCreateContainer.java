@@ -375,13 +375,13 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     }
 
     @Nonnull
-    public String getDockerLabelString() {
+    public String getDockerLabelsString() {
         return joinToStr(dockerLabels);
     }
 
     @DataBoundSetter
-    public void setDockerLabelString(String dockerLabelString) {
-        setDockerLabels(splitAndFilterEmpty(dockerLabelString));
+    public void setDockerLabelsString(String dockerLabelsString) {
+        setDockerLabels(splitAndFilterEmpty(dockerLabelsString));
     }
 
     public void setDockerLabels(List<String> dockerLabels) {

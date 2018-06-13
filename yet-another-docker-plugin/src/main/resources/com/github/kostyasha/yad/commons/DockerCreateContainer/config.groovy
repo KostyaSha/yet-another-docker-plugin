@@ -47,7 +47,7 @@ f.advanced(title: _("Create Container settings"), align: "left") {
         f.textarea()
     }
 
-    f.entry(title: _("Docker Labels"), field: "dockerLabelString") {
+    f.entry(title: _("Docker Labels"), field: "dockerLabelsString") {
         f.textarea()
     }
 
