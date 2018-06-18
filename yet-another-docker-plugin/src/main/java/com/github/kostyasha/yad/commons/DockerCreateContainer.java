@@ -388,6 +388,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         this.dockerLabels = dockerLabels;
     }
 
+    @CheckForNull
     public List<String> getDockerLabels() {
         return dockerLabels;
     }
