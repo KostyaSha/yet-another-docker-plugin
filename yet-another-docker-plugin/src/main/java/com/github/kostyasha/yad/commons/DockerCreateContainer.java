@@ -388,9 +388,9 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         this.dockerLabels = dockerLabels;
     }
 
-    @CheckForNull
+    @Nonnull
     public List<String> getDockerLabels() {
-        return dockerLabels;
+        return isNull(dockerLabels) ? Collections.EMPTY_LIST : dockerLabels;
     }
 
     // extrahosts
