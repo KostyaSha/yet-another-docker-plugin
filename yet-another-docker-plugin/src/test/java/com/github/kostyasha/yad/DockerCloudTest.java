@@ -115,6 +115,7 @@ public class DockerCloudTest {
             createContainer.setRestartPolicy(new DockerContainerRestartPolicy(NO, 0));
             createContainer.setWorkdir("workdir");
             createContainer.setUser("user");
+            createContainer.setDockerLabels(singletonList("testlabel=testvalue"));
 
             final DockerStopContainer stopContainer = new DockerStopContainer();
             stopContainer.setTimeout(100);

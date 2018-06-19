@@ -45,6 +45,8 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -138,6 +140,9 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
     @CheckForNull
     private List<String> links;
+
+    @CheckForNull
+    private List<String> dockerLabels;
 
     @CheckForNull
     private Long shmSize;
@@ -369,6 +374,25 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         setEnvironment(splitAndFilterEmpty(environmentString));
     }
 
+    @Nonnull
+    public String getDockerLabelsString() {
+        return joinToStr(dockerLabels);
+    }
+
+    @DataBoundSetter
+    public void setDockerLabelsString(String dockerLabelsString) {
+        setDockerLabels(splitAndFilterEmpty(dockerLabelsString));
+    }
+
+    public void setDockerLabels(List<String> dockerLabels) {
+        this.dockerLabels = dockerLabels;
+    }
+
+    @Nonnull
+    public List<String> getDockerLabels() {
+        return isNull(dockerLabels) ? Collections.EMPTY_LIST : dockerLabels;
+    }
+
     // extrahosts
     @CheckForNull
     public List<String> getExtraHosts() {
@@ -540,6 +564,19 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
         if (CollectionUtils.isNotEmpty(getDnsHosts())) {
             containerConfig.withDns(getDnsHosts().toArray(new String[getDnsHosts().size()]));
+        }
+
+        if (CollectionUtils.isNotEmpty(getDockerLabels())) {
+            Map<String, String> labels = containerConfig.getLabels();
+            if (labels == null) labels = new HashMap<>();
+
+            for (String s : getDockerLabels()) {
+                String[] l = s.split("=");
+                if (l.length > 1) {
+                    labels.put(l[0], l[1]);
+                }
+            }
+            containerConfig.withLabels(labels);
         }
 
         // https://github.com/docker/docker/blob/ed257420025772acc38c51b0f018de3ee5564d0f/runconfig/parse.go#L182-L196
