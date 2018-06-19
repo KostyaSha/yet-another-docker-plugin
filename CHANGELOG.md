@@ -1,5 +1,9 @@
 ##
 
+## 0.1.0-rc48
+- Allow add additional labels to created containers.
+- Don't enforce root for container creation in JNLP launher (still possible to set it manually in Create Container).
+
 ## 0.1.0-rc47
 - Print log when container started, but node is null.
 
