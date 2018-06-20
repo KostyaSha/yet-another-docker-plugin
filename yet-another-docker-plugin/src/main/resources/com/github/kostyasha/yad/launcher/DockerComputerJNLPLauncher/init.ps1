@@ -39,7 +39,7 @@ Write-Output "###################################"
 
 $RUN_CMD="java"
 
-if (!$JAVA_OPTS) {
+if ($JAVA_OPTS) {
    $RUN_CMD="$RUN_CMD $JAVA_OPTS"
 }
 
@@ -53,7 +53,7 @@ if ($NO_CERTIFICATE_CHECK -eq "true") {
    $RUN_CMD="$RUN_CMD -noCertificateCheck"
 }
 
-if (!$SLAVE_OPTS) {
+if ($SLAVE_OPTS) {
    $RUN_CMD="$RUN_CMD $SLAVE_OPTS"
 }
 
