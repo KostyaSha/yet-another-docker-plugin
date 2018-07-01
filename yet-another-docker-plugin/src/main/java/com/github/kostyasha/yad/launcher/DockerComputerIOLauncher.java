@@ -4,6 +4,7 @@ import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.DockerComputer;
 import com.github.kostyasha.yad.DockerSlave;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
+import com.github.kostyasha.yad.OsType;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.ExecCreateCmdResponse;
@@ -11,6 +12,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.In
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.StreamType;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.AttachContainerResultCallback;
+import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import com.google.common.base.Throwables;
 import hudson.Extension;
 import hudson.model.Slave;
@@ -23,6 +25,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
@@ -35,14 +38,40 @@ import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.Objects;
 
+import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils.trimToEmpty;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 public class DockerComputerIOLauncher extends DockerComputerLauncher {
+    protected String javaPath = "";
+
+    protected String jvmOpts = "-Dfile.encoding=UTF-8";
+
+    private static final String SLAVE_JAR = "/tmp/slave.jar";
 
     @DataBoundConstructor
     public DockerComputerIOLauncher() {
         super(null);
+    }
+
+    @DataBoundSetter
+    public void setJavaPath(String javaPath) {
+        this.javaPath = trimToEmpty(javaPath);
+    }
+
+    @Nonnull
+    public String getJavaPath() {
+        return trimToEmpty(javaPath);
+    }
+
+    @DataBoundSetter
+    public void setJvmOpts(String jvmOpts) {
+        this.jvmOpts = trimToEmpty(jvmOpts);
+    }
+
+    @Nonnull
+    public String getJvmOpts() {
+        return trimToEmpty(jvmOpts);
     }
 
     @Override
@@ -59,19 +88,18 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
 //            }
             byte[] slaveJar = new Slave.JnlpJar("slave.jar").readFully();
 
-            TarArchiveEntry entry = new TarArchiveEntry("slave.jar");
+            TarArchiveEntry entry = new TarArchiveEntry(SLAVE_JAR);
             entry.setSize(slaveJar.length);
             entry.setMode(0664);
             tarOut.putArchiveEntry(entry);
             tarOut.write(slaveJar);
             tarOut.closeArchiveEntry();
-
-
             tarOut.close();
+
             try (InputStream is = new ByteArrayInputStream(byteArrayOutputStream.toByteArray())) {
                 client.copyArchiveToContainerCmd(containerId)
                         .withTarInputStream(is)
-                        .withRemotePath("/tmp")
+                        .withRemotePath("/")
                         .exec();
             }
         }
@@ -92,7 +120,6 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
 
         final String containerId = dockerComputer.getContainerId();
         final DockerCloud dockerCloud = dockerComputer.getCloud();
-//        Objects.requireNonNull(dockerCloud, "Cloud not found for computer " + computer.getName());
         if (isNull(dockerCloud)) {
             listener.error("Cloud not found for computer " + computer.getName());
             throw new NullPointerException("Cloud not found for computer " + computer.getName());
@@ -117,28 +144,29 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
         PipedOutputStream outputStream = new PipedOutputStream(pipedInputStream);
         llog.println("Attaching to container...");
 
+        String java = getJavaPath();
+
+        if (StringUtils.isEmpty(java)) {
+            java = "java";
+        }
+
+        OsType osType = node.getDockerSlaveTemplate().getOsType();
+
         ExecCreateCmdResponse cmdResponse = client.execCreateCmd(containerId)
                 .withAttachStderr(true)
                 .withAttachStdin(true)
                 .withAttachStdout(true)
                 .withTty(false)
-                .withCmd("/bin/bash", "-c", "java -Dfile.encoding=UTF-8 -jar /tmp/slave.jar")
-                .withUser("root")
+                .withCmd(
+                        osType == OsType.WINDOWS ? "cmd" : "/bin/sh",
+                        osType == OsType.WINDOWS ? "/c" : "-c",
+                        java + " " + getJvmOpts() + " -jar " + SLAVE_JAR)
                 .exec();
 
         client.execStartCmd(cmdResponse.getId())
                 .withStdIn(pipedInputStream)
                 .exec(callback);
 
-//        client.attachContainerCmd(containerId)
-//                .withStdErr(true)
-//                .withStdOut(true)
-//                .withFollowStream(true)
-//                .withStdIn(pipedInputStream)
-//                .exec(callback);
-
-        // container stdout is InputStream ... in.read()
-        // container stdin is  out.write()
         computer.setChannel(inputStream, outputStream, listener.getLogger(), new Channel.Listener() {
             @Override
             public void onClosed(Channel channel, IOException cause) {
@@ -173,6 +201,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
             } else if (item.getStreamType() == StreamType.STDOUT) {
                 try {
                     outputStream.write(item.getPayload());
+                    outputStream.flush();
                 } catch (IOException e) {
                     listener.error("Can't write container stdout to channel");
                     Throwables.propagate(e);
@@ -182,24 +211,32 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
         }
     }
 
+    @Override
+    public void afterDisconnect(SlaveComputer computer, TaskListener listener) {
+    }
+
+    @Override
+    public void beforeDisconnect(SlaveComputer computer, TaskListener listener) {
+    }
 
     @Override
     public DockerComputerLauncher getPreparedLauncher(String cloudId, DockerSlaveTemplate dockerSlaveTemplate,
                                                       InspectContainerResponse ir) {
-        return new DockerComputerIOLauncher();
+        final DockerComputerIOLauncher launcher = new DockerComputerIOLauncher();
+        launcher.setJavaPath(getJavaPath());
+        launcher.setJvmOpts(getJvmOpts());
+        return launcher;
     }
 
     @Override
     public void appendContainerConfig(DockerSlaveTemplate dockerSlaveTemplate,
                                       CreateContainerCmd createContainerCmd) throws IOException {
-//        createContainerCmd.withEntrypoint("/bin/bash", "-c", "java -jar /tmp/slave.jar");
-        createContainerCmd.withEntrypoint("sleep");
-        createContainerCmd.withCmd("infinity");
+        if (createContainerCmd.getCmd() == null || createContainerCmd.getCmd().length == 0) {
+            createContainerCmd.withCmd("cat");
+        }
         createContainerCmd.withTty(false);
-//        createContainerCmd.withLogConfig(new LogConfig(NONE));
         createContainerCmd.withStdinOpen(true);
     }
-
 
     @Override
     public ComputerLauncher getLauncher() {

@@ -25,8 +25,8 @@
 
     <!-- jenkins plugins identified only by artifactId(!), so keep stupid naming -->
     <modules>
-        <module>yet-another-docker-plugin</module>
         <module>yet-another-docker-java</module>
+        <module>yet-another-docker-plugin</module>
     </modules>
 
     <scm>

@@ -14,7 +14,6 @@ if (instance == null) {
 f.advanced(title: _("Create Container settings"), align: "left") {
     f.entry(title: _("Docker Command"), field: "command") {
         f.textarea(name: "command",
-//                class: "fixed-width",
                 'codemirror-mode': 'shell',
                 'codemirror-config': "mode: 'text/x-sh', lineNumbers: true")
     }
