@@ -1,13 +1,14 @@
 package com.github.kostyasha.it.tests;
 
-import com.github.kostyasha.it.other.WaitMessageResultCallback;
 import com.github.kostyasha.it.rule.DockerRule;
+import com.github.kostyasha.yad.other.VariableSSLConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.ExposedPort;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.HostConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Version;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.VolumesFrom;
@@ -17,12 +18,8 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DockerCli
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
-import com.github.kostyasha.yad.other.VariableSSLConfig;
-import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -37,7 +34,6 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
-import java.util.concurrent.TimeUnit;
 
 import static com.github.kostyasha.it.rule.DockerRule.getDockerItDir;
 import static com.github.kostyasha.it.utils.DockerHPIContainerUtil.getResource;
@@ -102,7 +98,10 @@ public class ShortTLSKeyTest {
 
         hostContainerId = d.getDockerCli().createContainerCmd(HOST_IMAGE_NAME)
                 .withName(HOST_CONTAINER_NAME)
-                .withPrivileged(true)
+                .withHostConfig(HostConfig.newHostConfig()
+                        .withPrivileged(true)
+                        .withPortBindings(PortBinding.parse("0.0.0.0:" + CONTAINER_PORT + ":" + CONTAINER_PORT))
+                        .withVolumesFrom(new VolumesFrom(dataContainerId)))
                 .withEnv("DOCKER_DAEMON_ARGS=" +
                                 "--tlsverify " +
                                 "--tlscacert=/var/keys/ca.pem " +
@@ -110,14 +109,12 @@ public class ShortTLSKeyTest {
                                 "--tlskey=/var/keys/server-key.pem",
                         "PORT=" + CONTAINER_PORT)
                 .withExposedPorts(new ExposedPort(CONTAINER_PORT))
-                .withPortBindings(PortBinding.parse("0.0.0.0:" + CONTAINER_PORT + ":" + CONTAINER_PORT))
                 .withPortSpecs(String.format("%d/tcp", CONTAINER_PORT))
-                .withVolumesFrom(new VolumesFrom(dataContainerId))
                 .exec()
                 .getId();
 
         d.getDockerCli().startContainerCmd(hostContainerId).exec();
-        
+
         d.waitDindStarted(hostContainerId);
     }
 
