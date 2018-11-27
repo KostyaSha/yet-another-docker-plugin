@@ -85,7 +85,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
             createCmd.withCmd("/bin/sh", "-c", "/usr/sbin/sshd -D -p " + sshPort);
         }
 
-        createCmd.getPortBindings().add(PortBinding.parse(Integer.toString(sshPort)));
+        createCmd.getHostConfig().getPortBindings().add(PortBinding.parse(Integer.toString(sshPort)));
     }
 
     @Override
