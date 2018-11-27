@@ -63,7 +63,7 @@
         <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java</artifactId>
-            <version>3.1.0-rc-5</version>
+            <version>3.1.0-rc-6</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
