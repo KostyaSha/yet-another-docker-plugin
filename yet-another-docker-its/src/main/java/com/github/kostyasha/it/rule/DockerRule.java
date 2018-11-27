@@ -14,6 +14,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Container;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.ExposedPort;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.HostConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Image;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Ports;
@@ -33,7 +34,6 @@ import hudson.cli.CLIConnectionFactory;
 import hudson.cli.DockerCLI;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.settings.building.SettingsBuildingException;
-import org.hamcrest.MatcherAssert;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.Description;
@@ -53,7 +53,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import static com.github.kostyasha.it.other.JenkinsDockerImage.JENKINS_DEFAULT;
 import static com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DefaultDockerClientConfig.createDefaultConfigBuilder;
@@ -152,8 +151,8 @@ public class DockerRule extends ExternalResource {
 
         boolean hasImage = Iterables.any(
                 images, image ->
-                    nonNull(image.getRepoTags()) &&
-                    Arrays.asList(image.getRepoTags()).contains(fullImageName)
+                        nonNull(image.getRepoTags()) &&
+                                Arrays.asList(image.getRepoTags()).contains(fullImageName)
 
         );
 
@@ -473,11 +472,12 @@ public class DockerRule extends ExternalResource {
                 .withEnv(CONTAINER_JAVA_OPTS)
                 .withExposedPorts(new ExposedPort(JENKINS_DEFAULT.tcpPort))
                 .withPortSpecs(String.format("%d/tcp", JENKINS_DEFAULT.tcpPort))
-                .withPortBindings(PortBinding.parse("0.0.0.0:48000:48000"))
-//                .withPortBindings(PortBinding.parse("0.0.0.0:48000:48000"), PortBinding.parse("0.0.0.0:50000:50000"))
-                .withVolumesFrom(new VolumesFrom(dataContainerId))
+                .withHostConfig(HostConfig.newHostConfig()
+                        .withPortBindings(PortBinding.parse("0.0.0.0:48000:48000"))
+                        .withVolumesFrom(new VolumesFrom(dataContainerId))
+                        .withPublishAllPorts(true))
                 .withLabels(labels)
-                .withPublishAllPorts(true)
+//                .withPortBindings(PortBinding.parse("0.0.0.0:48000:48000"), PortBinding.parse("0.0.0.0:50000:50000"))
                 .exec()
                 .getId();
         provisioned.add(id);
