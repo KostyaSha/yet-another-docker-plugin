@@ -7,6 +7,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Bind;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Device;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.HostConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Link;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Volume;
@@ -543,27 +544,29 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             containerConfig.withCmd(cmd);
         }
 
-        containerConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
+        HostConfig hostConfig = containerConfig.getHostConfig();
+
+        hostConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
 
         if (BooleanUtils.isTrue(getBindAllPorts())) {
-            containerConfig.withPublishAllPorts(getBindAllPorts());
+            hostConfig.withPublishAllPorts(getBindAllPorts());
         }
 
         if (BooleanUtils.isTrue(getPrivileged())) {
-            containerConfig.withPrivileged(getPrivileged());
+            hostConfig.withPrivileged(getPrivileged());
         }
 
         if (getCpuShares() != null && getCpuShares() > 0) {
-            containerConfig.withCpuShares(getCpuShares());
+            hostConfig.withCpuShares(getCpuShares());
         }
 
         if (getMemoryLimit() != null && getMemoryLimit() > 0) {
             Long memoryInByte = getMemoryLimit() * 1024 * 1024;
-            containerConfig.withMemory(memoryInByte);
+            hostConfig.withMemory(memoryInByte);
         }
 
         if (CollectionUtils.isNotEmpty(getDnsHosts())) {
-            containerConfig.withDns(getDnsHosts().toArray(new String[getDnsHosts().size()]));
+            hostConfig.withDns(getDnsHosts().toArray(new String[0]));
         }
 
         if (CollectionUtils.isNotEmpty(getDockerLabels())) {
@@ -601,8 +604,8 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
                 }
             }
 
-            containerConfig.withVolumes(vols.toArray(new Volume[vols.size()]));
-            containerConfig.withBinds(binds.toArray(new Bind[binds.size()]));
+            containerConfig.withVolumes(vols.toArray(new Volume[0]));
+            hostConfig.withBinds(binds.toArray(new Bind[0]));
         }
 
         if (CollectionUtils.isNotEmpty(getVolumesFrom())) {
@@ -611,7 +614,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
                 volFrom.add(new VolumesFrom(volFromStr));
             }
 
-            containerConfig.withVolumesFrom(volFrom.toArray(new VolumesFrom[volFrom.size()]));
+            hostConfig.withVolumesFrom(volFrom.toArray(new VolumesFrom[0]));
         }
 
         if (BooleanUtils.isTrue(getTty())) {
@@ -619,7 +622,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         }
 
         if (CollectionUtils.isNotEmpty(getEnvironment())) {
-            containerConfig.withEnv(getEnvironment().toArray(new String[getEnvironment().size()]));
+            containerConfig.withEnv(getEnvironment().toArray(new String[0]));
         }
 
         if (StringUtils.isNotBlank(getMacAddress())) {
@@ -627,39 +630,39 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         }
 
         if (CollectionUtils.isNotEmpty(getExtraHosts())) {
-            containerConfig.withExtraHosts(getExtraHosts().toArray(new String[getExtraHosts().size()]));
+            hostConfig.withExtraHosts(getExtraHosts().toArray(new String[0]));
         }
 
         if (StringUtils.isNotBlank(getNetworkMode())) {
-            containerConfig.withNetworkMode(getNetworkMode());
+            hostConfig.withNetworkMode(getNetworkMode());
         }
 
         if (!getDevices().isEmpty()) {
-            containerConfig.withDevices(
+            hostConfig.withDevices(
                     getDevices().stream().map(Device::parse).collect(Collectors.toList())
             );
         }
 
         if (StringUtils.isNotBlank(getCpusetCpus())) {
-            containerConfig.withCpusetCpus(getCpusetCpus());
+            hostConfig.withCpusetCpus(getCpusetCpus());
         }
 
         if (StringUtils.isNotBlank(getCpusetMems())) {
-            containerConfig.withCpusetMems(getCpusetMems());
+            hostConfig.withCpusetMems(getCpusetMems());
         }
 
         if (!getLinks().isEmpty()) {
-            containerConfig.withLinks(
+            hostConfig.withLinks(
                     getLinks().stream().map(Link::parse).collect(Collectors.toList())
             );
         }
 
         if (nonNull(shmSize)) {
-            containerConfig.getHostConfig().withShmSize(shmSize);
+            hostConfig.withShmSize(shmSize);
         }
 
         if (nonNull(restartPolicy)) {
-            containerConfig.withRestartPolicy(restartPolicy.getRestartPolicy());
+            hostConfig.withRestartPolicy(restartPolicy.getRestartPolicy());
         }
 
         if (StringUtils.isNotBlank(getWorkdir())) {
