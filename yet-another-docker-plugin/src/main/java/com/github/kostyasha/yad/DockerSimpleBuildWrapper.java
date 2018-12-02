@@ -41,7 +41,7 @@ import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListe
 public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
     private static final Logger LOG = LoggerFactory.getLogger(DockerSimpleBuildWrapper.class);
 
-    private YADockerConnector connector;
+    private YADockerConnector connector; // default connector
     private DockerSlaveConfig config;
     private String slaveName;
 

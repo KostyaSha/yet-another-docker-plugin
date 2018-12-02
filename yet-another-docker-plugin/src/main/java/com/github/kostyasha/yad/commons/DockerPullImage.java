@@ -5,6 +5,8 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.github.kostyasha.yad.NoStapler;
+import com.github.kostyasha.yad.connector.YADockerConnector;
 import com.github.kostyasha.yad.credentials.DockerRegistryAuthCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.PullImageCmd;
@@ -22,6 +24,7 @@ import hudson.security.ACL;
 import hudson.util.ListBoxModel;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -40,12 +43,14 @@ import static com.github.kostyasha.yad.client.ClientBuilderForConnector.lookupSy
 import static java.util.Collections.emptyList;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 /**
  * Contains docker pull image related settings:
  *
  * @author Kanstantsin Shautsou
  */
+@DockerCmd
 public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerPullImage.class);
 
@@ -58,6 +63,9 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
 
     @CheckForNull
     private List<DockerRegistryCredential> registriesCreds;
+
+    @NoStapler
+    private YADockerConnector connector;
 
     @DataBoundConstructor
     public DockerPullImage() {
@@ -94,10 +102,34 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
         this.registriesCreds = registriesCreds;
     }
 
+    public YADockerConnector getConnector() {
+        return connector;
+    }
+
+    @DataBoundSetter
+    public void setConnector(YADockerConnector connector) {
+        this.connector = connector;
+    }
+
+    public void exec(@Nonnull final DockerClient client, @Nonnull final String imageName, TaskListener listener)
+            throws Exception {
+        if (nonNull(connector)) {
+            try (DockerClient altClient = connector.getClient()) {
+                if (nonNull(altClient)) {
+                    LOG.debug("Using alternative client {} for {}", client, imageName);
+                    execInternal(altClient, imageName, listener);
+                    return;
+                }
+            }
+        }
+
+        execInternal(client, imageName, listener);
+    }
+
     /**
      * Action around image with defined configuration
      */
-    public void exec(@Nonnull final DockerClient client, @Nonnull final String imageName, TaskListener listener)
+    public void execInternal(@Nonnull final DockerClient client, @Nonnull final String imageName, TaskListener listener)
             throws IOException {
         PrintStream llog = listener.getLogger();
 
@@ -181,6 +213,11 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
         return hasImage ?
                 getPullStrategy().pullIfExists(imageName) :
                 getPullStrategy().pullIfNotExists(imageName);
+    }
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this, SHORT_PREFIX_STYLE);
     }
 
     @Override

@@ -68,10 +68,10 @@ public class DockerConnector extends YADockerConnector {
     private ConnectorType connectorType = NETTY;
 
     @CheckForNull
-    private Integer connectTimeout;
+    private Integer connectTimeout; //ms
 
     @CheckForNull
-    private Integer readTimeout;
+    private Integer readTimeout; //ms
 
     @CheckForNull
     private transient DockerClient client = null;

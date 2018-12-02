@@ -7,6 +7,7 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
 
+import javax.annotation.CheckForNull;
 import java.io.Serializable;
 
 /**
@@ -15,9 +16,11 @@ import java.io.Serializable;
  *
  * @author Kanstantsin Shautsou
  */
-public abstract class YADockerConnector extends AbstractDescribableImpl<YADockerConnector> implements ExtensionPoint, Serializable {
+public abstract class YADockerConnector extends AbstractDescribableImpl<YADockerConnector>
+        implements ExtensionPoint, Serializable {
     private static final long serialVersionUID = 1L;
 
+    @CheckForNull
     public abstract DockerClient getClient() throws Exception;
 
     @Override

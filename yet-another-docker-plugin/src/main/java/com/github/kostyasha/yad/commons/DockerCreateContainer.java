@@ -65,6 +65,7 @@ import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
  *
  * @see com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.CreateContainerCmdImpl
  */
+@DockerCmd
 public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateContainer> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerCreateContainer.class);
 

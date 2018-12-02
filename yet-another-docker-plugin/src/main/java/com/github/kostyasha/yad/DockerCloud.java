@@ -220,7 +220,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
      * Provision slave container and wait for it's availability.
      */
     private DockerSlave provisionWithWait(DockerSlaveTemplate template, ProvisioningActivity.Id id)
-            throws IOException, Descriptor.FormException {
+            throws Exception {
         final DockerContainerLifecycle dockerContainerLifecycle = template.getDockerContainerLifecycle();
         final String imageId = dockerContainerLifecycle.getImage();
         final DockerComputerLauncher computerLauncher = template.getLauncher();

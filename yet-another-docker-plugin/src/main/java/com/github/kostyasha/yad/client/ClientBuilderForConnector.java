@@ -54,8 +54,8 @@ public class ClientBuilderForConnector {
     private Builder configBuilder = new Builder();
 
     private ConnectorType connectorType = null;
-    private Integer connectTimeout = null;
-    private Integer readTimeout = null;
+    private Integer connectTimeout = null; // ms
+    private Integer readTimeout = null; // ms
 
     private ClientBuilderForConnector() {
     }

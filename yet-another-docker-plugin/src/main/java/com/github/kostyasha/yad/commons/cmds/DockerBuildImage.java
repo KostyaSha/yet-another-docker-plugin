@@ -1,7 +1,10 @@
 package com.github.kostyasha.yad.commons.cmds;
 
 import com.cloudbees.plugins.credentials.Credentials;
+import com.github.kostyasha.yad.NoStapler;
 import com.github.kostyasha.yad.client.ClientBuilderForConnector;
+import com.github.kostyasha.yad.commons.DockerCmd;
+import com.github.kostyasha.yad.connector.YADockerConnector;
 import com.github.kostyasha.yad.credentials.DockerRegistryAuthCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfig;
@@ -38,6 +41,7 @@ import static org.apache.commons.lang.StringUtils.isEmpty;
 /**
  * @author Kanstantsin Shautsou
  */
+@DockerCmd
 @Beta
 public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -64,6 +68,9 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
     private Map<String, String> buildArgs;
 
     private AuthConfigurations authConfigurations;
+
+    @NoStapler
+    private YADockerConnector connector;
 
     @DataBoundConstructor
     public DockerBuildImage() {
@@ -225,6 +232,15 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
     @CheckForNull
     public AuthConfigurations getAuthConfigurations() {
         return authConfigurations;
+    }
+
+    @CheckForNull
+    public YADockerConnector getConnector() {
+        return connector;
+    }
+
+    public void setConnector(YADockerConnector connector) {
+        this.connector = connector;
     }
 
     /**
