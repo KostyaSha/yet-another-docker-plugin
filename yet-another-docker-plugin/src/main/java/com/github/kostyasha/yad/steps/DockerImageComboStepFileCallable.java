@@ -283,7 +283,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
             for (String containerId : containers) {
                 try {
                     client.removeImageCmd(containerId)
-                        .exec();
+                            .exec();
                     llog.printf("Removed dangling layer image %s.%n", containerId);
                     LOG.debug("Removed dangling layer image '{}'", containerId);
                 } catch (NotFoundException | ConflictException ex) {
@@ -324,6 +324,10 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
             super.onNext(item);
         }
 
+        /**
+         * Docker can't cleanup dangling images https://github.com/moby/moby/issues/37311
+         * Track all containers from input stream.
+         */
         private void checkContainer(String text) {
             String trimmed = text.trim();
             if (trimmed.startsWith(RUNNINGIN)) {
