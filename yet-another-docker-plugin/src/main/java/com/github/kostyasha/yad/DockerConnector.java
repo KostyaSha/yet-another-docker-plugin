@@ -242,7 +242,6 @@ public class DockerConnector extends YADockerConnector {
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "docker-java uses runtime exceptions")
         @RequirePOST
         public FormValidation doTestConnection(
-                @AncestorInPath ItemGroup context,
                 @QueryParameter String serverUrl,
                 @QueryParameter String apiVersion,
                 @QueryParameter String credentialsId,
