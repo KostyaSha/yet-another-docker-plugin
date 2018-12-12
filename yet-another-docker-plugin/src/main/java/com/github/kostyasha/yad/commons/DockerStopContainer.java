@@ -63,13 +63,13 @@ public class DockerStopContainer extends AbstractDescribableImpl<DockerStopConta
         if (nonNull(connector)) {
             try (DockerClient altClient = connector.getClient()) {
                 if (nonNull(altClient)) {
-                    LOG.debug("Using alternative client {} for {}", client, containerId);
+                    LOG.debug("Using alternative client '{}' for '{}'", client, containerId);
                     execInternal(altClient, containerId);
                     return;
                 }
             }
         }
-
+        LOG.debug("Using default client '{}' for '{}'", client, containerId);
         execInternal(client, containerId);
     }
 

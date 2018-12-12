@@ -19,8 +19,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.ItemGroup;
 import hudson.security.ACL;
+import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.kohsuke.stapler.AncestorInPath;
@@ -219,12 +221,19 @@ public class DockerConnector extends YADockerConnector {
     public static class DescriptorImpl extends YADockerConnectorDescriptor {
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
+            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
+            if (!ac.hasPermission(Jenkins.ADMINISTER)) {
+                return new ListBoxModel();
+            }
+
             List<StandardCredentials> credentials =
-                    CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM,
+                    CredentialsProvider.lookupCredentials(StandardCredentials.class,
+                            context,
+                            ACL.SYSTEM,
                             Collections.emptyList());
 
             return new CredentialsListBoxModel()
-                    .withEmptySelection()
+                    .includeEmptyValue()
                     .withMatching(CredentialsMatchers.always(), credentials);
         }
 
@@ -237,6 +246,8 @@ public class DockerConnector extends YADockerConnector {
                 @QueryParameter Integer connectTimeout,
                 @QueryParameter Integer readTimeout
         ) throws IOException, ServletException, DockerException {
+            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+
             try {
                 DefaultDockerClientConfig.Builder configBuilder = new DefaultDockerClientConfig.Builder()
                         .withApiVersion(apiVersion)

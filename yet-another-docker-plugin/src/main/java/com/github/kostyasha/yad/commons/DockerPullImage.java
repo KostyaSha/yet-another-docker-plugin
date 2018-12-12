@@ -4,7 +4,6 @@ import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.kostyasha.yad.NoStapler;
 import com.github.kostyasha.yad.connector.YADockerConnector;
 import com.github.kostyasha.yad.credentials.DockerRegistryAuthCredentials;
@@ -241,7 +240,7 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
             List<DockerRegistryAuthCredentials> credentials =
                     CredentialsProvider.lookupCredentials(DockerRegistryAuthCredentials.class, context, ACL.SYSTEM,
-                            Collections.<DomainRequirement>emptyList());
+                            Collections.emptyList());
 
             return new StandardListBoxModel().withEmptySelection()
                     .withMatching(CredentialsMatchers.instanceOf(DockerRegistryAuthCredentials.class), credentials);

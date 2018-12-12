@@ -212,12 +212,13 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             }
 
             try {
-                // start
+                // start cmd
                 StartContainerCmd startCommand = client.startContainerCmd(cId);
                 startCommand.exec();
                 llog.println("Started container " + cId);
                 LOG.debug("Start container {}, for {}", cId, run.getDisplayName());
 
+                // attach cmd
                 try (AttachContainerResultCallback callback = new MyAttachContainerResultCallback(llog)) {
                     client.attachContainerCmd(cId)
                             .withStdErr(true)

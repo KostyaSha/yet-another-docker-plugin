@@ -201,7 +201,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         StartContainerCmd startCommand = client.startContainerCmd(cId);
         startCommand.exec();
         logger.println("Started container " + cId);
-        LOG.debug("Start container {}, for {}", cId, run.getDisplayName());
+        LOG.debug("Started container '{}', for '{}'.", cId, run.getDisplayName());
 
         boolean running = false;
         long launchTime = System.currentTimeMillis();
@@ -210,8 +210,8 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
             try {
                 InspectContainerResponse inspectResp = client.inspectContainerCmd(cId).exec();
                 if (isTrue(inspectResp.getState().getRunning())) {
-                    logger.println("Container is running!");
-                    LOG.debug("Container {} is running", cId);
+                    logger.println("Container is running.");
+                    LOG.debug("Container '{}' is running.", cId);
                     running = true;
                 } else {
                     logger.println("Container is not running...");

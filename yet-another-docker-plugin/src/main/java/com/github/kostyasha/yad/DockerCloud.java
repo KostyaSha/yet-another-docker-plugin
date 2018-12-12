@@ -421,6 +421,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
             return Arrays.asList(jenkins.model.Jenkins.getInstance().getDescriptor(DockerSlaveTemplate.class));
         }
 
+        @Nonnull
         @Override
         public String getDisplayName() {
             return "Yet Another Docker";

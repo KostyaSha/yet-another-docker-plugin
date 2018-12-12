@@ -104,6 +104,7 @@ public class DockerImageComboStepTest {
 
         DockerImageComboStep comboStep = new DockerImageComboStep(dockerConnector, buildImage);
         comboStep.setClean(true);
+        comboStep.setCleanupDangling(true);
         comboStep.setPush(true);
 
         FreeStyleProject project = jRule.createFreeStyleProject("test");
