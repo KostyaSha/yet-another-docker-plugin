@@ -29,6 +29,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -220,6 +221,7 @@ public class DockerConnector extends YADockerConnector {
     @Extension(ordinal = 100)
     public static class DescriptorImpl extends YADockerConnectorDescriptor {
 
+        @RequirePOST
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
             AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
             if (!ac.hasPermission(Jenkins.ADMINISTER)) {
@@ -238,7 +240,9 @@ public class DockerConnector extends YADockerConnector {
         }
 
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "docker-java uses runtime exceptions")
+        @RequirePOST
         public FormValidation doTestConnection(
+                @AncestorInPath ItemGroup context,
                 @QueryParameter String serverUrl,
                 @QueryParameter String apiVersion,
                 @QueryParameter String credentialsId,
@@ -246,8 +250,6 @@ public class DockerConnector extends YADockerConnector {
                 @QueryParameter Integer connectTimeout,
                 @QueryParameter Integer readTimeout
         ) throws IOException, ServletException, DockerException {
-            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
-
             try {
                 DefaultDockerClientConfig.Builder configBuilder = new DefaultDockerClientConfig.Builder()
                         .withApiVersion(apiVersion)
