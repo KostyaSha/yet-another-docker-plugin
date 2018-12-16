@@ -65,6 +65,9 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
     private static final Logger LOG = LoggerFactory.getLogger(DockerShellStep.class);
 
     private YADockerConnector connector = null;
+    @CheckForNull
+    private YADockerConnector longConnector = null; // connector that used during long running operations
+
     private DockerContainerLifecycle containerLifecycle = new DockerContainerLifecycle();
 
     private String shellScript = "";
@@ -81,6 +84,16 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
     @DataBoundSetter
     public void setConnector(YADockerConnector connector) {
         this.connector = connector;
+    }
+
+    @CheckForNull
+    public YADockerConnector getLongConnector() {
+        return longConnector;
+    }
+
+    @DataBoundSetter
+    public void setLongConnector(@CheckForNull YADockerConnector longConnector) {
+        this.longConnector = longConnector;
     }
 
     public DockerContainerLifecycle getContainerLifecycle() {
@@ -120,8 +133,9 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
         final String imageId = containerLifecycle.getImage();
 
         try (DockerClient client = (connector instanceof DockerConnector) ?
-                ((DockerConnector) connector).getFreshClient() :
-                connector.getClient()) {
+                ((DockerConnector) connector).getFreshClient() : connector.getClient();
+            DockerClient longClient = (longConnector == null) ? client : longConnector.getClient()
+        ) {
             //pull image
             llog.println("Pulling image " + imageId + "...");
             containerLifecycle.getPullImage().exec(client, imageId, listener);
@@ -216,11 +230,11 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                 StartContainerCmd startCommand = client.startContainerCmd(cId);
                 startCommand.exec();
                 llog.println("Started container " + cId);
-                LOG.debug("Start container {}, for {}", cId, run.getDisplayName());
+                LOG.debug("Start container '{}', for '{}'", cId, run.getDisplayName());
 
                 // attach cmd
                 try (AttachContainerResultCallback callback = new MyAttachContainerResultCallback(llog)) {
-                    client.attachContainerCmd(cId)
+                    longClient.attachContainerCmd(cId)
                             .withStdErr(true)
                             .withStdOut(true)
                             .withFollowStream(true)
@@ -228,7 +242,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                             .exec(callback);
 
                     WaitContainerResultCallback waitCallback = new WaitContainerResultCallback();
-                    client.waitContainerCmd(cId).exec(waitCallback);
+                    longClient.waitContainerCmd(cId).exec(waitCallback);
                     final Integer statusCode = waitCallback.awaitStatusCode();
                     callback.awaitCompletion(1, TimeUnit.SECONDS);
                     if (isNull(statusCode) || statusCode != 0) {
@@ -321,7 +335,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
     }
 
     /**
-     * Append some tags to identify who create this container.
+     * Append some tags to identify who created this container.
      */
     protected static void insertLabels(CreateContainerCmd containerConfig, Run run) {
         // add tags
@@ -338,7 +352,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
 
     @Extension
     @Symbol("dockerShell")
-    public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
+    public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
         @Nonnull
         @Override
         public String getDisplayName() {
