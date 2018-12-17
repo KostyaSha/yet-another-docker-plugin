@@ -28,8 +28,8 @@ import static com.github.kostyasha.yad.steps.DockerBuildImageStepFileCallable.ne
 public class DockerBuildImageStep extends Builder implements SimpleBuildStep {
     private static final Logger LOG = LoggerFactory.getLogger(DockerBuildImageStep.class);
 
-    private YADockerConnector connector = null;
-    private DockerBuildImage buildImage = new DockerBuildImage();
+    private YADockerConnector connector;
+    private DockerBuildImage buildImage;
 
     @DataBoundConstructor
     public DockerBuildImageStep(YADockerConnector connector, DockerBuildImage buildImage) {

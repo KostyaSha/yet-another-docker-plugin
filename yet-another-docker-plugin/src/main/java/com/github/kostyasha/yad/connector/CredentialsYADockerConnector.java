@@ -6,6 +6,7 @@ import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.SSLConfig;
+import hudson.Extension;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -13,6 +14,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
+import java.util.Objects;
 
 import static com.github.kostyasha.yad.client.ClientBuilderForConnector.newClientBuilderForConnector;
 import static com.github.kostyasha.yad.other.ConnectorType.NETTY;
@@ -39,8 +41,6 @@ public class CredentialsYADockerConnector extends YADockerConnector {
     @CheckForNull
     private Credentials credentials = null;
 
-    @CheckForNull
-    private transient DockerClient client = null;
 
     private ConnectorType connectorType = NETTY;
 
@@ -52,6 +52,9 @@ public class CredentialsYADockerConnector extends YADockerConnector {
 
     @CheckForNull
     private SSLConfig sslConfig;
+
+    @CheckForNull
+    private transient DockerClient client = null;
 
     public CredentialsYADockerConnector() {
     }
@@ -176,7 +179,44 @@ public class CredentialsYADockerConnector extends YADockerConnector {
         return client;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CredentialsYADockerConnector that = (CredentialsYADockerConnector) o;
+        return Objects.equals(serverUrl, that.serverUrl) &&
+                Objects.equals(apiVersion, that.apiVersion) &&
+                Objects.equals(tlsVerify, that.tlsVerify) &&
+                Objects.equals(credentials, that.credentials) &&
+                Objects.equals(client, that.client) &&
+                connectorType == that.connectorType &&
+                Objects.equals(connectTimeout, that.connectTimeout) &&
+                Objects.equals(readTimeout, that.readTimeout) &&
+                Objects.equals(sslConfig, that.sslConfig);
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(serverUrl, apiVersion, tlsVerify, credentials, client, connectorType,
+                connectTimeout, readTimeout, sslConfig);
+    }
+
+    @Override
+    public String toString() {
+        return "CredentialsYADockerConnector{" +
+                "serverUrl='" + serverUrl + '\'' +
+                ", apiVersion='" + apiVersion + '\'' +
+                ", tlsVerify=" + tlsVerify +
+                ", credentials=" + credentials +
+                ", client=" + client +
+                ", connectorType=" + connectorType +
+                ", connectTimeout=" + connectTimeout +
+                ", readTimeout=" + readTimeout +
+                ", sslConfig=" + sslConfig +
+                '}';
+    }
+
+    @Extension
     public static class DescriptorImpl extends YADockerConnectorDescriptor {
         @Nonnull
         @Override

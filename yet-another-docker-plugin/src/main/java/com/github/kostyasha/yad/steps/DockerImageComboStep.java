@@ -41,6 +41,7 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
     private YADockerConnector connector = null;
     private DockerBuildImage buildImage = null;
     private boolean clean = true;
+    private boolean cleanupDangling = true;
     private boolean push = true;
 
     @DataBoundConstructor
@@ -66,6 +67,15 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
         this.clean = clean;
     }
 
+    public boolean isCleanupDangling() {
+        return cleanupDangling;
+    }
+
+    @DataBoundSetter
+    public void setCleanupDangling(boolean cleanupDangling) {
+        this.cleanupDangling = cleanupDangling;
+    }
+
     public boolean isPush() {
         return push;
     }
@@ -86,6 +96,7 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
                 .withConnector(connector)
                 .withPushAll(push)
                 .withCleanAll(clean)
+                .withCleanupDangling(cleanupDangling)
                 .build();
         try {
             llog.println("Executing remote combo builder...");

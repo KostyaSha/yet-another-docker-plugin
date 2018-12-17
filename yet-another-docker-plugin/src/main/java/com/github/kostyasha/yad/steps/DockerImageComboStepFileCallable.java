@@ -6,6 +6,7 @@ import com.github.kostyasha.yad.utils.VariableUtils;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.PushImageCmd;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.ConflictException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfigurations;
@@ -30,7 +31,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.github.kostyasha.yad.utils.DockerJavaUtils.getAuthConfig;
 import static com.github.kostyasha.yad.utils.LogUtils.printResponseItemToListener;
@@ -55,6 +58,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
     private final YADockerConnector connector;
     private DockerBuildImage buildImage;
     private final boolean cleanup;
+    private final boolean cleanupDangling;
     private final boolean push;
 
     private final TaskListener taskListener;
@@ -63,11 +67,13 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
     public DockerImageComboStepFileCallable(final YADockerConnector connector,
                                             final DockerBuildImage buildImage,
                                             final boolean cleanup,
+                                            final boolean cleanupDangling,
                                             final boolean push,
                                             final TaskListener taskListener) {
         this.connector = connector;
         this.buildImage = buildImage;
         this.cleanup = cleanup;
+        this.cleanupDangling = cleanupDangling;
         this.push = push;
         this.taskListener = taskListener;
     }
@@ -77,6 +83,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         private YADockerConnector connector;
         private DockerBuildImage buildImage;
         private boolean cleanup;
+        private boolean cleanupDangling;
         private boolean push;
 
         private TaskListener taskListener;
@@ -110,6 +117,11 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
             return this;
         }
 
+        public Builder withCleanupDangling(boolean cleanupDangling) {
+            this.cleanupDangling = cleanupDangling;
+            return this;
+        }
+
         public Builder withPushAll(boolean push) {
             this.push = push;
             return this;
@@ -135,6 +147,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
                     connector,
                     buildImage,
                     cleanup,
+                    cleanupDangling,
                     push,
                     taskListener
             );
@@ -161,17 +174,17 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
     /**
      * less indents
      */
-    private void invoke(DockerClient client) throws AbortException {
+    private void invoke(DockerClient client) throws AbortException, InterruptedException {
         PrintStream llog = taskListener.getLogger();
         String imageId = null;
+        MyBuildImageResultCallback imageResultCallback = new MyBuildImageResultCallback(llog);
 
         try {
             // build image
             BuildImageCmd buildImageCmd = client.buildImageCmd();
             buildImage.fillSettings(buildImageCmd);
-            llog.print("Building image... ");
-
-            imageId = buildImageCmd.exec(new MyBuildImageResultCallback(llog)).awaitImageId();
+            llog.println("Building image... ");
+            imageId = buildImageCmd.exec(imageResultCallback).awaitImageId();
             llog.println("Build done.");
 
             if (isEmpty(imageId)) {
@@ -205,7 +218,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
                         }
 
                         pushImageCmd.exec(new MyPushImageResultCallback())
-                                .awaitSuccess();
+                                .awaitCompletion();
                         llog.println("Pushed '" + tag + "'.");
                     } catch (Exception ex) {
                         taskListener.error("Can't push " + tag + " " + ex.getMessage());
@@ -214,7 +227,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
                 }
             }
         } finally {
-            invokeCleanup(client, imageId);
+            invokeCleanup(client, imageId, imageResultCallback.getContainers());
         }
     }
 
@@ -222,7 +235,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
     /**
      * Try to clean as much as we can without throwing errors.
      */
-    private void invokeCleanup(DockerClient client, String imageId) {
+    private void invokeCleanup(DockerClient client, String imageId, @Nonnull Set<String> containers) {
         PrintStream llog = taskListener.getLogger();
         if (!cleanup) {
             llog.println("Skipping cleanup.");
@@ -248,14 +261,14 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         for (String tag : buildImage.getTagsNormalised()) {
             try {
                 NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
-                llog.printf("Removing tagged image '%s:%s'.%n", reposTag.repos, reposTag.tag);
                 // no need to remove before
                 try {
                     client.removeImageCmd(reposTag.repos + ":" + reposTag.tag)
                             .withForce(true)
                             .exec();
+                    llog.printf("Removed tagged image '%s:%s'.%n", reposTag.repos, reposTag.tag);
                 } catch (NotFoundException ex) {
-                    llog.println("Tagged image doesn't exist.");
+                    //llog.println("Tagged image doesn't exist.");
                 } catch (Throwable ex) {
                     taskListener.error("Can't remove tagged image" + ex.getMessage());
                     //ignore as it cleanup
@@ -265,22 +278,72 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
                 LOG.error("Can't process tag.", ex);
             }
         }
+
+        if (cleanupDangling) {
+            for (String containerId : containers) {
+                try {
+                    client.removeImageCmd(containerId)
+                            .exec();
+                    llog.printf("Removed dangling layer image %s.%n", containerId);
+                    LOG.debug("Removed dangling layer image '{}'", containerId);
+                } catch (NotFoundException | ConflictException ex) {
+                    // ignore
+                } catch (Throwable ex) {
+                    taskListener.error("Can't remove dangling layer image " + containerId + ".");
+                    LOG.error("Can't remove dangling layer image " + containerId, ex);
+                }
+            }
+        }
     }
 
     private static class MyBuildImageResultCallback extends BuildImageResultCallback {
+        private static final String RUNNINGIN = "---> Running in";
+        private static final String IN = "--->";
+        private static final String REMOVING = "Removing intermediate container";
+        private static final String BUILT = "Successfully built";
+
         private final PrintStream llog;
+        private final Set<String> containers = new HashSet<>();
 
         MyBuildImageResultCallback(PrintStream llog) {
             this.llog = llog;
         }
 
+        public Set<String> getContainers() {
+            return containers;
+        }
+
         public void onNext(BuildResponseItem item) {
             String text = item.getStream();
             if (nonNull(text)) {
-                llog.println(StringUtils.removeEnd(text, "\n"));
-                LOG.debug(StringUtils.removeEnd(text, "\n"));
+                String s = StringUtils.removeEnd(text, "\n");
+                checkContainer(s);
+                llog.println(s);
+                LOG.debug(s);
             }
             super.onNext(item);
+        }
+
+        /**
+         * Docker can't cleanup dangling images https://github.com/moby/moby/issues/37311
+         * Track all containers from input stream.
+         */
+        private void checkContainer(String text) {
+            String trimmed = text.trim();
+            if (trimmed.startsWith(RUNNINGIN)) {
+                String container = trimmed.replace(RUNNINGIN, "").trim();
+                containers.add(container);
+            } else if (trimmed.startsWith(IN)) {
+                String container = trimmed.replace(IN, "").trim();
+                containers.add(container);
+            } else if (trimmed.contains(REMOVING)) {
+                String container = trimmed.replace(REMOVING, "").trim();
+                containers.remove(container);
+            } else if (trimmed.contains(BUILT)) {
+                String container = trimmed.replace(BUILT, "").trim();
+                containers.remove(container);
+            }
+
         }
     }
 

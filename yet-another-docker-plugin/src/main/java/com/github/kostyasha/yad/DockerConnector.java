@@ -19,14 +19,17 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.ItemGroup;
 import hudson.security.ACL;
+import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -68,10 +71,10 @@ public class DockerConnector extends YADockerConnector {
     private ConnectorType connectorType = NETTY;
 
     @CheckForNull
-    private Integer connectTimeout;
+    private Integer connectTimeout; //ms
 
     @CheckForNull
-    private Integer readTimeout;
+    private Integer readTimeout; //ms
 
     @CheckForNull
     private transient DockerClient client = null;
@@ -218,17 +221,26 @@ public class DockerConnector extends YADockerConnector {
     @Extension(ordinal = 100)
     public static class DescriptorImpl extends YADockerConnectorDescriptor {
 
+        @RequirePOST
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
+            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
+            if (!ac.hasPermission(Jenkins.ADMINISTER)) {
+                return new ListBoxModel();
+            }
+
             List<StandardCredentials> credentials =
-                    CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM,
+                    CredentialsProvider.lookupCredentials(StandardCredentials.class,
+                            context,
+                            ACL.SYSTEM,
                             Collections.emptyList());
 
             return new CredentialsListBoxModel()
-                    .withEmptySelection()
+                    .includeEmptyValue()
                     .withMatching(CredentialsMatchers.always(), credentials);
         }
 
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "docker-java uses runtime exceptions")
+        @RequirePOST
         public FormValidation doTestConnection(
                 @QueryParameter String serverUrl,
                 @QueryParameter String apiVersion,

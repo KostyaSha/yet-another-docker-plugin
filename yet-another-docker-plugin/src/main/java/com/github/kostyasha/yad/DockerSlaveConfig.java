@@ -26,7 +26,7 @@ import static java.util.Objects.nonNull;
 import static java.util.UUID.randomUUID;
 
 /**
- * Some generic config with everything required for container-slave operaition.
+ * Some generic config with everything required for container-slave operation.
  * Without docker connector because one connector may have multiple configs i.e. {@link DockerCloud}
  *
  * @author Kanstantsin Shautsou
