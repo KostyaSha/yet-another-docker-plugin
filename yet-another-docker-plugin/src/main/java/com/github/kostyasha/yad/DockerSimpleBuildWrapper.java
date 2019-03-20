@@ -2,7 +2,6 @@ package com.github.kostyasha.yad;
 
 import com.github.kostyasha.yad.connector.YADockerConnector;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -26,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.io.PrintStream;
 
 import static java.util.Objects.isNull;
 import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.get;
@@ -76,6 +76,8 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
                       Launcher launcher,
                       TaskListener listener,
                       EnvVars initialEnvironment) throws IOException, InterruptedException {
+        PrintStream logger = listener.getLogger();
+        logger.println("Trying to setup env...");
 
         final ProvisioningActivity.Id activityId = new ProvisioningActivity.Id(
                 run.getDisplayName(),
@@ -84,7 +86,7 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
 
         try {
             get().onStarted(activityId);
-            final String futureName = "yadp" + Integer.toString(activityId.getFingerprint());
+            final String futureName = "yadp" + activityId.getFingerprint();
 
             final DockerSlaveSingle slave = new DockerSlaveSingle(futureName,
                     "Slave for " + run.getFullDisplayName(),
@@ -96,6 +98,7 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
             Jenkins.getInstance().addNode(slave);
             final Node futureNode = Jenkins.getInstance().getNode(futureName);
             if (!(futureNode instanceof DockerSlaveSingle)) {
+                logger.println("Can't get node" + futureName);
                 throw new IllegalStateException("Can't get Node " + futureName);
             }
 
@@ -103,6 +106,7 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
             try {
                 final Computer toComputer = node.toComputer();
                 if (!(toComputer instanceof DockerComputerSingle)) {
+                    logger.println("Can't get computer for " + node.getNodeName());
                     throw new IllegalStateException("Can't get computer for " + node.getNodeName());
                 }
 
@@ -110,9 +114,11 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
                 computer.setRun(run);
                 computer.setListener(listener);
                 node.setListener(listener);
-                listener.getLogger().println("Getting launcher...");
+                logger.println("Getting launcher...");
                 ((DelegatingComputerLauncher) computer.getLauncher()).getLauncher().launch(computer, listener);
             } catch (Throwable e) {
+                logger.println("Failed to provision");
+                e.printStackTrace(logger);
                 LOG.error("fd", e);
                 CloudStatistics.ProvisioningListener.get().onFailure(node.getId(), e);
                 //terminate will do container cleanups and remove node from jenkins silently
@@ -124,8 +130,10 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
             context.setDisposer(new DisposerImpl(futureName));
 
         } catch (Descriptor.FormException | IOException e) {
+            logger.println("Failed to run slave");
+            e.printStackTrace(logger);
             get().onFailure(activityId, e);
-            throw new AbortException("failed to run slave");
+            throw new IOException("failed to run slave", e);
         }
     }
 
@@ -143,8 +151,10 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
         @Override
         public void tearDown(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener)
                 throws IOException, InterruptedException {
+            PrintStream logger = listener.getLogger();
+
             LOG.info("Shutting down slave");
-            listener.getLogger().println("Shutting down slave '" + slaveName + "'.");
+            logger.println("Shutting down slave '" + slaveName + "'.");
             final Node slaveNode = Jenkins.getInstance().getNode(slaveName);
             if (isNull(slaveNode)) {
                 throw new IllegalStateException("Can't get node " + slaveName);
@@ -153,6 +163,8 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
             try {
                 node.terminate();
             } catch (Throwable e) {
+                logger.println("Can't terminate node");
+                e.printStackTrace(logger);
                 LOG.error("Can't terminate node", e);
                 CloudStatistics.ProvisioningListener.get().onFailure(node.getId(), e);
             }
