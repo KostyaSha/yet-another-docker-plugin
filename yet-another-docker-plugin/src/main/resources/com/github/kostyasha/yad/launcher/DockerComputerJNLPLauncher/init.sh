@@ -2,8 +2,14 @@
 
 set -uxe
 
+config_timeout=60
 export CONFIG="/tmp/config.sh"
 while [ ! -f "$CONFIG" ]; do
+    config_timeout=$(($config_timeout-1))
+    if [ $config_timeout -le 0 ]; then
+        echo "No config file found after 60s! Exiting."
+        exit 1
+    fi
     echo "No config, sleeping for 1 second"
     sleep 1
 done
