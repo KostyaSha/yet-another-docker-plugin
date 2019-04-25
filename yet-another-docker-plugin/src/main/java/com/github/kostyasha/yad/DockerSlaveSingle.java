@@ -156,9 +156,15 @@ public class DockerSlaveSingle extends AbstractCloudSlave implements TrackedItem
                 LOG.info("Removed container {}", getContainerId());
                 listener.getLogger().println("Removed container " + getContainerId());
             } catch (Exception ex) {
-                LOG.error("Failed to remove instance '{}' for slave '{}' due to exception: {}",
-                        getContainerId(), name, ex.getMessage());
-                listener.error("failed to remove " + getContainerId());
+                String inProgress = "removal of container " + getContainerId() + " is already in progress";
+                if (ex.getMessage().contains(inProgress)) {
+                    LOG.debug("Removing", ex);
+                    listener.getLogger().println(inProgress);
+                } else {
+                    LOG.error("Failed to remove instance '{}' for slave '{}' due to exception: {}",
+                            getContainerId(), name, ex.getMessage());
+                    listener.error("failed to remove " + getContainerId());
+                }
             }
         } else {
             LOG.error("ContainerId is absent, no way to remove/stop container");
