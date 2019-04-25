@@ -137,7 +137,6 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             DockerClient longClient = (longConnector == null) ? client : longConnector.getClient()
         ) {
             //pull image
-            llog.println("Pulling image " + imageId + "...");
             containerLifecycle.getPullImage().exec(client, imageId, listener);
 
             llog.println("Trying to create container for " + imageId);
