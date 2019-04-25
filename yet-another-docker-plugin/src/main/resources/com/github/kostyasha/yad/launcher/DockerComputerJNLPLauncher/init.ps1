@@ -67,6 +67,7 @@ cd $JENKINS_HOME
 
 try {
    Write-Output "Invoke-WebRequest -Uri $JENKINS_URL/jnlpJars/slave.jar -Outfile $JENKINS_HOME/slave.jar"
+   [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
    Invoke-WebRequest -Uri "$JENKINS_URL/jnlpJars/slave.jar" -Outfile "$JENKINS_HOME/slave.jar"
 
    Write-Output "$RUN_CMD"
