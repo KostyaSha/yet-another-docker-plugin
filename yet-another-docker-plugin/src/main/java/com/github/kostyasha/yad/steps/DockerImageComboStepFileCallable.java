@@ -312,10 +312,12 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         public void onNext(BuildResponseItem item) {
             String text = item.getStream();
             if (nonNull(text)) {
-                String s = StringUtils.removeEnd(text, "\n");
-                checkContainer(s);
-                llog.println(s);
-                LOG.debug(s);
+                LOG.trace(text);
+                String s = StringUtils.trimToNull(StringUtils.chop(text));
+                if (nonNull(s)) {
+                    checkContainer(s);
+                    llog.println(s);
+                }
             }
             super.onNext(item);
         }
