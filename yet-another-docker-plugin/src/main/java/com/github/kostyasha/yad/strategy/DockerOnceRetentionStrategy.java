@@ -1,5 +1,6 @@
 package com.github.kostyasha.yad.strategy;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
@@ -109,6 +110,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
         done(c);
     }
 
+    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
     protected void done(final AbstractCloudComputer<?> c) {
         c.setAcceptingTasks(false); // just in case
         synchronized (this) {
