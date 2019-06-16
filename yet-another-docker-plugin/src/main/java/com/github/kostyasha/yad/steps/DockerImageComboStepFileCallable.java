@@ -23,6 +23,7 @@ import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -231,6 +232,9 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
             response.setSuccess(true);
         } catch (Throwable t) {
             response.setSuccess(false);
+            llog.println(t.getMessage());
+            response.setErrorMessage(t.getMessage());
+            response.setErrorTrace(ExceptionUtils.getFullStackTrace(t));
         } finally {
             builtImages.add(imageId);
             response.setImages(builtImages);
@@ -279,7 +283,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
                     client.removeImageCmd(image)
                             .exec();
                 } catch (NotFoundException ex) {
-                    llog.println("Image doesn't exist.");
+                    LOG.trace("Image '{}' already doesn't exist.", image);
                 } catch (Throwable ex) {
                     taskListener.error("Can't remove image" + ex.getMessage());
                     //ignore as it cleanup
@@ -308,10 +312,12 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         public void onNext(BuildResponseItem item) {
             String text = item.getStream();
             if (nonNull(text)) {
-                String s = StringUtils.removeEnd(text, "\n");
-                checkContainer(s);
-                llog.println(s);
-                LOG.debug(s);
+                LOG.trace(text);
+                String s = StringUtils.trimToNull(StringUtils.chomp(text));
+                if (nonNull(s)) {
+                    checkContainer(s);
+                    llog.println(s);
+                }
             }
             super.onNext(item);
         }
