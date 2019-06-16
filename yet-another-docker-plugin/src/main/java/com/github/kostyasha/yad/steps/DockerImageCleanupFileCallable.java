@@ -55,7 +55,7 @@ public class DockerImageCleanupFileCallable extends MasterToSlaveFileCallable<Vo
                     client.removeImageCmd(image)
                             .exec();
                 } catch (NotFoundException ex) {
-                    llog.println("Image doesn't exist.");
+                    LOG.trace("Image '{}' already doesn't exist.", image);
                 } catch (Throwable ex) {
                     taskListener.error("Can't remove image" + ex.getMessage());
                     //ignore as it cleanup
