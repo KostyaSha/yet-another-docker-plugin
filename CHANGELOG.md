@@ -1,4 +1,22 @@
-##
+## 0.1.0-rc54
+- Strip new lines.
+- Print error message.
+
+## 0.1.0-rc53
+failed release
+
+## 0.1.0-rc51
+- Explicitly set the SecurityProtocol when getting slave.jar
+- fresh docker-java
+- more logging
+
+## 0.1.0-rc50
+- (internal) Timeout per command. Cleanup dangling images. 
+
+## 0.1.0-rc49
+- Avoid touching entrypoint on DockerComputerIOLauncher
+- Fix wrong handling of java and slave options in powershell script
+- fresh versions.
 
 ## 0.1.0-rc48
 - Allow add additional labels to created containers.
