@@ -25,6 +25,7 @@ import java.io.PrintStream;
 
 import static com.github.kostyasha.yad.steps.DockerImageComboStepFileCallable.newDockerImageComboStepFileCallableBuilder;
 import static java.util.Objects.isNull;
+import static org.apache.commons.lang.StringUtils.trimToEmpty;
 
 /**
  * Let's assume that user wants:
@@ -117,8 +118,14 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
 
             response = workspace.act(comboCallable);
 
-            if (isNull(response) || !response.isSuccess()) {
+            if (!response.isSuccess()) {
+                throw new IOException(trimToEmpty(response.getErrorMessage()),
+                        new Exception(trimToEmpty(response.getErrorTrace())));
+            }
+
+            if (isNull(response)) {
                 throw new AbortException("Something failed.");
+
             }
         } catch (Exception ex) {
             LOG.error("Can't build image", ex);

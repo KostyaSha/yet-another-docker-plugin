@@ -23,6 +23,7 @@ import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -231,6 +232,9 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
             response.setSuccess(true);
         } catch (Throwable t) {
             response.setSuccess(false);
+            llog.println(t.getMessage());
+            response.setErrorMessage(t.getMessage());
+            response.setErrorTrace(ExceptionUtils.getFullStackTrace(t));
         } finally {
             builtImages.add(imageId);
             response.setImages(builtImages);
