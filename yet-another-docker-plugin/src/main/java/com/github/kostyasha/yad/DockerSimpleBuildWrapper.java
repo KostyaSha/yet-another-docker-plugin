@@ -27,6 +27,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import static com.github.kostyasha.yad.utils.DockerUtils.jenkinsAddNodeWithRetry;
 import static java.util.Objects.isNull;
 import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.get;
 
@@ -88,14 +89,8 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
             get().onStarted(activityId);
             final String futureName = "yadp" + activityId.getFingerprint();
 
-            final DockerSlaveSingle slave = new DockerSlaveSingle(futureName,
-                    "Slave for " + run.getFullDisplayName(),
-                    getConfig(),
-                    getConnector(),
-                    activityId
-            );
+            jenkinsAddNodeWithRetry(getDockerSlaveSingleWithRetry(run, activityId, futureName));
 
-            Jenkins.getInstance().addNode(slave);
             final Node futureNode = Jenkins.getInstance().getNode(futureName);
             if (!(futureNode instanceof DockerSlaveSingle)) {
                 logger.println("Can't get node" + futureName);
@@ -115,14 +110,15 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
                 computer.setListener(listener);
                 node.setListener(listener);
                 logger.println("Getting launcher...");
-                ((DelegatingComputerLauncher) computer.getLauncher()).getLauncher().launch(computer, listener);
+                ((DelegatingComputerLauncher) computer.getLauncher()).getLauncher()
+                        .launch(computer, listener);
             } catch (Throwable e) {
                 logger.println("Failed to provision");
                 e.printStackTrace(logger);
                 LOG.error("fd", e);
                 CloudStatistics.ProvisioningListener.get().onFailure(node.getId(), e);
                 //terminate will do container cleanups and remove node from jenkins silently
-                slave.terminate();
+                node.terminate();
                 throw e;
             }
 
@@ -136,6 +132,31 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
             throw new IOException("failed to run slave", e);
         }
     }
+
+    private DockerSlaveSingle getDockerSlaveSingleWithRetry(Run<?, ?> run, ProvisioningActivity.Id activityId, String futureName)
+            throws IOException, Descriptor.FormException, InterruptedException {
+        int retries = 6;
+        while (retries >= 0) {
+            try {
+                return new DockerSlaveSingle(futureName,
+                        "Slave for " + run.getFullDisplayName(),
+                        getConfig(),
+                        getConnector(),
+                        activityId);
+            } catch (IOException t) {
+                if (retries <= 0) {
+                    throw t;
+                }
+                LOG.trace("Failed to create DockerSlaveSingle, retrying...", t);
+                Thread.sleep(1000);
+            } finally {
+                retries--;
+            }
+        }
+
+        throw new IllegalStateException("Max creation retries");
+    }
+
 
     /**
      * Terminates slave for specified slaveName. Works only with {@link DockerSlaveSingle}.

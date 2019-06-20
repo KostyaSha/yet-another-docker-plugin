@@ -263,7 +263,30 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         }
 
         final DockerComputerLauncher launcher = computerLauncher.getPreparedLauncher(getDisplayName(), template, ir);
-        return new DockerSlave(slaveName, nodeDescription, launcher, containerId, template, getDisplayName(), id);
+
+        return getDockerSlaveWithRetry(template, id, containerId, nodeDescription, slaveName, launcher);
+    }
+
+    private DockerSlave getDockerSlaveWithRetry(DockerSlaveTemplate template, ProvisioningActivity.Id id,
+                                                String containerId, String nodeDescription, String slaveName,
+                                                DockerComputerLauncher launcher)
+            throws IOException, Descriptor.FormException, InterruptedException {
+        int retries = 6;
+        while (retries >= 0) {
+            try {
+                return new DockerSlave(slaveName, nodeDescription, launcher, containerId, template, getDisplayName(), id);
+            } catch (IOException t) {
+                if (retries <= 0) {
+                    throw t;
+                }
+                LOG.trace("Failed to create DockerSlaveSingle, retrying...", t);
+                Thread.sleep(1000);
+            } finally {
+                retries--;
+            }
+        }
+
+        throw new IllegalStateException("Max creation retries");
     }
 
     /**
