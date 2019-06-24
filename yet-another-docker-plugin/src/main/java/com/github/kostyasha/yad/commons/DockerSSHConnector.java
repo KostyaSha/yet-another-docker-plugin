@@ -91,7 +91,7 @@ public class DockerSSHConnector extends ComputerConnector {
      */
     private final Integer retryWaitTime;
 
-    // CHECKSTYLE:OFF
+    //CHECKSTYLE:OFF
     @DataBoundConstructor
     public DockerSSHConnector(int port,
                               StandardUsernameCredentials credentials,
@@ -115,7 +115,7 @@ public class DockerSSHConnector extends ComputerConnector {
         this.maxNumRetries = maxNumRetries != null && maxNumRetries > 0 ? maxNumRetries : 0;
         this.retryWaitTime = retryWaitTime != null && retryWaitTime > 0 ? retryWaitTime : 0;
     }
-    // CHECKSTYLE:ON
+    //CHECKSTYLE:ON
 
     public int getPort() {
         return port;
@@ -167,24 +167,23 @@ public class DockerSSHConnector extends ComputerConnector {
 
     @CheckForNull
     public StandardUsernameCredentials getCredentials() {
-        String credentialsId;
-        if (isNull(this.credentialsId)) {
-            credentialsId = (isNull(this.credentials)) ? null : this.credentials.getId();
+        String credentialsIdf;
+
+        if (isNull(credentialsId)) {
+            credentialsIdf = (isNull(credentials)) ? null : credentials.getId();
         } else {
-            credentialsId = this.credentialsId;
+            credentialsIdf = credentialsId;
         }
+
         try {
-            // only ever want from the system
-            // lookup every time so that we always have the latest
-            StandardUsernameCredentials credentials;
-            if (credentialsId == null) {
-                credentials = null;
+            StandardUsernameCredentials credentialss;
+            if (credentialsIdf == null) {
+                credentialss = null;
             } else {
-                credentials = SSHLauncher.lookupSystemCredentials(credentialsId);
+                credentialss = SSHLauncher.lookupSystemCredentials(credentialsIdf);
             }
-            if (nonNull(credentials)) {
-                this.credentials = credentials;
-                return credentials;
+            if (nonNull(credentialss)) {
+                credentials = credentialss;
             }
         } catch (Throwable t) {
             // ignore
