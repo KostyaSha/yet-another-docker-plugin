@@ -7,8 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-import static java.util.Objects.nonNull;
-
 public class DockerUtils {
     private static final Logger LOG = LoggerFactory.getLogger(DockerUtils.class);
 
@@ -23,6 +21,7 @@ public class DockerUtils {
         while (retries >= 0) {
             try {
                 Jenkins.getInstance().addNode(slave);
+                return;
             } catch (IOException ex) {
                 lastException = ex;
                 if (retries <= 0) {
@@ -34,11 +33,8 @@ public class DockerUtils {
                 retries--;
             }
         }
-        if (nonNull(lastException)) {
-            throw lastException;
-        }
 
-        throw new IllegalStateException("Failed to add DockerSlaveSingle...");
+        throw lastException;
     }
 
 
