@@ -1,4 +1,7 @@
-## 0.1.0-rc54
+## 0.1.1
+- return from method
+
+## 0.1.0
 - Strip new lines.
 - Print error message.
 
