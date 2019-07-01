@@ -263,7 +263,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
                 } catch (NotFoundException | ConflictException ex) {
                     // ignore
                 } catch (Throwable ex) {
-                    taskListener.error("Can't remove dangling layer image " + containerId + ".");
+                    //taskListener.error("Can't remove dangling layer image " + containerId + ".");
                     LOG.error("Can't remove dangling layer image " + containerId, ex);
                 }
             }
