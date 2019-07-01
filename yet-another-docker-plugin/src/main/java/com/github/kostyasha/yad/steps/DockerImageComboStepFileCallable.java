@@ -332,8 +332,11 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
                 String container = trimmed.replace(RUNNING_IN, "").trim();
                 containers.add(container);
             } else if (trimmed.startsWith(IN)) {
-                String container = trimmed.replace(IN, "").trim();
-                containers.add(container);
+                // exclude ---> Package gcc-c++.x86_64 0:4.8.5-28.el7_5.1 will be installed
+                if (trimmed.length() == 12 && !trimmed.contains(" ")) {
+                    String container = trimmed.replace(IN, "").trim();
+                    containers.add(container);
+                }
             } else if (trimmed.contains(REMOVING)) {
                 String container = trimmed.replace(REMOVING, "").trim();
                 containers.remove(container);
