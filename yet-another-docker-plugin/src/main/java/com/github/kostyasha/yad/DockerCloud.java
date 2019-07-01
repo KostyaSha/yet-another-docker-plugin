@@ -240,7 +240,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         try {
             ir = getClient().inspectContainerCmd(containerId).exec();
         } catch (ProcessingException ex) {
-            LOG.error("Failed to run container for {}, clean-up container", imageId);
+            LOG.error("Failed to run container for {}, removing container", imageId);
             dockerContainerLifecycle.getRemoveContainer().exec(getClient(), containerId);
             throw ex;
         }
@@ -249,12 +249,17 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
         String slaveName = String.format("%s-%s", getDisplayName(), containerId.substring(0, 12));
 
-        if (computerLauncher.waitUp(getDisplayName(), template, ir)) {
-            LOG.debug("Container {} is ready for slave connection", containerId);
-        } else {
-            LOG.error("Container {} is not ready for slave connection. Cleaning up...", containerId);
+        try {
+            if (computerLauncher.waitUp(getDisplayName(), template, ir)) {
+                LOG.debug("Container {} is ready for slave connection", containerId);
+            } else {
+                LOG.error("Container {} is not ready for slave connection.", containerId);
+                throw new IllegalStateException("Failed to run container.");
+            }
+        } catch (RuntimeException ex) {
+            LOG.error("Removing {} container.", containerId);
             dockerContainerLifecycle.getRemoveContainer().exec(getClient(), containerId);
-            throw new IllegalStateException("Failed to run container.");
+            throw ex;
         }
 
         final DockerComputerLauncher launcher = computerLauncher.getPreparedLauncher(getDisplayName(), template, ir);
