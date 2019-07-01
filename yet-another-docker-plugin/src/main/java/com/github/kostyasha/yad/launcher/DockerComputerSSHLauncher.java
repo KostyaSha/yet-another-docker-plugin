@@ -91,7 +91,9 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     @Override
     public boolean waitUp(String cloudId, DockerSlaveTemplate dockerSlaveTemplate,
                           InspectContainerResponse containerInspect) {
-        super.waitUp(cloudId, dockerSlaveTemplate, containerInspect);
+        if (!super.waitUp(cloudId, dockerSlaveTemplate, containerInspect)) {
+            return false;
+        }
 
         final HostAndPort hostAndPort = getHostAndPort(cloudId, containerInspect);
         HostAndPortChecker hostAndPortChecker = HostAndPortChecker.create(hostAndPort);

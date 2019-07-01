@@ -245,21 +245,16 @@ public class DockerCloud extends AbstractCloud implements Serializable {
             throw ex;
         }
 
-        // Build a description up:
-        String nodeDescription = "Docker Node [" + imageId + " on ";
-        try {
-            nodeDescription += getDisplayName();
-        } catch (Exception ex) {
-            nodeDescription += "???";
-        }
-        nodeDescription += "]";
+        String nodeDescription = String.format("Docker Node [%s on %s]", imageId, getDisplayName());
 
         String slaveName = String.format("%s-%s", getDisplayName(), containerId.substring(0, 12));
 
         if (computerLauncher.waitUp(getDisplayName(), template, ir)) {
             LOG.debug("Container {} is ready for slave connection", containerId);
         } else {
-            LOG.error("Container {} is not ready for slave connection.", containerId);
+            LOG.error("Container {} is not ready for slave connection. Cleaning up...", containerId);
+            dockerContainerLifecycle.getRemoveContainer().exec(getClient(), containerId);
+            throw new IllegalStateException("Failed to run container.");
         }
 
         final DockerComputerLauncher launcher = computerLauncher.getPreparedLauncher(getDisplayName(), template, ir);
