@@ -312,20 +312,19 @@ public class DockerCloud extends AbstractCloud implements Serializable {
      * @param template If null, then all instances are counted.
      */
     public int countCurrentDockerSlaves(final DockerSlaveTemplate template) throws Exception {
+        final Map<String, String> labels = new HashMap<>();
+        labels.put(DOCKER_CLOUD_LABEL, getDisplayName());
+
         int count = 0;
-        List<Container> containers = getClient().listContainersCmd().exec();
+        List<Container> containers = getClient().listContainersCmd().withLabelFilter(labels).exec();
 
         for (Container container : containers) {
-            final Map<String, String> labels = container.getLabels();
-
-            if (labels.containsKey(DOCKER_CLOUD_LABEL) && labels.get(DOCKER_CLOUD_LABEL).equals(getDisplayName())) {
-                if (template == null) {
-                    // count only total cloud capacity
-                    count++;
-                } else if (labels.containsKey(DOCKER_TEMPLATE_LABEL) &&
-                        labels.get(DOCKER_TEMPLATE_LABEL).equals(template.getId())) {
-                    count++;
-                }
+            if (template == null) {
+                // count only total cloud capacity
+                count++;
+            } else if (container.getLabels().containsKey(DOCKER_TEMPLATE_LABEL) &&
+                    container.getLabels().get(DOCKER_TEMPLATE_LABEL).equals(template.getId())) {
+                count++;
             }
         }
 
