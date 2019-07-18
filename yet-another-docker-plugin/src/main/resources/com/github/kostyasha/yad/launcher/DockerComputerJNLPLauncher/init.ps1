@@ -6,6 +6,35 @@ while (-not (Test-Path $CONFIG)) {
    sleep 1
 }
 
+function Test-FileLock {
+   param (
+      [parameter(Mandatory=$true)]
+      [string]$Path
+   )
+
+   $oFile = New-Object System.IO.FileInfo $Path
+
+   try
+   {
+      $oStream = $oFile.Open([System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+      if ($oStream)
+      {
+         $oStream.Close()
+      }
+      $false
+   }
+   catch
+   {
+      # file is locked by a process.
+      $true
+   }
+}
+
+while (Test-FileLock $CONFIG) {
+   Write-Output "Config file is still being created, sleeping for 1 second"
+   sleep 1
+}
+
 Write-Output "Found config file $CONFIG"
 . "$CONFIG"
 
