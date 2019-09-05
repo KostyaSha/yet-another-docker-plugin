@@ -1,5 +1,6 @@
 package com.github.kostyasha.yad.launcher;
 
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
@@ -120,8 +121,10 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
             LOG.info("Creating slave SSH launcher for '{}:{}'. Cloud: '{}'. Template: '{}'",
                     hostAndPort.getHostText(), hostAndPort.getPort(), cloudId,
                     template.getDockerContainerLifecycle().getImage());
+            final String credentialsId = sshConnector.getCredentialsId();
+            final StandardUsernameCredentials credentials = SSHLauncher.lookupSystemCredentials(credentialsId);
             return new SSHLauncher(hostAndPort.getHostText(), hostAndPort.getPort(),
-                    sshConnector.getCredentials(),
+                    credentials,
                     sshConnector.jvmOptions,
                     sshConnector.javaPath,
                     sshConnector.prefixStartSlaveCmd,
