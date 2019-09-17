@@ -74,13 +74,15 @@ public class DockerBuildImageStepTest {
         final CredentialsYADockerConnector dockerConnector = new CredentialsYADockerConnector()
                 .withConnectorType(JERSEY)
                 .withServerUrl("tcp://127.0.0.1:2376")
-                .withSslConfig(new LocalDirectorySSLConfig("/home/vagrant/keys"));
+                .withSslConfig(new LocalDirectorySSLConfig("/home/vagrant/keys"))
+                ;
 //                .withCredentials(new DockerDaemonFileCredentials(null, "docker-cert", "",
 //                        "/home/vagrant/keys"));
 
         DockerBuildImage buildImage = new DockerBuildImage();
         buildImage.setBaseDirectory(dockerfilePath);
         buildImage.setPull(true);
+        buildImage.setNoCache(true);
 
         DockerBuildImageStep dockerBuildImageStep = new DockerBuildImageStep(dockerConnector, buildImage);
 
@@ -107,7 +109,13 @@ public class DockerBuildImageStepTest {
 //                File tempFolder = folder.newFolder();
             File tempFolder = new File("/home/vagrant/jenkins2/docker");
             File dockerfile = new File(tempFolder, "Dockerfile");
-            String dockerfileContent = "FROM busybox\nRUN echo hello";
+//            String dockerfileContent = "FROM busybox\nRUN echo hello";
+            String dockerfileContent =
+                    "FROM maven:3.6.2-jdk-8\n" +
+                    "RUN echo hello\n" +
+                    "RUN mvn archetype:generate -DgroupId=com.mycompany.app -DartifactId=my-app -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.4 -DinteractiveMode=false\n" +
+                    "RUN cd my-app && mvn install\n"
+                    ;
             FileUtils.writeStringToFile(dockerfile, dockerfileContent);
             return tempFolder.getAbsolutePath();
         }
