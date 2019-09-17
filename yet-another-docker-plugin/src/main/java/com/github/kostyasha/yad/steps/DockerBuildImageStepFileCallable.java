@@ -82,7 +82,8 @@ public class DockerBuildImageStepFileCallable extends MasterToSlaveFileCallable<
         public void onNext(BuildResponseItem item) {
             String text = item.getStream();
             if (nonNull(text)) {
-                llog.println(StringUtils.removeEnd(text, "\n"));
+                llog.print(text);
+//                llog.println(StringUtils.removeEnd(text, "\n"));
                 LOG.debug(StringUtils.removeEnd(text, "\n"));
             }
             super.onNext(item);
