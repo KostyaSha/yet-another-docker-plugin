@@ -26,7 +26,7 @@
             <groupId>com.github.kostyasha.yet-another-docker</groupId>
             <artifactId>yet-another-docker-plugin</artifactId>
             <!--<version>${project.version}</version>-->
-            <version>0.1.0-SNAPSHOT</version>
+            <version>0.1.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -34,7 +34,7 @@
             <artifactId>yet-another-docker-java</artifactId>
             <!--TODO cleanup? dep fails with variable reference -->
             <!--<version>${project.version}</version>-->
-            <version>0.1.0-SNAPSHOT</version>
+            <version>0.1.2-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.github.docker-java</groupId>
