@@ -53,7 +53,7 @@ import static org.apache.commons.lang.StringUtils.isNotEmpty;
  * @see DockerImageComboStep
  */
 public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<DockerImageComboStepResponse> {
-    private static final Logger LOG = LoggerFactory.getLogger(DockerBuildImageStepFileCallable.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DockerImageComboStepFileCallable.class);
     private static final long serialVersionUID = 1L;
 
     private final YADockerConnector connector;
@@ -312,11 +312,11 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         public void onNext(BuildResponseItem item) {
             String text = item.getStream();
             if (nonNull(text)) {
+                llog.print(text);
                 LOG.trace(text);
                 String s = StringUtils.trimToNull(StringUtils.chomp(text));
                 if (nonNull(s)) {
                     checkContainer(s);
-                    llog.println(s);
                 }
             }
             super.onNext(item);

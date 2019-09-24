@@ -9,7 +9,6 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.B
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,8 +82,7 @@ public class DockerBuildImageStepFileCallable extends MasterToSlaveFileCallable<
             String text = item.getStream();
             if (nonNull(text)) {
                 llog.print(text);
-//                llog.println(StringUtils.removeEnd(text, "\n"));
-                LOG.debug(StringUtils.removeEnd(text, "\n"));
+                LOG.debug(text);
             }
             super.onNext(item);
         }
