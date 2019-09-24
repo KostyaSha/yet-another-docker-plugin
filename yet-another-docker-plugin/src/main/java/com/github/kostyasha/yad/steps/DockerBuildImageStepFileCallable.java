@@ -9,7 +9,6 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.B
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
