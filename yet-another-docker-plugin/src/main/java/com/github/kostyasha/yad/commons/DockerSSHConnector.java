@@ -94,7 +94,7 @@ public class DockerSSHConnector extends ComputerConnector {
 
     private SshHostKeyVerificationStrategy sshHostKeyVerificationStrategy;
 
-    //CHECKSTYLE:OFF
+    @SuppressWarnings("checkstyle:paramnum")
     @DataBoundConstructor
     public DockerSSHConnector(int port,
                               StandardUsernameCredentials credentials,
@@ -120,7 +120,6 @@ public class DockerSSHConnector extends ComputerConnector {
         this.retryWaitTime = retryWaitTime != null && retryWaitTime > 0 ? retryWaitTime : 0;
         this.sshHostKeyVerificationStrategy = sshHostKeyVerificationStrategy;
     }
-    //CHECKSTYLE:ON
 
     public int getPort() {
         return port;
