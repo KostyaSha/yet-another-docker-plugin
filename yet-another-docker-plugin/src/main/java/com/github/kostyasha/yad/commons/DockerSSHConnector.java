@@ -94,7 +94,7 @@ public class DockerSSHConnector extends ComputerConnector {
 
     private SshHostKeyVerificationStrategy sshHostKeyVerificationStrategy;
 
-    @SuppressWarnings("checkstyle:paramnum")
+    @SuppressWarnings("checkstyle:ParameterNumber")
     @DataBoundConstructor
     public DockerSSHConnector(int port,
                               StandardUsernameCredentials credentials,
