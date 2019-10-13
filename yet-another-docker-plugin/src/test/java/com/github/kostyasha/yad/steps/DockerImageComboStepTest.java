@@ -12,6 +12,7 @@ import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.sshslaves.SSHLauncher;
+import hudson.plugins.sshslaves.verifiers.NonVerifyingKeyVerificationStrategy;
 import hudson.remoting.Callable;
 import hudson.slaves.DumbSlave;
 import org.apache.commons.io.FileUtils;
@@ -82,7 +83,8 @@ public class DockerImageComboStepTest {
                 "", //      String suffixStartSlaveCmd,
                 20, //      Integer launchTimeoutSeconds,
                 1, //      Integer maxNumRetries,
-                3//      Integer retryWaitTime
+                3,//      Integer retryWaitTime
+                new NonVerifyingKeyVerificationStrategy()
         );
         final DumbSlave dumbSlave = new DumbSlave("docker-daemon", "/home/vagrant/jenkins2", sshLauncher);
         jRule.getInstance().addNode(dumbSlave);

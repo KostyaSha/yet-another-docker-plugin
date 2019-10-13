@@ -13,6 +13,8 @@ import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.sshslaves.SSHLauncher;
+import hudson.plugins.sshslaves.verifiers.NonVerifyingKeyVerificationStrategy;
+import hudson.plugins.sshslaves.verifiers.SshHostKeyVerificationStrategy;
 import hudson.slaves.DumbSlave;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -56,7 +58,8 @@ public class DockerShellStepIT {
                 "", //      String suffixStartSlaveCmd,
                 20, //      Integer launchTimeoutSeconds,
                 1, //      Integer maxNumRetries,
-                3//      Integer retryWaitTime
+                3,//      Integer retryWaitTime
+                new NonVerifyingKeyVerificationStrategy()
         );
         final DumbSlave dumbSlave = new DumbSlave("docker-daemon", "/home/vagrant/jenkins2", sshLauncher);
         jRule.getInstance().addNode(dumbSlave);

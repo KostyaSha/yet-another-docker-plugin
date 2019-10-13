@@ -4,4 +4,4 @@ import lib.FormTagLib
 
 def f = namespace(FormTagLib);
 
-f.property(field: "dockerSSHConnector")
+f.property(field: "sshConnector")

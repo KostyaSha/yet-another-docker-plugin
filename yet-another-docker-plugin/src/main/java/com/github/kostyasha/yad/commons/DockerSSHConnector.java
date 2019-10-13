@@ -9,8 +9,9 @@ import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.ItemGroup;
 import hudson.model.TaskListener;
-import hudson.plugins.sshslaves.Messages;
 import hudson.plugins.sshslaves.SSHLauncher;
+import hudson.plugins.sshslaves.verifiers.KnownHostsFileKeyVerificationStrategy;
+import hudson.plugins.sshslaves.verifiers.SshHostKeyVerificationStrategy;
 import hudson.security.ACL;
 import hudson.security.AccessControlled;
 import hudson.slaves.ComputerConnector;
@@ -91,6 +92,8 @@ public class DockerSSHConnector extends ComputerConnector {
      */
     private final Integer retryWaitTime;
 
+    private SshHostKeyVerificationStrategy sshHostKeyVerificationStrategy;
+
     //CHECKSTYLE:OFF
     @DataBoundConstructor
     public DockerSSHConnector(int port,
@@ -102,7 +105,8 @@ public class DockerSSHConnector extends ComputerConnector {
                               String suffixStartSlaveCmd,
                               Integer launchTimeoutSeconds,
                               Integer maxNumRetries,
-                              Integer retryWaitTime) {
+                              Integer retryWaitTime,
+                              SshHostKeyVerificationStrategy sshHostKeyVerificationStrategy) {
         this.jvmOptions = jvmOptions;
         this.port = port == 0 ? 22 : port;
         this.credentials = credentials;
@@ -114,6 +118,7 @@ public class DockerSSHConnector extends ComputerConnector {
         this.launchTimeoutSeconds = launchTimeoutSeconds == null || launchTimeoutSeconds <= 0 ? null : launchTimeoutSeconds;
         this.maxNumRetries = maxNumRetries != null && maxNumRetries > 0 ? maxNumRetries : 0;
         this.retryWaitTime = retryWaitTime != null && retryWaitTime > 0 ? retryWaitTime : 0;
+        this.sshHostKeyVerificationStrategy = sshHostKeyVerificationStrategy;
     }
     //CHECKSTYLE:ON
 
@@ -165,6 +170,10 @@ public class DockerSSHConnector extends ComputerConnector {
         return retryWaitTime;
     }
 
+    public SshHostKeyVerificationStrategy getSshHostKeyVerificationStrategy() {
+        return sshHostKeyVerificationStrategy;
+    }
+
     @CheckForNull
     public StandardUsernameCredentials getCredentials() {
         String credentialsIdf;
@@ -192,11 +201,19 @@ public class DockerSSHConnector extends ComputerConnector {
         return credentials;
     }
 
-
     @Override
     public SSHLauncher launch(String host, TaskListener listener) throws IOException, InterruptedException {
-        return new SSHLauncher(host, port, getCredentials(), jvmOptions, javaPath, jdkInstaller, prefixStartSlaveCmd,
-                suffixStartSlaveCmd, launchTimeoutSeconds, maxNumRetries, retryWaitTime);
+        return new SSHLauncher(host, port, credentialsId, jvmOptions, javaPath, prefixStartSlaveCmd,
+                suffixStartSlaveCmd, launchTimeoutSeconds, maxNumRetries, retryWaitTime,
+                sshHostKeyVerificationStrategy);
+    }
+
+    protected Object readResolve() {
+        if (isNull(sshHostKeyVerificationStrategy)) {
+            this.sshHostKeyVerificationStrategy = new KnownHostsFileKeyVerificationStrategy();
+        }
+
+        return this;
     }
 
     @Extension
@@ -226,11 +243,11 @@ public class DockerSSHConnector extends ComputerConnector {
             if (StringUtils.isBlank(value)) return FormValidation.ok();
             try {
                 if (Integer.parseInt(value.trim()) < 0) {
-                    return FormValidation.error(Messages.SSHConnector_LaunchTimeoutMustBePostive());
+                    return FormValidation.error("Launch timeout must be positive!");
                 }
                 return FormValidation.ok();
             } catch (NumberFormatException e) {
-                return FormValidation.error(Messages.SSHConnector_LaunchTimeoutMustBeANumber());
+                return FormValidation.error("Launch timeout must be a number!");
             }
         }
 
