@@ -27,7 +27,8 @@ import static org.hamcrest.Matchers.lessThan;
 public class PortUtilsTest {
 
     public static final int RETRY_COUNT = 2;
-    public static final int DELAY = (int) SECONDS.toMillis(1);
+    public static final int DELAY = (int) SECONDS.toMillis(6);
+    public static final int RETRY_DELAY = (int) SECONDS.toMillis(1);
 
     @Rule
     public SomeServerRule server = new SomeServerRule();
@@ -79,7 +80,7 @@ public class PortUtilsTest {
     public void shouldReturnWithoutWaitIfPortAvailable() throws Exception {
         long before = currentTimeMillis();
         assertThat("Used port should be connectible",
-                create(server.host(), server.port()).withEveryRetryWaitFor(DELAY, MILLISECONDS), is(true));
+                create(server.host(), server.port()).withEveryRetryWaitFor(RETRY_DELAY, MILLISECONDS), is(true));
         assertThat("Should not wait", new Date(currentTimeMillis()), lessThan(new Date(before + DELAY)));
     }
 
