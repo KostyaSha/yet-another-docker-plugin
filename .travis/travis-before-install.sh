@@ -38,9 +38,11 @@ sudo -E stop docker
 #rm -f "src/test/resources/logback.xml"
 
 #export HOST_IP="$(ip r | grep default | awk '{ print $3 }')"
-export HOST_IP="$(ip a show dev eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)"
+HOST_IP="$(ip a show dev eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)"
+export HOST_IP
 export HOST_PORT=2376
-export KEY_PATH="$(pwd)/keys"
+KEY_PATH="$(pwd)/keys"
+export KEY_PATH
 
 function generateKeys() {
     mkdir "keys" || :
@@ -123,7 +125,7 @@ generateKeys
 
 TEST_KEYS="yet-another-docker-its/src/test/resources/com/github/kostyasha/it/tests/ShortTLSKeyTest/data_container/keys"
 
-rm -rf "${TEST_KEYS}"/*
+rm -rf "${TEST_KEYS:?}"/*
 
 cp -ar "${KEY_PATH}"/* "${TEST_KEYS}/"
 
@@ -177,9 +179,10 @@ curl -v https://${HOST_IP}:${HOST_PORT}/images/json \
 docker version || sudo cat /var/log/upstart/docker.log
 docker info
 
-export DOCKER_TLS_VERIFY=1
-export DOCKER_CERT_PATH=$(pwd)/keys
+DOCKER_CERT_PATH="$(pwd)/keys"
+export DOCKER_CERT_PATH
 export DOCKER_HOST=tcp://${HOST_IP}:${HOST_PORT}
+export DOCKER_TLS_VERIFY=1
 
 ls -la $DOCKER_CERT_PATH
 

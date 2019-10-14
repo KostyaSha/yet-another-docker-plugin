@@ -211,6 +211,12 @@
     <!-- see http://checkstyle.sourceforge.net/config.html#SuppressWarningsFilter -->
     <module name="SuppressWarningsFilter"/>
 
+    <module name="SuppressionCommentFilter">
+        <property name="offCommentFormat" value="CHECKSTYLE.OFF\: ([\w\|]+)"/>
+        <property name="onCommentFormat" value="CHECKSTYLE.ON\: ([\w\|]+)"/>
+        <property name="checkFormat" value="$1"/>
+    </module>
+
     <!-- Checks properties file for a duplicated properties. -->
     <!-- See http://checkstyle.sourceforge.net/config_misc.html#UniqueProperties -->
     <module name="UniqueProperties"/>

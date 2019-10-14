@@ -1,9 +1,9 @@
 package com.github.kostyasha.yad.launcher;
 
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.kostyasha.yad.DockerCloud;
 import com.github.kostyasha.yad.DockerSlaveTemplate;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
+import com.github.kostyasha.yad.commons.DockerSSHConnector;
 import com.github.kostyasha.yad.utils.HostAndPortChecker;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
@@ -16,7 +16,6 @@ import com.github.kostyasha.yad_docker_java.com.google.common.base.Preconditions
 import com.github.kostyasha.yad_docker_java.com.google.common.net.HostAndPort;
 import hudson.Extension;
 import hudson.model.ItemGroup;
-import hudson.plugins.sshslaves.SSHConnector;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.util.ListBoxModel;
@@ -42,17 +41,24 @@ import static java.util.Objects.nonNull;
 @Beta
 public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     private static final Logger LOG = LoggerFactory.getLogger(DockerComputerSSHLauncher.class);
-    // store real UI configuration
-    protected final SSHConnector sshConnector;
+    /**
+     * store real UI configuration.
+     * Broken binary compatibility since 1.30.0 ssh-slaves plugin upgrade
+     */
+    protected DockerSSHConnector sshConnector;
 
     @DataBoundConstructor
-    public DockerComputerSSHLauncher(SSHConnector sshConnector) {
+    public DockerComputerSSHLauncher(DockerSSHConnector sshConnector) {
         super(null);
         this.sshConnector = sshConnector;
     }
 
-    public SSHConnector getSshConnector() {
+    public DockerSSHConnector getSshConnector() {
         return sshConnector;
+    }
+
+    public void setSshConnector(DockerSSHConnector sshConnector) {
+        this.sshConnector = sshConnector;
     }
 
     public DockerComputerLauncher getPreparedLauncher(String cloudId, DockerSlaveTemplate dockerSlaveTemplate,
@@ -67,7 +73,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
     @Override
     public void appendContainerConfig(DockerSlaveTemplate dockerSlaveTemplate, CreateContainerCmd createCmd) {
-        final int sshPort = getSshConnector().port;
+        final int sshPort = sshConnector.getPort();
         ExposedPort[] exposedPorts = createCmd.getExposedPorts();
         // we want allow exposing not only ssh ports
         if (nonNull(createCmd.getExposedPorts())) {
@@ -121,17 +127,16 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
             LOG.info("Creating slave SSH launcher for '{}:{}'. Cloud: '{}'. Template: '{}'",
                     hostAndPort.getHostText(), hostAndPort.getPort(), cloudId,
                     template.getDockerContainerLifecycle().getImage());
-            final String credentialsId = sshConnector.getCredentialsId();
-            final StandardUsernameCredentials credentials = SSHLauncher.lookupSystemCredentials(credentialsId);
             return new SSHLauncher(hostAndPort.getHostText(), hostAndPort.getPort(),
-                    credentials,
-                    sshConnector.jvmOptions,
-                    sshConnector.javaPath,
-                    sshConnector.prefixStartSlaveCmd,
-                    sshConnector.suffixStartSlaveCmd,
-                    sshConnector.launchTimeoutSeconds,
-                    sshConnector.maxNumRetries,
-                    sshConnector.retryWaitTime);
+                    sshConnector.getCredentialsId(),
+                    sshConnector.getJvmOptions(),
+                    sshConnector.getJavaPath(),
+                    sshConnector.getPrefixStartSlaveCmd(),
+                    sshConnector.getSuffixStartSlaveCmd(),
+                    sshConnector.getLaunchTimeoutSeconds(),
+                    sshConnector.getMaxNumRetries(),
+                    sshConnector.getRetryWaitTime(),
+                    sshConnector.getSshHostKeyVerificationStrategy());
         } catch (NullPointerException ex) {
             throw new RuntimeException("Error happened. Probably there is no mapped port 22 in host for SSL. Config=" +
                     inspect, ex);
@@ -140,7 +145,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
     public HostAndPort getHostAndPort(String cloudId, InspectContainerResponse ir) {
         // get exposed port
-        ExposedPort sshPort = new ExposedPort(sshConnector.port);
+        ExposedPort sshPort = new ExposedPort(sshConnector.getPort());
         String host = null;
         Integer port = 22;
 
@@ -177,7 +182,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         }
 
         public Class getSshConnectorClass() {
-            return SSHConnector.class;
+            return DockerSSHConnector.class;
         }
 
         @Nonnull

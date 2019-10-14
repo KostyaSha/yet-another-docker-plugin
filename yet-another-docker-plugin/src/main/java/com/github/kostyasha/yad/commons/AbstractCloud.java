@@ -64,6 +64,16 @@ public abstract class AbstractCloud extends Cloud {
         return null;
     }
 
+    @CheckForNull
+    public DockerSlaveTemplate getTemplateById(String id) {
+        for (DockerSlaveTemplate t : templates) {
+            if (t.getId().equals(id)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
     /**
      * Gets first {@link DockerSlaveTemplate} that has the matching {@link Label}.
      */
