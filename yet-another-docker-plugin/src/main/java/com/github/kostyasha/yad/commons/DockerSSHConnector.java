@@ -98,6 +98,7 @@ public class DockerSSHConnector extends ComputerConnector {
     @DataBoundConstructor
     public DockerSSHConnector(int port,
                               StandardUsernameCredentials credentials,
+                              String credentialsId,
                               String jvmOptions,
                               String javaPath,
                               JDKInstaller jdkInstaller,
@@ -110,7 +111,7 @@ public class DockerSSHConnector extends ComputerConnector {
         this.jvmOptions = jvmOptions;
         this.port = port == 0 ? 22 : port;
         this.credentials = credentials;
-        this.credentialsId = credentials == null ? null : this.credentials.getId();
+        this.credentialsId = credentialsId;
         this.javaPath = javaPath;
         this.jdkInstaller = jdkInstaller;
         this.prefixStartSlaveCmd = fixEmpty(prefixStartSlaveCmd);

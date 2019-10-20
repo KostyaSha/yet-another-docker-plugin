@@ -24,7 +24,7 @@ import static org.hamcrest.Matchers.lessThan;
 /**
  * @author lanwen (Merkushev Kirill)
  */
-public class PortUtilsTest {
+public class    PortUtilsTest {
 
     public static final int RETRY_COUNT = 2;
     public static final int DELAY = (int) SECONDS.toMillis(6);
@@ -68,10 +68,10 @@ public class PortUtilsTest {
         long before = currentTimeMillis();
         try {
             create(server.host(), server.port()).withRetries(RETRY_COUNT)
-                    .bySshWithEveryRetryWaitFor(DELAY, MILLISECONDS);
+                    .bySshWithEveryRetryWaitFor(RETRY_DELAY, MILLISECONDS);
         } catch (IOException e) {
             assertThat("Should wait for timeout", new Date(currentTimeMillis()),
-                    greaterThanOrEqualTo(new Date(before + RETRY_COUNT * DELAY)));
+                    greaterThanOrEqualTo(new Date(before + RETRY_COUNT * RETRY_DELAY)));
             throw e;
         }
     }
