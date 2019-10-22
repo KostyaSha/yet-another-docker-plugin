@@ -34,7 +34,6 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -161,9 +160,9 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
             }
 
             try {
-                pullImageCmd
-                        .exec(new DockerPullImageListenerLogger(listener))
-                        .awaitSuccess();
+                pullImageCmd.exec(new DockerPullImageListenerLogger(listener)).awaitCompletion();
+            } catch (InterruptedException exception) {
+                throw new DockerClientException("", exception);
             } catch (DockerClientException exception) {
                 String exMsg = exception.getMessage();
                 if (exMsg.contains("Could not pull image: Digest:") ||
@@ -199,15 +198,17 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
             return false;
         }
 
-        List<Image> images = client.listImagesCmd().exec();
+        List<Image> images = client.listImagesCmd().withImageNameFilter(fullImageName).exec();
 
-        boolean hasImage = images.stream().anyMatch(image ->
-                nonNull(image.getRepoTags()) &&
-                        Arrays.stream(image.getRepoTags())
-                                .anyMatch(repoTag ->
-                                        repoTag.contains(fullImageName) || repoTag.contains("docker.io/" + fullImageName)
-                                )
-        );
+        boolean hasImage = false;
+
+        for (Image image : images) {
+            for (String repoTag : image.getRepoTags()) {
+                if (repoTag.contains(fullImageName) || repoTag.contains("docker.io/" + fullImageName)) {
+                    hasImage = true;
+                }
+            }
+        }
 
         return hasImage ?
                 getPullStrategy().pullIfExists(imageName) :
