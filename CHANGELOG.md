@@ -1,3 +1,18 @@
+
+## 0.1.5
+- fix credentials binding
+
+## 0.1.4
+- Migrate data to plugin class. Attempt to move from ssh-slaves-plugin
+
+## 0.1.3
+- attempt to fix ssh-slaves-plugin broken compatibility
+
+## 0.1.2
+- Docker build logs new lines
+- Make sure that the config.ps1 is not locked before accessing it from the init.ps1 script.
+- Cleanup when wait failed
+
 ## 0.1.1
 - return from method
 
