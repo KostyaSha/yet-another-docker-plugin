@@ -21,7 +21,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <shade-prefix>com.github.kostyasha.yad_docker_java</shade-prefix>
-        <maven-shade-plugin.version>3.2.0</maven-shade-plugin.version>
+        <maven-shade-plugin.version>3.2.2</maven-shade-plugin.version>
     </properties>
 
     <repositories>
@@ -48,23 +48,13 @@
             <id>repo.jenkins-ci.org</id>
             <url>https://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
-        <!--<pluginRepository>-->
-        <!--<id>bintray</id>-->
-        <!--<url>https://dl.bintray.com/kostyasha/maven-plugins</url>-->
-        <!--<releases>-->
-        <!--<enabled>true</enabled>-->
-        <!--</releases>-->
-        <!--<snapshots>-->
-        <!--<enabled>false</enabled>-->
-        <!--</snapshots>-->
-        <!--</pluginRepository>-->
     </pluginRepositories>
 
     <dependencies>
         <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java</artifactId>
-            <version>3.1.2</version>
+            <version>3.2.0-rc5</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
