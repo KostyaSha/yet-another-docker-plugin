@@ -34,7 +34,7 @@
             <artifactId>yet-another-docker-java</artifactId>
             <!--TODO cleanup? dep fails with variable reference -->
             <!--<version>${project.version}</version>-->
-            <version>0.1.5-SNAPSHOT</version>
+            <version>0.1.6-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.github.docker-java</groupId>
