@@ -93,9 +93,9 @@ public class FreestyleTest implements Serializable {
     }
 
     @Parameterized.Parameter(0)
-    public static String slaveJnlpImage;
-    @Parameterized.Parameter(1)
     public ConnectorType connectorType;
+    @Parameterized.Parameter(1)
+    public static String slaveJnlpImage;
 
     //TODO redesign rule internals
     @ClassRule
