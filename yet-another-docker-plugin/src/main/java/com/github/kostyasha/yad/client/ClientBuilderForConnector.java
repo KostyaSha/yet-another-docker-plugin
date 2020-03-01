@@ -218,7 +218,7 @@ public class ClientBuilderForConnector {
         }
 
         if (dockerCmdExecFactory instanceof OkHttpDockerCmdExecFactory) {
-            final OkHttpDockerCmdExecFactory okhttp = (OkHttpDockerCmdExecFactory) dockerCmdExecFactory;
+//            final OkHttpDockerCmdExecFactory okhttp = (OkHttpDockerCmdExecFactory) dockerCmdExecFactory;
             // timeouts?!
         }
 

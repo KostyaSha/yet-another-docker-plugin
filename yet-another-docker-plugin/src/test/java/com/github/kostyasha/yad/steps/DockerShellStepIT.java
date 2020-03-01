@@ -6,7 +6,6 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import com.github.kostyasha.yad.commons.cmds.DockerBuildImage;
 import com.github.kostyasha.yad.connector.CredentialsYADockerConnector;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.LocalDirectorySSLConfig;
 import hudson.model.FreeStyleBuild;
