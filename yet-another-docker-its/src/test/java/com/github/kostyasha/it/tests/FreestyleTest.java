@@ -91,12 +91,10 @@ public class FreestyleTest implements Serializable {
                 }
         );
     }
-    public  FreestyleTest(ConnectorType connectorType, String slaveJnlpImage) {
-        this.connectorType = connectorType;
-        this.slaveJnlpImage = slaveJnlpImage;
-    }
 
-    public String slaveJnlpImage;
+    @Parameterized.Parameter(0)
+    public static String slaveJnlpImage;
+    @Parameterized.Parameter(1)
     public ConnectorType connectorType;
 
     //TODO redesign rule internals
