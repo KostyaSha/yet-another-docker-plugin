@@ -6,6 +6,7 @@
         <groupId>com.github.kostyasha.yet-another-docker</groupId>
         <artifactId>yet-another-docker-parent</artifactId>
         <version>0.1.6-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>yet-another-docker-plugin</artifactId>
