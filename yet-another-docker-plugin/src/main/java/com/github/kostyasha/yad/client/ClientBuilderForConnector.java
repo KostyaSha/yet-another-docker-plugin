@@ -16,6 +16,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.KeystoreS
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.SSLConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.okhttp.OkHttpDockerCmdExecFactory;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
@@ -35,6 +36,7 @@ import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
+import static com.github.kostyasha.yad.other.ConnectorType.OKHTTP;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -140,12 +142,12 @@ public class ClientBuilderForConnector {
     }
 
     public ClientBuilderForConnector withCredentials(Credentials credentials) throws UnrecoverableKeyException,
-        NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+            NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         if (credentials instanceof CertificateCredentials) {
             CertificateCredentials certificateCredentials = (CertificateCredentials) credentials;
             withSslConfig(new KeystoreSSLConfig(
-                certificateCredentials.getKeyStore(),
-                certificateCredentials.getPassword().getPlainText()
+                    certificateCredentials.getKeyStore(),
+                    certificateCredentials.getPassword().getPlainText()
             ));
 //            } else if (credentials instanceof StandardUsernamePasswordCredentials) {
 //                StandardUsernamePasswordCredentials usernamePasswordCredentials =
@@ -158,9 +160,9 @@ public class ClientBuilderForConnector {
             final DockerServerCredentials dockerCreds = (DockerServerCredentials) credentials;
 
             withSslConfig(new VariableSSLConfig(
-                dockerCreds.getClientKey(),
-                dockerCreds.getClientCertificate(),
-                dockerCreds.getServerCaCertificate()
+                    dockerCreds.getClientKey(),
+                    dockerCreds.getClientCertificate(),
+                    dockerCreds.getServerCaCertificate()
             ));
         } else if (credentials instanceof DockerDaemonCerts) {
             final DockerDaemonCerts dockerCreds = (DockerDaemonCerts) credentials;
@@ -198,6 +200,8 @@ public class ClientBuilderForConnector {
         if (isNull(dockerCmdExecFactory)) {
             if (connectorType == JERSEY) {
                 dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
+            } else if (connectorType == OKHTTP) {
+                dockerCmdExecFactory = new OkHttpDockerCmdExecFactory();
             } else {
                 dockerCmdExecFactory = new NettyDockerCmdExecFactory();
             }
@@ -211,6 +215,11 @@ public class ClientBuilderForConnector {
             if (nonNull(readTimeout)) {
                 jersey.withReadTimeout(readTimeout);
             }
+        }
+
+        if (dockerCmdExecFactory instanceof OkHttpDockerCmdExecFactory) {
+            final OkHttpDockerCmdExecFactory okhttp = (OkHttpDockerCmdExecFactory) dockerCmdExecFactory;
+            // timeouts?!
         }
 
         if (isNull(clientConfig)) {

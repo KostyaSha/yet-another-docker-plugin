@@ -57,6 +57,11 @@
             <version>3.2.0-rc5</version>
         </dependency>
         <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-transport-okhttp</artifactId>
+            <version>3.2.0-rc5</version>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.5</version>
@@ -113,6 +118,10 @@
                                 <exclude>META-INF/*.SF</exclude>
                                 <exclude>META-INF/*.DSA</exclude>
                                 <exclude>META-INF/*.RSA</exclude>
+                                <exclude>META-INF/NOTICE*</exclude>
+                                <exclude>META-INF/MANIFEST.MF</exclude>
+                                <exclude>META-INF/DEPENDENCIES</exclude>
+                                <exclude>META-INF/LICENSE*</exclude>
                             </excludes>
                         </filter>
                     </filters>
@@ -125,6 +134,10 @@
                     </artifactSet>
                     <relocations>
                         <!-- com -->
+                        <relocation>
+                            <pattern>com.squareup.okhttp3</pattern>
+                            <shadedPattern>${shade-prefix}.com.squareup.okhttp3</shadedPattern>
+                        </relocation>
                         <relocation>
                             <pattern>com.google</pattern>
                             <shadedPattern>${shade-prefix}.com.google</shadedPattern>

@@ -48,6 +48,7 @@ import java.io.Serializable;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -55,14 +56,14 @@ import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.caller;
 import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.waitUntilNoActivityUpTo;
 import static com.github.kostyasha.yad.commons.DockerImagePullStrategy.PULL_LATEST;
 import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
-import static java.util.Objects.requireNonNull;
+import static com.github.kostyasha.yad.other.ConnectorType.NETTY;
+import static com.github.kostyasha.yad.other.ConnectorType.OKHTTP;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.jvnet.hudson.test.JenkinsRule.getLog;
-import static org.mockito.Matchers.isNull;
 
 /**
  * @author Kanstantsin Shautsou
@@ -78,27 +79,41 @@ public class FreestyleTest implements Serializable {
     private static final String CLOUD_ID = "CLOUD_ID";
     private static final String DOCKER_HOST = "SOME_HOST";
 
-    @Parameterized.Parameters(name = "{0}")
-    public static Iterable<String> data() {
-        return Arrays.asList(
-                DockerRule.SLAVE_IMAGE_JNLP,
-                "java:8-jdk-alpine"
+    @Parameterized.Parameters(name = "{0} {1}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                        {OKHTTP, DockerRule.SLAVE_IMAGE_JNLP},
+                        {JERSEY, DockerRule.SLAVE_IMAGE_JNLP},
+                        {NETTY, DockerRule.SLAVE_IMAGE_JNLP},
+                        {OKHTTP, "java:8-jdk-alpine"},
+                        {JERSEY, "java:8-jdk-alpine"},
+                        {NETTY, "java:8-jdk-alpine"},
+                }
         );
     }
+    public  FreestyleTest(ConnectorType connectorType, String slaveJnlpImage) {
+        this.connectorType = connectorType;
+        this.slaveJnlpImage = slaveJnlpImage;
+    }
 
-    @Parameterized.Parameter
-    public static String slaveJnlpImage;
+    public String slaveJnlpImage;
+    public ConnectorType connectorType;
 
     //TODO redesign rule internals
     @ClassRule
     public static DockerRule d = new DockerRule(false);
 
     @Rule
-    public MyResource dJenkins = new MyResource();
+    public MyResource dJenkins = new MyResource(slaveJnlpImage);
 
     public static class MyResource extends DockerResource {
         public String jenkinsId;
         public DockerCLI cli;
+        private String slaveJnlpImage;
+
+        public MyResource(String slaveJnlpImage) {
+            this.slaveJnlpImage = slaveJnlpImage;
+        }
 
         public Boolean call(BCallable callable) throws Throwable {
             return caller(cli, callable);
