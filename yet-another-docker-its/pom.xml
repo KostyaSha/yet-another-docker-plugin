@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.github.kostyasha.yet-another-docker</groupId>
         <artifactId>yet-another-docker-parent</artifactId>
-        <version>0.1.5-SNAPSHOT</version>
+        <version>0.1.6-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -26,7 +26,7 @@
             <groupId>com.github.kostyasha.yet-another-docker</groupId>
             <artifactId>yet-another-docker-plugin</artifactId>
             <!--<version>${project.version}</version>-->
-            <version>0.1.5-SNAPSHOT</version>
+            <version>0.1.6-SNAPSHOT</version>
         </dependency>
 
         <dependency>
