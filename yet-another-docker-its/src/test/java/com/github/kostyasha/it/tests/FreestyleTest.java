@@ -102,16 +102,11 @@ public class FreestyleTest implements Serializable {
     public static DockerRule d = new DockerRule(false);
 
     @Rule
-    public MyResource dJenkins = new MyResource(slaveJnlpImage);
+    public MyResource dJenkins = new MyResource();
 
     public static class MyResource extends DockerResource {
         public String jenkinsId;
         public DockerCLI cli;
-        private String slaveJnlpImage;
-
-        public MyResource(String slaveJnlpImage) {
-            this.slaveJnlpImage = slaveJnlpImage;
-        }
 
         public Boolean call(BCallable callable) throws Throwable {
             return caller(cli, callable);
