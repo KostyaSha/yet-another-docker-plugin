@@ -84,7 +84,7 @@ public class ShortTLSKeyTest {
     public static DockerRule d = new DockerRule(false);
 
     @ClassRule
-    public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
+    public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir() + connectorType));
 
     @Before
     public void before() throws IOException, InterruptedException {
