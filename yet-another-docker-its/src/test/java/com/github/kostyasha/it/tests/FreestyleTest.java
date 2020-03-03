@@ -100,7 +100,7 @@ public class FreestyleTest implements Serializable {
     public static String slaveJnlpImage;
 
 //    @Rule
-    public DockerRule d = new DockerRule(false);
+    public DockerRule d = new DockerRule(true);
 
 //    @Rule
     public MyResource dJenkins = new MyResource(d);
