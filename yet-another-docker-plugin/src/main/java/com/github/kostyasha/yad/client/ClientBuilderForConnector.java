@@ -217,6 +217,16 @@ public class ClientBuilderForConnector {
             }
         }
 
+        if (dockerCmdExecFactory instanceof NettyDockerCmdExecFactory) {
+            final NettyDockerCmdExecFactory netty = (NettyDockerCmdExecFactory) dockerCmdExecFactory;
+            if (nonNull(connectTimeout)) {
+                netty.withConnectTimeout(connectTimeout);
+            }
+            if (nonNull(readTimeout)) {
+                netty.withReadTimeout(readTimeout);
+            }
+        }
+
         if (dockerCmdExecFactory instanceof OkHttpDockerCmdExecFactory) {
 //            final OkHttpDockerCmdExecFactory okhttp = (OkHttpDockerCmdExecFactory) dockerCmdExecFactory;
             // timeouts?!

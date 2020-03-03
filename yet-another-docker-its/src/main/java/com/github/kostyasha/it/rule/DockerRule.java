@@ -5,6 +5,7 @@ import com.github.kostyasha.it.other.JenkinsDockerImage;
 import com.github.kostyasha.it.other.WaitMessageResultCallback;
 import com.github.kostyasha.it.utils.DockerHPIContainerUtil;
 import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
+import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
@@ -26,6 +27,8 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParse
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.okhttp.OkHttpDockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.codec.digest.DigestUtils;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
@@ -100,8 +103,10 @@ public class DockerRule extends ExternalResource {
     public Description description;
     public DefaultDockerClientConfig clientConfig;
     private DockerCmdExecFactory dockerCmdExecFactory;
+    private ConnectorType connectorType;
 
-    public DockerRule() {
+    public DockerRule(boolean b, ConnectorType connectorType) {
+        this.connectorType = connectorType;
     }
 
     public DockerRule(boolean cleanup) {
@@ -114,6 +119,11 @@ public class DockerRule extends ExternalResource {
 //                .append(host).append(":").append(dockerPort)
 //                .toString();
 //    }
+
+
+    public void setConnectorType(ConnectorType connectorType) {
+        this.connectorType = connectorType;
+    }
 
     public String getHost() {
         return clientConfig.getDockerHost().getHost();
@@ -131,9 +141,9 @@ public class DockerRule extends ExternalResource {
 
     @Override
     protected void before() throws Throwable {
-        prepareDockerCli();
+//        prepareDockerCli();
         //check dockerClient
-        getDockerCli().infoCmd().exec();
+
         // ensure we have right ssh creds
 //        checkSsh();
     }
@@ -176,17 +186,29 @@ public class DockerRule extends ExternalResource {
      * Prepare cached DockerClient `dockerClient`.
      * Pick system/file connection settings.
      */
-    private void prepareDockerCli() {
+    public void prepareDockerCli() {
         clientConfig = createDefaultConfigBuilder()
                 .build();
 
-        dockerCmdExecFactory = new JerseyDockerCmdExecFactory()
-                .withConnectTimeout(10 * 1000)
-                .withReadTimeout(100 * 1000);
+        if (nonNull(connectorType)) {
+            if (connectorType == ConnectorType.OKHTTP) {
+                dockerCmdExecFactory = new OkHttpDockerCmdExecFactory();
+            } else if (connectorType == ConnectorType.NETTY) {
+                dockerCmdExecFactory = new NettyDockerCmdExecFactory()
+                        .withConnectTimeout(10 * 1000)
+                        .withReadTimeout(100 * 1000);
+            }
+        } else {
+            dockerCmdExecFactory = new JerseyDockerCmdExecFactory()
+                    .withConnectTimeout(10 * 1000)
+                    .withReadTimeout(100 * 1000);
+        }
 
         dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)
                 .build();
+
+        dockerClient.infoCmd().exec();
     }
 
 //    private void checkSsh() {
