@@ -3,6 +3,7 @@ package com.github.kostyasha.it.tests;
 import com.github.kostyasha.it.rule.DockerResource;
 import com.github.kostyasha.it.rule.DockerRule;
 import com.github.kostyasha.it.utils.DockerUtils;
+import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
@@ -28,15 +29,21 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 import static com.github.kostyasha.it.rule.DockerRule.getDockerItDir;
 import static com.github.kostyasha.it.utils.DockerUtils.ensureContainerRemoved;
 import static com.github.kostyasha.it.utils.TempFileHelper.checkPathIT;
+import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
+import static com.github.kostyasha.yad.other.ConnectorType.NETTY;
+import static com.github.kostyasha.yad.other.ConnectorType.OKHTTP;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.io.FileUtils.writeStringToFile;
@@ -47,11 +54,24 @@ import static org.apache.commons.io.FileUtils.writeStringToFile;
  *
  * @author Kanstantsin Shautsou
  */
+@RunWith(Parameterized.class)
 public class NginxRegistryTest {
     private static final Logger LOG = LoggerFactory.getLogger(NginxRegistryTest.class);
 
+    @Parameterized.Parameters(name = "{0}")
+    public static Iterable<ConnectorType> connectorTypes() {
+        return Arrays.asList(
+                NETTY,
+                JERSEY,
+                OKHTTP
+        );
+    }
+
+    @Parameterized.Parameter
+    public static ConnectorType connectorType;
+
     @ClassRule
-    public static DockerRule d = new DockerRule(false);
+    public static DockerRule d = new DockerRule(true);
 
     @ClassRule
     transient public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
@@ -115,7 +135,7 @@ public class NginxRegistryTest {
 
     private NginxRegistryResource nginxContainer = new NginxRegistryResource();
 
-    private class NginxRegistryResource extends DockerResource {
+    private static class NginxRegistryResource extends DockerResource {
         private final String DATA_IMAGE_TAG = getClass().getSimpleName().toLowerCase();
         private final String HOST_CONTAINER_NAME = getClass().getCanonicalName() + "_host";
         public static final int CONTAINER_PORT = 80;
@@ -189,7 +209,7 @@ public class NginxRegistryTest {
 
     private RegistryResource registryResource = new RegistryResource();
 
-    private class RegistryResource extends DockerResource {
+    private static class RegistryResource extends DockerResource {
         public final String REGISTRY_IMAGE_NAME = "registry:2.3.0";
         public final String HOST_CONTAINER_NAME = getClass().getCanonicalName() + "_host";
         public static final int CONTAINER_PORT = 5000;
@@ -204,8 +224,10 @@ public class NginxRegistryTest {
 
         @Override
         protected void before() throws Throwable {
-            after();
+            d.setConnectorType(connectorType);
+            d.prepareDockerCli();
 
+            after();
             d.getDockerCli().pullImageCmd(REGISTRY_IMAGE_NAME).exec(new PullImageResultCallback()).awaitSuccess();
 
             hostContainerId = d.getDockerCli().createContainerCmd(REGISTRY_IMAGE_NAME)
@@ -224,7 +246,6 @@ public class NginxRegistryTest {
         @Override
         protected void after() {
             ensureContainerRemoved(d.getDockerCli(), HOST_CONTAINER_NAME);
-
         }
     }
 
