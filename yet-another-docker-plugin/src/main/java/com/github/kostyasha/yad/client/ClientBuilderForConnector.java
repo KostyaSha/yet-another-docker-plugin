@@ -194,8 +194,7 @@ public class ClientBuilderForConnector {
         return this;
     }
 
-    public DockerClient build() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException,
-            KeyManagementException {
+    public DockerClient build() {
 
         if (isNull(dockerCmdExecFactory)) {
             if (connectorType == JERSEY) {

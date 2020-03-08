@@ -70,11 +70,10 @@ public class NginxRegistryTest {
     @Parameterized.Parameter
     public static ConnectorType connectorType;
 
-    @ClassRule
-    public static DockerRule d = new DockerRule(true);
+    public DockerRule d = new DockerRule(true);
 
     @ClassRule
-    transient public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
+    public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
 
     public DindResource dindResource = new DindResource();
 
@@ -133,14 +132,19 @@ public class NginxRegistryTest {
         }
     }
 
-    private NginxRegistryResource nginxContainer = new NginxRegistryResource();
+    private NginxRegistryResource nginxContainer = new NginxRegistryResource(d);
 
     private static class NginxRegistryResource extends DockerResource {
         private final String DATA_IMAGE_TAG = getClass().getSimpleName().toLowerCase();
         private final String HOST_CONTAINER_NAME = getClass().getCanonicalName() + "_host";
         public static final int CONTAINER_PORT = 80;
 
+        private DockerRule dRule;
         private String hostContainerId;
+
+        public NginxRegistryResource(DockerRule dockerRule) {
+            this.dRule = dockerRule;
+        }
 
         @NonNull
         public String getHostContainerId() {
@@ -149,23 +153,25 @@ public class NginxRegistryTest {
         }
 
         public int getExposedPort() {
-            final InspectContainerResponse inspect = d.getDockerCli().inspectContainerCmd(getHostContainerId()).exec();
+            final InspectContainerResponse inspect = dRule.getDockerCli().inspectContainerCmd(getHostContainerId()).exec();
             return DockerUtils.getExposedPort(inspect, CONTAINER_PORT);
         }
 
         @Override
         public void before() throws IOException {
+            dRule.setConnectorType(connectorType);
+            dRule.prepareDockerCli();
             after();
             checkPathIT(new File(""));
 
-            final File buildDir = folder.newFolder(getClass().getName());
+            final File buildDir = folder.newFolder(connectorType.toString() + getClass().getName());
 
             File resources = new File(String.format("src/test/resources/%s/docker",
                     NginxRegistryTest.class.getName().replace(".", "/"))
             );
             FileUtils.copyDirectory(resources, buildDir);
 
-            final String imageId = d.getDockerCli().buildImageCmd(buildDir)
+            final String imageId = dRule.getDockerCli().buildImageCmd(buildDir)
                     .withForcerm(true)
                     .withTag(DATA_IMAGE_TAG)
                     .exec(new BuildImageResultCallback() {
@@ -179,26 +185,26 @@ public class NginxRegistryTest {
                     })
                     .awaitImageId();
 
-            hostContainerId = d.getDockerCli().createContainerCmd(imageId)
+            hostContainerId = dRule.getDockerCli().createContainerCmd(imageId)
                     .withName(HOST_CONTAINER_NAME)
                     .withHostConfig(HostConfig.newHostConfig()
                             .withRestartPolicy(RestartPolicy.alwaysRestart())
-                            .withExtraHosts("registry:" + d.getHost())
+                            .withExtraHosts("registry:" + dRule.getHost())
                             .withPortBindings(PortBinding.parse(Integer.toString(CONTAINER_PORT))))
                     .exec()
                     .getId();
 
-            d.getDockerCli().startContainerCmd(hostContainerId).exec();
+            dRule.getDockerCli().startContainerCmd(hostContainerId).exec();
         }
 
         @Override
         protected void after() {
             // remove host container
-            ensureContainerRemoved(d.getDockerCli(), HOST_CONTAINER_NAME);
+            ensureContainerRemoved(dRule.getDockerCli(), HOST_CONTAINER_NAME);
 
             // remove data image
             try {
-                d.getDockerCli().removeImageCmd(DATA_IMAGE_TAG)
+                dRule.getDockerCli().removeImageCmd(DATA_IMAGE_TAG)
                         .withForce(true)
                         .exec();
                 LOG.info("Removed image {}", DATA_IMAGE_TAG);
@@ -207,7 +213,7 @@ public class NginxRegistryTest {
         }
     }
 
-    private RegistryResource registryResource = new RegistryResource();
+    private RegistryResource registryResource = new RegistryResource(d);
 
     private static class RegistryResource extends DockerResource {
         public final String REGISTRY_IMAGE_NAME = "registry:2.3.0";
@@ -215,6 +221,11 @@ public class NginxRegistryTest {
         public static final int CONTAINER_PORT = 5000;
 
         private String hostContainerId;
+        private DockerRule d;
+
+        public RegistryResource(DockerRule dockerRule) {
+            d = dockerRule;
+        }
 
         @NonNull
         public String getHostContainerId() {
@@ -250,7 +261,8 @@ public class NginxRegistryTest {
     }
 
     @Rule
-    public RuleChain chain = RuleChain.outerRule(registryResource)
+    public RuleChain chain = RuleChain.outerRule(d)
+            .around(registryResource)
             .around(nginxContainer)
             .around(dindResource);
 
@@ -271,7 +283,7 @@ public class NginxRegistryTest {
 
         final String imageName = String.format("%s:%d/image", d.getHost(), nginxContainer.getExposedPort());
 
-        final File buildDir = folder.newFolder();
+        final File buildDir = folder.newFolder(connectorType.toString());
         writeStringToFile(new File(buildDir, "Dockerfile"),
                 "FROM scratch\n" +
                         "MAINTAINER Kanstantsin Shautsou <kanstantsin.sha@gmail.com>");
