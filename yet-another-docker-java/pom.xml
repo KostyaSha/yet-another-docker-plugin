@@ -22,7 +22,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <shade-prefix>com.github.kostyasha.yad_docker_java</shade-prefix>
         <maven-shade-plugin.version>3.2.2</maven-shade-plugin.version>
-        <docker-java.version>3.2.0-rc5</docker-java.version>
+        <docker-java.version>3.2.0-rc6</docker-java.version>
     </properties>
 
     <repositories>

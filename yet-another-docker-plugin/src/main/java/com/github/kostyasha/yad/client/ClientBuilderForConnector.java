@@ -8,7 +8,7 @@ import com.github.kostyasha.yad.credentials.DockerDaemonCerts;
 import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad.other.VariableSSLConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.AbstractDockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DockerClientConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DockerClientImpl;
@@ -50,7 +50,7 @@ import static org.apache.commons.lang.StringUtils.isNotBlank;
 public class ClientBuilderForConnector {
     private static final Logger LOG = LoggerFactory.getLogger(ClientBuilderForConnector.class);
 
-    private DockerCmdExecFactory dockerCmdExecFactory = null;
+    private AbstractDockerCmdExecFactory dockerCmdExecFactory = null;
     private DockerClientConfig clientConfig = null;
     // fallback to builder
     private Builder configBuilder = new Builder();
@@ -62,7 +62,7 @@ public class ClientBuilderForConnector {
     private ClientBuilderForConnector() {
     }
 
-    public ClientBuilderForConnector withDockerCmdExecFactory(DockerCmdExecFactory dockerCmdExecFactory) {
+    public ClientBuilderForConnector withDockerCmdExecFactory(AbstractDockerCmdExecFactory dockerCmdExecFactory) {
         this.dockerCmdExecFactory = dockerCmdExecFactory;
         return this;
     }
@@ -207,29 +207,11 @@ public class ClientBuilderForConnector {
             }
         }
 
-        if (dockerCmdExecFactory instanceof JerseyDockerCmdExecFactory) {
-            final JerseyDockerCmdExecFactory jersey = (JerseyDockerCmdExecFactory) dockerCmdExecFactory;
-            if (nonNull(connectTimeout)) {
-                dockerCmdExecFactory = jersey.withConnectTimeout(connectTimeout);
-            }
-            if (nonNull(readTimeout)) {
-                jersey.withReadTimeout(readTimeout);
-            }
+        if (nonNull(connectTimeout)) {
+            dockerCmdExecFactory.withConnectTimeout(connectTimeout);
         }
-
-        if (dockerCmdExecFactory instanceof NettyDockerCmdExecFactory) {
-            final NettyDockerCmdExecFactory netty = (NettyDockerCmdExecFactory) dockerCmdExecFactory;
-            if (nonNull(connectTimeout)) {
-                netty.withConnectTimeout(connectTimeout);
-            }
-            if (nonNull(readTimeout)) {
-                netty.withReadTimeout(readTimeout);
-            }
-        }
-
-        if (dockerCmdExecFactory instanceof OkHttpDockerCmdExecFactory) {
-//            final OkHttpDockerCmdExecFactory okhttp = (OkHttpDockerCmdExecFactory) dockerCmdExecFactory;
-            // timeouts?!
+        if (nonNull(readTimeout)) {
+            dockerCmdExecFactory.withReadTimeout(readTimeout);
         }
 
         if (isNull(clientConfig)) {
