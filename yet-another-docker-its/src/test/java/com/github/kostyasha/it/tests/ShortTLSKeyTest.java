@@ -5,7 +5,6 @@ import com.github.kostyasha.yad.client.ClientBuilderForConnector;
 import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad.other.VariableSSLConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.BuildResponseItem;
@@ -25,6 +24,7 @@ import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
@@ -80,17 +80,19 @@ public class ShortTLSKeyTest {
     @Parameterized.Parameter
     public static ConnectorType connectorType;
 
-    @ClassRule
-    public static DockerRule d = new DockerRule(false);
+    @Rule
+    public DockerRule d = new DockerRule(false);
 
     @ClassRule
-    public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir() + connectorType));
+    public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
 
     @Before
     public void before() throws IOException, InterruptedException {
+        d.setConnectorType(connectorType);
+        d.prepareDockerCli();
         after();
 
-        final File buildDir = folder.newFolder(getClass().getName());
+        final File buildDir = folder.newFolder(connectorType.toString() + getClass().getName());
 
         File resources = new File("src/test/resources/" + getClass().getName().replace(".", "/") + "/data_container");
         FileUtils.copyDirectory(resources, buildDir);
