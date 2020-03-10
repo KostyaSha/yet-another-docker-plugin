@@ -317,8 +317,8 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
         for (Container container : containers) {
             final Map<String, String> labels = container.getLabels();
-
-            if (labels.containsKey(DOCKER_CLOUD_LABEL) && labels.get(DOCKER_CLOUD_LABEL).equals(getDisplayName())) {
+            // broken container in daemon may return null labels
+            if (labels != null && labels.containsKey(DOCKER_CLOUD_LABEL) && labels.get(DOCKER_CLOUD_LABEL).equals(getDisplayName())) {
                 if (template == null) {
                     // count only total cloud capacity
                     count++;
