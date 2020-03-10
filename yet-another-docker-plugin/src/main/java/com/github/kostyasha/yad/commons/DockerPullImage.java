@@ -162,7 +162,7 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
 
             try {
                 pullImageCmd
-                        .exec(new DockerPullImageListenerLogger(listener))
+                            .exec(new DockerPullImageListenerLogger(listener))
                         .awaitSuccess();
             } catch (DockerClientException exception) {
                 String exMsg = exception.getMessage();

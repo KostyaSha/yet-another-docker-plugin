@@ -35,9 +35,11 @@ import jenkins.model.Jenkins;
 import jenkins.model.JenkinsLocationConfiguration;
 import org.hamcrest.Matchers;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
@@ -48,6 +50,7 @@ import java.io.Serializable;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -55,14 +58,14 @@ import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.caller;
 import static com.github.kostyasha.it.utils.JenkinsRuleHelpers.waitUntilNoActivityUpTo;
 import static com.github.kostyasha.yad.commons.DockerImagePullStrategy.PULL_LATEST;
 import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
-import static java.util.Objects.requireNonNull;
+import static com.github.kostyasha.yad.other.ConnectorType.NETTY;
+import static com.github.kostyasha.yad.other.ConnectorType.OKHTTP;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.jvnet.hudson.test.JenkinsRule.getLog;
-import static org.mockito.Matchers.isNull;
 
 /**
  * @author Kanstantsin Shautsou
@@ -78,27 +81,42 @@ public class FreestyleTest implements Serializable {
     private static final String CLOUD_ID = "CLOUD_ID";
     private static final String DOCKER_HOST = "SOME_HOST";
 
-    @Parameterized.Parameters(name = "{0}")
-    public static Iterable<String> data() {
-        return Arrays.asList(
-                DockerRule.SLAVE_IMAGE_JNLP,
-                "java:8-jdk-alpine"
+    @Parameterized.Parameters(name = "{0} {1}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                        {OKHTTP, DockerRule.SLAVE_IMAGE_JNLP},
+                        {JERSEY, DockerRule.SLAVE_IMAGE_JNLP},
+                        {NETTY, DockerRule.SLAVE_IMAGE_JNLP},
+                        {OKHTTP, "java:8-jdk-alpine"},
+                        {JERSEY, "java:8-jdk-alpine"},
+                        {NETTY, "java:8-jdk-alpine"},
+                }
         );
     }
 
-    @Parameterized.Parameter
+    @Parameterized.Parameter(0)
+    public static ConnectorType connectorType;
+    @Parameterized.Parameter(1)
     public static String slaveJnlpImage;
 
-    //TODO redesign rule internals
-    @ClassRule
-    public static DockerRule d = new DockerRule(false);
+//    @Rule
+    public DockerRule d = new DockerRule(true);
+
+//    @Rule
+    public MyResource dJenkins = new MyResource(d);
 
     @Rule
-    public MyResource dJenkins = new MyResource();
+    public RuleChain chain= RuleChain.outerRule(d)
+            .around(dJenkins);
 
     public static class MyResource extends DockerResource {
         public String jenkinsId;
         public DockerCLI cli;
+        public DockerRule d;
+
+        public MyResource(DockerRule d) {
+            this.d = d;
+        }
 
         public Boolean call(BCallable callable) throws Throwable {
             return caller(cli, callable);
@@ -106,6 +124,8 @@ public class FreestyleTest implements Serializable {
 
         @Override
         protected void before() throws Throwable {
+            d.setConnectorType(connectorType);
+            d.prepareDockerCli();
             d.getDockerCli().pullImageCmd(slaveJnlpImage).exec(new PullImageResultCallback()).awaitSuccess();
 
             jenkinsId = d.runFreshJenkinsContainer(PULL_LATEST, false);
@@ -123,7 +143,8 @@ public class FreestyleTest implements Serializable {
                         cli.jenkins.getPort(),
                         d.getDockerServerCredentials(),
                         d.clientConfig.getDockerHost(),
-                        slaveJnlpImage
+                        slaveJnlpImage,
+                        connectorType
                 );
                 LOG.trace("Calling caller.");
                 caller(cli, prepareCloudCallable);
@@ -151,13 +172,16 @@ public class FreestyleTest implements Serializable {
         private final DockerServerCredentials dockerServerCredentials;
         private final URI dockerUri;
         private final String slaveImage;
+        private ConnectorType connectorType;
 
         public PrepareCloudCallable(int jenkinsPort, DockerServerCredentials credentials,
-                                    URI dockerUri, String slaveImage) {
+                                    URI dockerUri, String slaveImage, ConnectorType connectorType) {
+            this.connectorType = connectorType;
             assertThat("jenkinsPort", jenkinsPort, notNullValue());
             assertThat("credentials", credentials, notNullValue());
             assertThat("dockerUri", dockerUri, notNullValue());
             assertThat("slaveImage", slaveImage, notNullValue());
+            assertThat("connectorType", connectorType, notNullValue());
 
             this.jenkinsPort = jenkinsPort;
             this.dockerServerCredentials = credentials;
@@ -183,16 +207,18 @@ public class FreestyleTest implements Serializable {
             //verify doTestConnection
             final DescriptorImpl descriptor = (DescriptorImpl) jenkins.getDescriptor(DockerConnector.class);
             checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), "",
-                    dockerServerCredentials.getId(), ConnectorType.NETTY, 10 * 1000, 11 * 1000));
-            checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), "",
-                    dockerServerCredentials.getId(), JERSEY, 10 * 1000, 11 * 1000));
+                    dockerServerCredentials.getId(), connectorType, 10 * 1000, 11 * 1000));
+//           checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), "",
+//                    dockerServerCredentials.getId(), JERSEY, 10 * 1000, 11 * 1000));
+//           checkFormValidation(descriptor.doTestConnection(dockerUri.toString(), "",
+//                    dockerServerCredentials.getId(), OKHTTP, 10 * 1000, 11 * 1000));
 
             // prepare Docker Cloud
             final DockerConnector dockerConnector = new DockerConnector(dockerUri.toString());
             dockerConnector.setCredentialsId(dockerServerCredentials.getId());
             dockerConnector.setConnectTimeout(10 * 1000);
             dockerConnector.setReadTimeout(0);
-            dockerConnector.setConnectorType(JERSEY);
+            dockerConnector.setConnectorType(connectorType);
             dockerConnector.testConnection();
 
             //launcher

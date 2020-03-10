@@ -743,7 +743,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
                         }
                         Bind.parse(s);
                     } else if (group.length == 1) {
-                        final Volume ignore = new Volume(s);
+//                        new Volume(s);
                     } else {
                         return FormValidation.error("Wrong line: " + s);
                     }

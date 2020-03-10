@@ -1,9 +1,10 @@
 package com.github.kostyasha.it.tests;
 
 import com.github.kostyasha.it.rule.DockerRule;
+import com.github.kostyasha.yad.client.ClientBuilderForConnector;
+import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad.other.VariableSSLConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.BuildResponseItem;
@@ -23,8 +24,11 @@ import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,10 +38,14 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
+import java.util.Arrays;
 
 import static com.github.kostyasha.it.rule.DockerRule.getDockerItDir;
 import static com.github.kostyasha.it.utils.DockerHPIContainerUtil.getResource;
 import static com.github.kostyasha.it.utils.DockerUtils.getExposedPort;
+import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
+import static com.github.kostyasha.yad.other.ConnectorType.NETTY;
+import static com.github.kostyasha.yad.other.ConnectorType.OKHTTP;
 import static com.jayway.awaitility.Awaitility.await;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -48,6 +56,7 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Kanstantsin Shautsou
  */
+@RunWith(Parameterized.class)
 public class ShortTLSKeyTest {
     private static final Logger LOG = LoggerFactory.getLogger(ShortTLSKeyTest.class);
     private static final String DATA_IMAGE_TAG = ShortTLSKeyTest.class.getSimpleName().toLowerCase();
@@ -59,17 +68,31 @@ public class ShortTLSKeyTest {
     private String dataContainerId;
     private String hostContainerId;
 
-    @ClassRule
-    public static DockerRule d = new DockerRule(false);
+    @Parameterized.Parameters(name = "{0}")
+    public static Iterable<ConnectorType> connectorTypes() {
+        return Arrays.asList(
+                NETTY,
+                JERSEY,
+                OKHTTP
+        );
+    }
+
+    @Parameterized.Parameter
+    public static ConnectorType connectorType;
+
+    @Rule
+    public DockerRule d = new DockerRule(false);
 
     @ClassRule
     public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
 
     @Before
     public void before() throws IOException, InterruptedException {
+        d.setConnectorType(connectorType);
+        d.prepareDockerCli();
         after();
 
-        final File buildDir = folder.newFolder(getClass().getName());
+        final File buildDir = folder.newFolder(connectorType.toString() + getClass().getName());
 
         File resources = new File("src/test/resources/" + getClass().getName().replace(".", "/") + "/data_container");
         FileUtils.copyDirectory(resources, buildDir);
@@ -172,12 +195,16 @@ public class ShortTLSKeyTest {
                 .withCustomSslConfig(sslConfig)
                 .build();
 
-//        DockerCmdExecFactory dockerCmdExecFactory = new NettyDockerCmdExecFactory();
-        DockerCmdExecFactory dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
-
-        DockerClient dockerClient = DockerClientBuilder.getInstance(clientConfig)
-                .withDockerCmdExecFactory(dockerCmdExecFactory)
+        DockerClient dockerClient = ClientBuilderForConnector.newClientBuilderForConnector()
+                .withDockerClientConfig(clientConfig)
+                .withConnectorType(connectorType)
                 .build();
+
+//        DockerCmdExecFactory dockerCmdExecFactory = new NettyDockerCmdExecFactory();
+//        DockerCmdExecFactory dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
+//        DockerClient dockerClient = DockerClientBuilder.getInstance(clientConfig)
+//                .withDockerCmdExecFactory(dockerCmdExecFactory)
+//                .build();
 
         await().timeout(10, SECONDS).until(() -> {
             final Version version = dockerClient.versionCmd().exec();
