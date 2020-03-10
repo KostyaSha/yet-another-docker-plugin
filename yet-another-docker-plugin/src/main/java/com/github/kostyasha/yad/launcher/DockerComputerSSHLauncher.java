@@ -7,6 +7,7 @@ import com.github.kostyasha.yad.commons.DockerSSHConnector;
 import com.github.kostyasha.yad.utils.HostAndPortChecker;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.ExposedPort;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.NetworkSettings;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PortBinding;
@@ -21,6 +22,7 @@ import hudson.slaves.DelegatingComputerLauncher;
 import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +49,8 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
      */
     protected DockerSSHConnector sshConnector;
 
+    private String dockerNetwork;
+
     @DataBoundConstructor
     public DockerComputerSSHLauncher(DockerSSHConnector sshConnector) {
         super(null);
@@ -61,8 +65,17 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         this.sshConnector = sshConnector;
     }
 
+    public String getDockerNetwork() {
+        return dockerNetwork;
+    }
+
+    @DataBoundSetter
+    public void setDockerNetwork(String dockerNetwork) {
+        this.dockerNetwork = dockerNetwork;
+    }
+
     public DockerComputerLauncher getPreparedLauncher(String cloudId, DockerSlaveTemplate dockerSlaveTemplate,
-                                                InspectContainerResponse inspect) {
+                                                      InspectContainerResponse inspect) {
         // don't care, we need only launcher
         final DockerComputerSSHLauncher prepLauncher = new DockerComputerSSHLauncher(null);
 
@@ -165,10 +178,28 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         }
 
         //get address, if docker on localhost, then use local?
-        if (host == null || host.equals("0.0.0.0")) {
+        if (isNull(host) || host.equals("0.0.0.0")) {
             final DockerCloud dockerCloud = DockerCloud.getCloudByName(cloudId);
             Preconditions.checkNotNull(dockerCloud, "Can't get cloud '" + cloudId + "'. Cloud was renamed?");
             host = URI.create(dockerCloud.getConnector().getServerUrl()).getHost();
+        }
+
+        if (isNull(host)) {
+            final Map<String, ContainerNetwork> networks = ir.getNetworkSettings().getNetworks();
+            if (nonNull(dockerNetwork)) {
+                final ContainerNetwork nw = networks.get(dockerNetwork);
+                if (nonNull(nw)) {
+                    host = nw.getIpAddress();
+                } else {
+                    throw new RuntimeException("Defined docker network " + dockerNetwork +
+                            " not found for container " + ir.getId());
+                }
+            } else {
+                final ContainerNetwork bridge = networks.get("bridge");
+                if (nonNull(bridge)) {
+                    host = bridge.getIpAddress();
+                }
+            }
         }
 
         return HostAndPort.fromParts(host, port);
