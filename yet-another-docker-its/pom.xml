@@ -6,8 +6,8 @@
     <parent>
         <groupId>com.github.kostyasha.yet-another-docker</groupId>
         <artifactId>yet-another-docker-parent</artifactId>
-        <version>0.1.6-SNAPSHOT</version>
-        <relativePath>../</relativePath>
+        <version>0.2.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>yet-another-docker-its</artifactId>
@@ -26,7 +26,6 @@
             <groupId>com.github.kostyasha.yet-another-docker</groupId>
             <artifactId>yet-another-docker-plugin</artifactId>
             <version>${project.version}</version>
-<!--            <version>0.1.6-SNAPSHOT</version>-->
         </dependency>
 
         <dependency>
@@ -34,7 +33,6 @@
             <artifactId>yet-another-docker-java</artifactId>
             <!--TODO cleanup? dep fails with variable reference -->
             <version>${project.version}</version>
-<!--            <version>0.1.6-SNAPSHOT</version>-->
             <exclusions>
                 <exclusion>
                     <groupId>com.github.docker-java</groupId>
