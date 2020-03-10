@@ -20,12 +20,14 @@ import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.util.ListBoxModel;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.net.URI;
@@ -65,8 +67,9 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         this.sshConnector = sshConnector;
     }
 
+    @CheckForNull
     public String getDockerNetwork() {
-        return dockerNetwork;
+        return StringUtils.trimToNull(dockerNetwork);
     }
 
     @DataBoundSetter
@@ -186,15 +189,17 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
         if (isNull(host)) {
             final Map<String, ContainerNetwork> networks = ir.getNetworkSettings().getNetworks();
-            if (nonNull(dockerNetwork)) {
-                final ContainerNetwork nw = networks.get(dockerNetwork);
+            final String dockNet = getDockerNetwork();
+            if (nonNull(dockNet)) {
+                final ContainerNetwork nw = networks.get(dockNet);
                 if (nonNull(nw)) {
                     host = nw.getIpAddress();
                 } else {
-                    throw new RuntimeException("Defined docker network " + dockerNetwork +
+                    throw new RuntimeException("Defined docker network " + dockNet +
                             " not found for container " + ir.getId());
                 }
             } else {
+                // the latest guess
                 final ContainerNetwork bridge = networks.get("bridge");
                 if (nonNull(bridge)) {
                     host = bridge.getIpAddress();
