@@ -177,8 +177,8 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
             host = b.getHostIp();
         }
 
-        //get address, if docker on localhost, then use local?
-        if (isNull(host) || host.equals("0.0.0.0")) {
+        //get address, if docker on localhost, then use docker address from connector
+        if ((isNull(host) || host.equals("0.0.0.0")) && isNull(dockerNetwork)) {
             final DockerCloud dockerCloud = DockerCloud.getCloudByName(cloudId);
             Preconditions.checkNotNull(dockerCloud, "Can't get cloud '" + cloudId + "'. Cloud was renamed?");
             host = URI.create(dockerCloud.getConnector().getServerUrl()).getHost();
