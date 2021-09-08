@@ -1,7 +1,13 @@
 $progressPreference = 'silentlyContinue'  # no progress bars
 
+$configTimeout = 60
 $CONFIG="c:\config.ps1"
 while (-not (Test-Path $CONFIG)) {
+   $configTimeout = $configTimeout - 1
+   if ($configTimeout -le 0) {
+      Write-Output "No config file found after 60s! Exiting."
+      exit 1
+   }
    Write-Output "No config, sleeping for 1 second"
    sleep 1
 }
