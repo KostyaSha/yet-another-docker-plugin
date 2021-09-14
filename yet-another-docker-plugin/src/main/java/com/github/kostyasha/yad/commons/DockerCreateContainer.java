@@ -137,6 +137,9 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     private List<String> devices;
 
     @CheckForNull
+    private Float cpus;
+
+    @CheckForNull
     private String cpusetCpus;
 
     @CheckForNull
@@ -316,6 +319,17 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     @DataBoundSetter
     public void setMacAddress(String macAddress) {
         this.macAddress = trimToNull(macAddress);
+    }
+
+    //cpus
+    @CheckForNull
+    public Float getCpus() {
+        return cpus;
+    }
+
+    @DataBoundSetter
+    public void setCpus(Float cpus) {
+        this.cpus = cpus;
     }
 
     //cpuShares
@@ -561,6 +575,11 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
         if (getCpuShares() != null && getCpuShares() > 0) {
             hostConfig.withCpuShares(getCpuShares());
+        }
+
+        if (getCpus() != null && getCpus() > 0) {
+            Float nanoCpus = getCpus() * 1000000000;
+            hostConfig.withNanoCPUs(Long.valueOf(nanoCpus.longValue()));
         }
 
         if (getMemoryLimit() != null && getMemoryLimit() > 0) {

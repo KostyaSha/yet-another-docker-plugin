@@ -61,11 +61,11 @@
             <artifactId>docker-java-core</artifactId>
             <version>${docker-java.version}</version>
         </dependency>
-        <dependency>
+<!--    <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java-transport-jersey</artifactId>
             <version>${docker-java.version}</version>
-        </dependency>
+        </dependency> -->
         <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java-transport-netty</artifactId>
