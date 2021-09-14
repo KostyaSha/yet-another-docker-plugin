@@ -90,6 +90,10 @@ f.advanced(title: _("Create Container settings"), align: "left") {
         f.textarea()
     }
 
+    f.entry(title: _("CPUs"), field: "cpus") {
+        f.number(name: "cpus", min: "0.1", step: "0.1")
+    }
+
     f.entry(title: _("Cpuset constraint: CPUs"), field: "cpusetCpus") {
         f.textbox()
     }
