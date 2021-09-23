@@ -71,6 +71,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     protected boolean reconnect = false;
 
+    protected String tunnel = "";
+
     @DataBoundConstructor
     public DockerComputerJNLPLauncher() {
         super(null);
@@ -104,6 +106,11 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     @DataBoundSetter
     public void setJvmOpts(String jvmOpts) {
         this.jvmOpts = trimToEmpty(jvmOpts);
+    }
+
+    @DataBoundSetter
+    public void setTunnel(String tunnel) {
+        this.tunnel = trimToEmpty(tunnel);
     }
 
     @Nonnull
@@ -326,6 +333,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         cloneJNLPlauncher.setUser(getUser());
         cloneJNLPlauncher.setJvmOpts(getJvmOpts());
         cloneJNLPlauncher.setSlaveOpts(getSlaveOpts());
+        cloneJNLPlauncher.setTunnel(getTunnel());
         cloneJNLPlauncher.setJenkinsUrl(getJenkinsUrl());
         cloneJNLPlauncher.setNoCertificateCheck(isNoCertificateCheck());
         cloneJNLPlauncher.setNoReconnect(isNoReconnect());
@@ -333,9 +341,13 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         return cloneJNLPlauncher;
     }
 
+    public String getTunnel() {
+        return tunnel;
+    }
+
     @Override
     public ComputerLauncher getLauncher() {
-        return new JNLPLauncher();
+        return new JNLPLauncher(tunnel, jvmOpts);
     }
 
     @Override
