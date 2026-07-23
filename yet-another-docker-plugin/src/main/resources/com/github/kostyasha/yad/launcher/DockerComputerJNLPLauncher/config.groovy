@@ -28,6 +28,10 @@ f.entry(title: _("Slave JVM options"), field: "jvmOpts") {
     f.textbox()
 }
 
+f.entry(title: _("JNLP tunnel"), field: "tunnel") {
+    f.textbox()
+}
+
 f.entry(title: _("Different jenkins master URL"), field: "jenkinsUrl") {
     f.textbox()
 }
