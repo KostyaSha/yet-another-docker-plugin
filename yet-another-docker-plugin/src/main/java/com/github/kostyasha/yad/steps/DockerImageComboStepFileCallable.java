@@ -13,9 +13,8 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Auth
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PushResponseItem;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.PushImageResultCallback;
-import com.google.common.base.Throwables;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.async.ResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.DockerClientException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.AbortException;
 import hudson.model.Run;
@@ -165,10 +164,8 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         try (DockerClient client = connector.getClient()) {
             return invoke(client);
         } catch (Exception ex) {
-            Throwables.propagate(ex);
+            throw new RuntimeException(ex);
         }
-
-        return null;
     }
 
     /**
@@ -292,7 +289,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         }
     }
 
-    private static class MyBuildImageResultCallback extends BuildImageResultCallback {
+    private static class MyBuildImageResultCallback extends ResultCallback.Adapter<BuildResponseItem> {
         private static final String RUNNING_IN = "---> Running in";
         private static final String IN = "--->";
         private static final String REMOVING = "Removing intermediate container";
@@ -300,6 +297,8 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
 
         private final PrintStream llog;
         private final Set<String> containers = new HashSet<>();
+        private String imageId;
+        private DockerClientException error;
 
         MyBuildImageResultCallback(PrintStream llog) {
             this.llog = llog;
@@ -309,7 +308,28 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
             return containers;
         }
 
+        public String awaitImageId() {
+            try {
+                awaitCompletion();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new DockerClientException("Interrupted while building image", e);
+            }
+            if (error != null) {
+                throw error;
+            }
+            if (imageId != null) {
+                return imageId;
+            }
+            throw new DockerClientException("Could not build image");
+        }
+
         public void onNext(BuildResponseItem item) {
+            if (item.isBuildSuccessIndicated()) {
+                this.imageId = item.getImageId();
+            } else if (item.isErrorIndicated()) {
+                this.error = new DockerClientException("Could not build image: " + item.getErrorDetail().getMessage());
+            }
             String text = item.getStream();
             if (nonNull(text)) {
                 llog.print(text);
@@ -348,7 +368,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
         }
     }
 
-    private class MyPushImageResultCallback extends PushImageResultCallback {
+    private class MyPushImageResultCallback extends ResultCallback.Adapter<PushResponseItem> {
         @Override
         public void onNext(PushResponseItem item) {
             printResponseItemToListener(taskListener, item);

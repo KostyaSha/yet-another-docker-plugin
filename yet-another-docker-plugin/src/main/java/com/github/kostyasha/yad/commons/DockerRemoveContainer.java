@@ -4,7 +4,8 @@ import com.github.kostyasha.yad.connector.YADockerConnector;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.RemoveContainerCmdImpl;
 import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
+import jenkins.model.Jenkins;
 import hudson.model.Descriptor;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
@@ -26,7 +27,7 @@ import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
  * @see RemoveContainerCmdImpl
  */
 @DockerCmd
-public class DockerRemoveContainer extends AbstractDescribableImpl<DockerRemoveContainer> implements Serializable {
+public class DockerRemoveContainer implements Describable<DockerRemoveContainer>, Serializable {
     private static final Logger LOG = LoggerFactory.getLogger(DockerRemoveContainer.class);
     private static final long serialVersionUID = 1L;
 
@@ -102,6 +103,12 @@ public class DockerRemoveContainer extends AbstractDescribableImpl<DockerRemoveC
         return HashCodeBuilder.reflectionHashCode(this);
     }
 
+
+
+    @Override
+    public Descriptor<DockerRemoveContainer> getDescriptor() {
+        return Jenkins.get().getDescriptorOrDie(getClass());
+    }
 
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerRemoveContainer> {

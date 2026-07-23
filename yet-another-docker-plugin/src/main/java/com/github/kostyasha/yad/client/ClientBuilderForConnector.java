@@ -34,10 +34,9 @@ import java.security.UnrecoverableKeyException;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
-import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
+import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentialsInItemGroup;
 import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
 import static com.github.kostyasha.yad.other.ConnectorType.OKHTTP;
-import static java.util.Collections.emptyList;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
@@ -160,7 +159,7 @@ public class ClientBuilderForConnector {
             final DockerServerCredentials dockerCreds = (DockerServerCredentials) credentials;
 
             withSslConfig(new VariableSSLConfig(
-                    dockerCreds.getClientKey(),
+                    dockerCreds.getClientKeySecret().getPlainText(),
                     dockerCreds.getClientCertificate(),
                     dockerCreds.getServerCaCertificate()
             ));
@@ -233,11 +232,10 @@ public class ClientBuilderForConnector {
      */
     public static Credentials lookupSystemCredentials(String credentialsId) {
         return firstOrNull(
-                lookupCredentials(
+                lookupCredentialsInItemGroup(
                         Credentials.class,
-                        Jenkins.getInstance(),
-                        ACL.SYSTEM,
-                        emptyList()
+                        Jenkins.get(),
+                        ACL.SYSTEM2
                 ),
                 withId(credentialsId)
         );

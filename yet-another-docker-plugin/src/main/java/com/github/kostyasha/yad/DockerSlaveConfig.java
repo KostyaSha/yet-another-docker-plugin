@@ -5,7 +5,8 @@ import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Strings;
 import hudson.Extension;
 import hudson.Util;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
+import jenkins.model.Jenkins;
 import hudson.model.Descriptor;
 import hudson.model.Node;
 import hudson.slaves.ComputerLauncher;
@@ -31,7 +32,7 @@ import static java.util.UUID.randomUUID;
  *
  * @author Kanstantsin Shautsou
  */
-public class DockerSlaveConfig extends AbstractDescribableImpl<DockerSlaveConfig> {
+public class DockerSlaveConfig implements Describable<DockerSlaveConfig> {
     /**
      * Unique id of this template configuration. Required for:
      * - hashcode,
@@ -178,6 +179,12 @@ public class DockerSlaveConfig extends AbstractDescribableImpl<DockerSlaveConfig
             .append(dockerContainerLifecycle, that.dockerContainerLifecycle)
 //            .append(nodeProperties, that.nodeProperties)
             .isEquals();
+    }
+
+
+    @Override
+    public Descriptor<DockerSlaveConfig> getDescriptor() {
+        return Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     @Extension

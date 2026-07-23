@@ -1,0 +1,6 @@
+<?jelly escape-by-default='true'?>
+<div>
+    Yet Another Docker plugin. Provides Docker cloud provisioning: dynamically
+    starts build agents in Docker containers and removes them when they are no
+    longer needed.
+</div>

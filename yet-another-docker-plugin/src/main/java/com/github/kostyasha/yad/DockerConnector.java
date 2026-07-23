@@ -14,7 +14,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.RemoteApi
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Preconditions;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import com.github.kostyasha.yad_docker_java.org.glassfish.jersey.client.ClientProperties;
-import com.google.common.base.Throwables;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.ItemGroup;
@@ -33,7 +33,7 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
@@ -161,7 +161,7 @@ public class DockerConnector extends YADockerConnector {
                         .withDockerConnector(this)
                         .build();
             } catch (GeneralSecurityException e) {
-                Throwables.propagate(e);
+                throw new RuntimeException(e);
             }
         }
 
@@ -223,20 +223,15 @@ public class DockerConnector extends YADockerConnector {
 
         @RequirePOST
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
+            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get());
             if (!ac.hasPermission(Jenkins.ADMINISTER)) {
                 return new ListBoxModel();
             }
 
-            List<StandardCredentials> credentials =
-                    CredentialsProvider.lookupCredentials(StandardCredentials.class,
-                            context,
-                            ACL.SYSTEM,
-                            Collections.emptyList());
-
             return new CredentialsListBoxModel()
                     .includeEmptyValue()
-                    .withMatching(CredentialsMatchers.always(), credentials);
+                    .includeMatchingAs(ACL.SYSTEM2, context, StandardCredentials.class,
+                            Collections.emptyList(), CredentialsMatchers.always());
         }
 
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "docker-java uses runtime exceptions")

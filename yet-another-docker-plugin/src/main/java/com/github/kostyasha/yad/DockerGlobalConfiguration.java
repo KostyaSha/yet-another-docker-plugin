@@ -23,14 +23,14 @@ public class DockerGlobalConfiguration extends GlobalConfiguration {
     }
 
     public void setCloudOrder(DockerCloudOrder cloudOrder) {
-        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
 
         this.cloudOrder = cloudOrder;
         save();
     }
 
     public static DockerGlobalConfiguration dockerGlobalConfig() {
-        return Jenkins.getInstance().getInjector().getInstance(DockerGlobalConfiguration.class);
+        return Jenkins.get().getInjector().getInstance(DockerGlobalConfiguration.class);
     }
 
 }

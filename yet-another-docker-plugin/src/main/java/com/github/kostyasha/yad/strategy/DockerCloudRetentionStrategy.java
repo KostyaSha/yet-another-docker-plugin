@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.IOException;
 
-import static hudson.util.TimeUnit2.MINUTES;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
  * {@link CloudRetentionStrategy} that has Descriptor and UI with description

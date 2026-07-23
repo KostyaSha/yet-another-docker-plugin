@@ -88,7 +88,8 @@ public class DockerProvisioningStrategy extends NodeProvisioner.Strategy {
 
                 if (availableCapacity < currentDemand) {
                     // may happen that would be provisioned with other template
-                    Collection<PlannedNode> plannedNodes = dockerCloud.provision(label, currentDemand - availableCapacity);
+                    Collection<PlannedNode> plannedNodes = dockerCloud.provision(
+                            new hudson.slaves.Cloud.CloudState(label, 0), currentDemand - availableCapacity);
                     LOG.debug("Planned {} new nodes", plannedNodes.size());
 
                     strategyState.recordPendingLaunches(plannedNodes);

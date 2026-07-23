@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static jenkins.model.Jenkins.getInstance;
+import static jenkins.model.Jenkins.get;
 
 /**
  * UI helper class.
@@ -36,7 +36,7 @@ public class DockerFunctions {
     @SuppressWarnings("rawtypes")
     public static List<NodePropertyDescriptor> getNodePropertyDescriptors(Class<? extends Node> clazz) {
         List<NodePropertyDescriptor> result = new ArrayList<>();
-        Collection<NodePropertyDescriptor> list = (Collection) Jenkins.getInstance().getDescriptorList(NodeProperty.class);
+        Collection<NodePropertyDescriptor> list = (Collection) Jenkins.get().getDescriptorList(NodeProperty.class);
         for (NodePropertyDescriptor npd : list) {
             if (npd.isApplicable(clazz)) {
                 result.add(npd);
@@ -58,9 +58,9 @@ public class DockerFunctions {
     public static List<Descriptor<ComputerLauncher>> getDockerComputerLauncherDescriptors() {
         List<Descriptor<ComputerLauncher>> launchers = new ArrayList<>();
 
-        launchers.add(getInstance().getDescriptor(DockerComputerSSHLauncher.class));
-        launchers.add(getInstance().getDescriptor(DockerComputerJNLPLauncher.class));
-        launchers.add(getInstance().getDescriptor(DockerComputerIOLauncher.class));
+        launchers.add(get().getDescriptor(DockerComputerSSHLauncher.class));
+        launchers.add(get().getDescriptor(DockerComputerJNLPLauncher.class));
+        launchers.add(get().getDescriptor(DockerComputerIOLauncher.class));
 
         return launchers;
     }
@@ -71,9 +71,9 @@ public class DockerFunctions {
     public static List<Descriptor<RetentionStrategy<?>>> getDockerRetentionStrategyDescriptors() {
         List<Descriptor<RetentionStrategy<?>>> strategies = new ArrayList<>();
 
-        strategies.add(getInstance().getDescriptor(DockerOnceRetentionStrategy.class));
-        strategies.add(getInstance().getDescriptor(DockerCloudRetentionStrategy.class));
-        strategies.add(getInstance().getDescriptor(DockerComputerIOLauncher.class));
+        strategies.add(get().getDescriptor(DockerOnceRetentionStrategy.class));
+        strategies.add(get().getDescriptor(DockerCloudRetentionStrategy.class));
+        strategies.add(get().getDescriptor(DockerComputerIOLauncher.class));
 
         return strategies;
     }
@@ -86,7 +86,7 @@ public class DockerFunctions {
      */
     @Nonnull
     public static List<DockerCloud> getAllDockerClouds() {
-        return getInstance().clouds.stream()
+        return get().clouds.stream()
                 .filter(Objects::nonNull)
                 .filter(DockerCloud.class::isInstance)
                 .map(cloud -> (DockerCloud) cloud)

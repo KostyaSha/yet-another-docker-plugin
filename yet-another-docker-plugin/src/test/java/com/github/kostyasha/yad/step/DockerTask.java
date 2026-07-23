@@ -4,30 +4,20 @@ import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.Queue;
 import hudson.model.ResourceList;
-import hudson.model.queue.AbstractQueueTask;
 import hudson.security.ACL;
 import hudson.security.AccessControlled;
 import hudson.security.Permission;
 import jenkins.model.Jenkins;
-import org.acegisecurity.AccessDeniedException;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Kanstantsin Shautsou
  */
-public class DockerTask extends AbstractQueueTask implements Queue.TransientTask, AccessControlled {
-    @Override
-    public boolean isBuildBlocked() {
-        return false;
-    }
-
-    @Override
-    public String getWhyBlocked() {
-        return null;
-    }
-
+public class DockerTask implements Queue.TransientTask, AccessControlled {
     @Override
     public String getName() {
         return "Some name";
@@ -68,11 +58,6 @@ public class DockerTask extends AbstractQueueTask implements Queue.TransientTask
     }
 
     @Override
-    public Node getLastBuiltOn() {
-        return null;
-    }
-
-    @Override
     public long getEstimatedDuration() {
         return -1;
     }
@@ -82,14 +67,24 @@ public class DockerTask extends AbstractQueueTask implements Queue.TransientTask
         return new MyExecutable(this);
     }
 
-    @Nonnull
     @Override
-    public ACL getACL() {
-        return Jenkins.getInstance().getAuthorizationStrategy().getRootACL();
+    public Collection<? extends hudson.model.queue.SubTask> getSubTasks() {
+        return Collections.singleton(this);
     }
 
     @Override
-    public void checkPermission(@Nonnull Permission permission) throws AccessDeniedException {
+    public hudson.model.Queue.Task getOwnerTask() {
+        return this;
+    }
+
+    @Nonnull
+    @Override
+    public ACL getACL() {
+        return Jenkins.get().getAuthorizationStrategy().getRootACL();
+    }
+
+    @Override
+    public void checkPermission(@Nonnull Permission permission) {
         getACL().checkPermission(permission);
     }
 
