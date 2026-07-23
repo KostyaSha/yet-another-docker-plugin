@@ -12,7 +12,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.St
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.DockerException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Container;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.LogContainerResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.async.ResultCallback;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Throwables;
 import com.github.kostyasha.yad_docker_java.javax.ws.rs.ProcessingException;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
@@ -25,8 +25,7 @@ import hudson.model.Label;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
-import hudson.util.NullStream;
-import hudson.util.StreamTaskListener;
+import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedPlannedNode;
@@ -98,7 +97,8 @@ public class DockerCloud extends AbstractCloud implements Serializable {
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "docker-java uses runtime exceptions")
     @Nonnull
     @Override
-    public synchronized Collection<PlannedNode> provision(@CheckForNull Label label, int excessWorkload) {
+    public synchronized Collection<PlannedNode> provision(CloudState state, int excessWorkload) {
+        final Label label = state.getLabel();
         LOG.info("Asked to provision load: '{}', for: '{}' label", excessWorkload, label);
 
         List<PlannedNode> r = new ArrayList<>(excessWorkload);
@@ -226,7 +226,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         final DockerComputerLauncher computerLauncher = template.getLauncher();
 
         //pull image
-        dockerContainerLifecycle.getPullImage().exec(getClient(), imageId, new StreamTaskListener(new NullStream()));
+        dockerContainerLifecycle.getPullImage().exec(getClient(), imageId, TaskListener.NULL);
 
         // set the operating system if it's not already cached
         if (template.getOsType() == null) {
@@ -377,7 +377,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
     //    @CheckForNull
     public static DockerCloud getCloudByName(String name) {
-        final Cloud cloud = Jenkins.getInstance().getCloud(name);
+        final Cloud cloud = Jenkins.get().getCloud(name);
         if (cloud instanceof DockerCloud) {
             return (DockerCloud) cloud;
         }
@@ -441,7 +441,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         }
 
         public List<Descriptor> getTemplatesDescriptors() {
-            return Arrays.asList(jenkins.model.Jenkins.getInstance().getDescriptor(DockerSlaveTemplate.class));
+            return Arrays.asList(jenkins.model.Jenkins.get().getDescriptor(DockerSlaveTemplate.class));
         }
 
         @Nonnull
@@ -451,7 +451,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         }
     }
 
-    private static class MyLogContainerResultCallback extends LogContainerResultCallback {
+    private static class MyLogContainerResultCallback extends ResultCallback.Adapter<Frame> {
         private ArrayList<String> logLines = new ArrayList<>();
 
         @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING")

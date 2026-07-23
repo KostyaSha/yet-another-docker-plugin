@@ -14,7 +14,7 @@
 
     <name>Yet Another Docker Plugin</name>
     <description>Yet Another Docker plugin. Provides docker Cloud provisioning</description>
-    <url>http://wiki.jenkins-ci.org/display/JENKINS/Yet+Another+Docker+Plugin</url>
+    <url>https://github.com/jenkinsci/yet-another-docker-plugin</url>
 
     <dependencies>
         <dependency>
@@ -32,195 +32,84 @@
         <dependency>
             <groupId>org.jenkins-ci.modules</groupId>
             <artifactId>instance-identity</artifactId>
-            <version>2.1</version>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>cloud-stats</artifactId>
-            <version>0.23</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>ssh-slaves</artifactId>
-            <version>1.22</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>durable-task</artifactId>
-            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>docker-commons</artifactId>
-            <version>${docker-commons-plugin.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.icon-shim</groupId>
-            <artifactId>icon-shim</artifactId>
-            <version>1.0.5</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
-            <version>2.1.3</version>
         </dependency>
 
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>ssh-credentials</artifactId>
-            <version>1.11</version>
             <optional>true</optional>
         </dependency>
-
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>jucies</artifactId>
-            <version>0.2.0</version>
-            <optional>true</optional>
+            <artifactId>jdk-tool</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.25</version>
-            <scope>provided</scope>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.27.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-lang3</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
+        <!-- test -->
         <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
-            <version>1.3</version>
+            <groupId>org.jenkins-ci.main</groupId>
+            <artifactId>jenkins-test-harness</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.10.0</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
-            <groupId>com.jayway.awaitility</groupId>
+            <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
-            <version>1.7.0</version>
+            <version>4.2.2</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-            </plugin>
-            <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
-                <version>${hpi-plugin.version}</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.kohsuke.stapler</groupId>
-                        <artifactId>stapler</artifactId>
-                        <version>${stapler.version}</version>
-                    </dependency>
-                </dependencies>
                 <configuration>
                     <artifactId>yet-another-docker-plugin</artifactId>
-                    <dependentWarExcludes>
-                        org.apache.httpcomponents:*,com.google.guava*
-                    </dependentWarExcludes>
-                    <!--<archive>-->
-                        <!--<manifestEntries>-->
-                            <!--<Mask-Classes>com.google.common</Mask-Classes>-->
-                        <!--</manifestEntries>-->
-                    <!--</archive>-->
-                    <!--<maskClasses>com.google.common.</maskClasses>-->
                 </configuration>
             </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>display-info</id>
-                        <configuration>
-                            <rules>
-                                <enforceBytecodeVersion>
-                                    <ignoreClasses combine.children="append">
-                                        <ignoreClass>module-info</ignoreClass>
-                                    </ignoreClasses>
-                                </enforceBytecodeVersion>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>yad-plugin-big-run</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.jenkins-ci.plugins</groupId>
-                    <artifactId>github-pullrequest</artifactId>
-                    <version>0.0.1-beta14</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.jenkins-ci.plugins</groupId>
-                    <artifactId>ssh-credentials</artifactId>
-                    <version>1.14</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.jenkins-ci.plugins</groupId>
-                    <artifactId>token-macro</artifactId>
-                    <version>1.7</version>
-                    <optional>true</optional>
-                </dependency>
-                <dependency>
-                    <groupId>org.jenkins-ci.plugins</groupId>
-                    <artifactId>docker-traceability</artifactId>
-                    <version>1.1</version>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
-            <id>yad-plugin-analysis</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>findbugs-maven-plugin</artifactId>
-                    </plugin>
-
-                    <plugin>
-                        <artifactId>maven-checkstyle-plugin</artifactId>
-                    </plugin>
-
-                    <plugin>
-                        <artifactId>maven-pmd-plugin</artifactId>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.jacoco</groupId>
-                        <artifactId>jacoco-maven-plugin</artifactId>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>

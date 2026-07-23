@@ -50,10 +50,13 @@ public class DockerSlaveSingle extends AbstractCloudSlave implements TrackedItem
                              @Nonnull YADockerConnector connector,
                              @Nonnull ProvisioningActivity.Id activityId)
             throws IOException, Descriptor.FormException {
-        super(name, nodeDescription,
-                config.getRemoteFs(), config.getNumExecutors(), config.getMode(),
-                "",
-                config.getLauncher(), config.getRetentionStrategy(), config.getNodeProperties());
+        super(name, config.getRemoteFs(), config.getLauncher());
+        setNodeDescription(nodeDescription);
+        setNumExecutors(config.getNumExecutors());
+        setMode(config.getMode());
+        setLabelString("");
+        setRetentionStrategy(config.getRetentionStrategy());
+        setNodeProperties(config.getNodeProperties());
         this.connector = connector;
         this.activityId = activityId;
         this.config = config;
@@ -101,7 +104,7 @@ public class DockerSlaveSingle extends AbstractCloudSlave implements TrackedItem
             _terminate(getListener());
         } finally {
             try {
-                Jenkins.getInstance().removeNode(this);
+                Jenkins.get().removeNode(this);
             } catch (IOException e) {
                 LOG.warn("Failed to remove {}", name, e);
                 getListener().error("Failed to remove " + name);

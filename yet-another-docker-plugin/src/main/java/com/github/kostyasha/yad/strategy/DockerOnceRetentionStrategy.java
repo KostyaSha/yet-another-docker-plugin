@@ -13,7 +13,7 @@ import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.CloudRetentionStrategy;
 import hudson.slaves.EphemeralNode;
 import hudson.slaves.RetentionStrategy;
-import hudson.util.TimeUnit2;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
@@ -61,7 +61,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
         // terminate. If it's not already trying to terminate then lets terminate manually.
         if (acc.isIdle() && !disabled) {
             final long idleMilliseconds = System.currentTimeMillis() - acc.getIdleStartMilliseconds();
-            if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(idleMinutes)) {
+            if (idleMilliseconds > TimeUnit.MINUTES.toMillis(idleMinutes)) {
                 LOG.debug("Disconnecting {}", acc.getName());
                 done(acc);
             }

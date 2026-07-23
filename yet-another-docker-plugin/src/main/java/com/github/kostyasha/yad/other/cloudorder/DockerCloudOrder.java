@@ -3,7 +3,7 @@ package com.github.kostyasha.yad.other.cloudorder;
 import com.github.kostyasha.yad.DockerCloud;
 import hudson.DescriptorExtensionList;
 import hudson.ExtensionPoint;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Label;
 import jenkins.model.Jenkins;
@@ -11,8 +11,7 @@ import jenkins.model.Jenkins;
 import javax.annotation.Nonnull;
 import java.util.List;
 
-public abstract class DockerCloudOrder extends AbstractDescribableImpl<DockerCloudOrder>
-        implements ExtensionPoint {
+public abstract class DockerCloudOrder implements Describable<DockerCloudOrder>, ExtensionPoint {
 
     /**
      * List of clouds that will be used for provisioning attempt one by one.
@@ -22,12 +21,12 @@ public abstract class DockerCloudOrder extends AbstractDescribableImpl<DockerClo
 
     @Override
     public DockerCloudOrderDescriptor getDescriptor() {
-        return (DockerCloudOrderDescriptor) super.getDescriptor();
+        return (DockerCloudOrderDescriptor) Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     public abstract static class DockerCloudOrderDescriptor extends Descriptor<DockerCloudOrder> {
         public static DescriptorExtensionList<DockerCloudOrder, DockerCloudOrderDescriptor> allDockerCloudOrderDescriptors() {
-            return Jenkins.getInstance().getDescriptorList(DockerCloudOrder.class);
+            return Jenkins.get().getDescriptorList(DockerCloudOrder.class);
         }
     }
 

@@ -5,7 +5,8 @@ import com.github.kostyasha.yad.connector.YADockerConnector;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.BuildResponseItem;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.async.ResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.DockerClientException;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
@@ -71,20 +72,48 @@ public class DockerBuildImageStepFileCallable extends MasterToSlaveFileCallable<
         return null;
     }
 
-    private static class MyBuildImageResultCallback extends BuildImageResultCallback {
+    private static class MyBuildImageResultCallback extends ResultCallback.Adapter<BuildResponseItem> {
         private final PrintStream llog;
+        private String imageId;
+        private DockerClientException error;
 
         MyBuildImageResultCallback(PrintStream llog) {
             this.llog = llog;
         }
 
+        @Override
         public void onNext(BuildResponseItem item) {
+            if (item.isBuildSuccessIndicated()) {
+                this.imageId = item.getImageId();
+            } else if (item.isErrorIndicated()) {
+                this.error = new DockerClientException("Could not build image: " + item.getErrorDetail().getMessage());
+            }
             String text = item.getStream();
             if (nonNull(text)) {
                 llog.print(text);
                 LOG.debug(text);
             }
             super.onNext(item);
+        }
+
+        public String awaitImageId() {
+            try {
+                awaitCompletion();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new DockerClientException("Interrupted while building image", e);
+            }
+            return getImageId();
+        }
+
+        private String getImageId() {
+            if (error != null) {
+                throw error;
+            }
+            if (imageId != null) {
+                return imageId;
+            }
+            throw new DockerClientException("Could not build image");
         }
     }
 }

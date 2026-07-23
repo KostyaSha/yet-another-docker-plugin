@@ -5,8 +5,9 @@ import com.github.kostyasha.yad.commons.DockerPullImage;
 import com.github.kostyasha.yad.commons.DockerRemoveContainer;
 import com.github.kostyasha.yad.commons.DockerStopContainer;
 import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
 import hudson.model.Descriptor;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -27,7 +28,7 @@ import static java.util.Objects.nonNull;
  *
  * @author Kanstantsin Shautsou
  */
-public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerContainerLifecycle> {
+public class DockerContainerLifecycle implements Describable<DockerContainerLifecycle> {
 
     private String image = "";
 
@@ -41,6 +42,11 @@ public class DockerContainerLifecycle extends AbstractDescribableImpl<DockerCont
 
     @DataBoundConstructor
     public DockerContainerLifecycle() {
+    }
+
+    @Override
+    public Descriptor<DockerContainerLifecycle> getDescriptor() {
+        return Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     // image

@@ -43,7 +43,7 @@ public class CloudNameDockerConnector extends YADockerConnector {
     @CheckForNull
     @Override
     public DockerClient getClient() {
-        final Cloud cloud = Jenkins.getInstance().getCloud(cloudName);
+        final Cloud cloud = Jenkins.get().getCloud(cloudName);
         if (cloud instanceof DockerCloud) {
             final DockerCloud dockerCloud = (DockerCloud) cloud;
             return dockerCloud.getClient();
@@ -55,7 +55,7 @@ public class CloudNameDockerConnector extends YADockerConnector {
     public static class DescriptorImpl extends YADockerConnectorDescriptor {
         public FormValidation doCheckCloudName(@QueryParameter String cloudName) {
             try {
-                final Cloud cloud = Jenkins.getInstance().getCloud(cloudName);
+                final Cloud cloud = Jenkins.get().getCloud(cloudName);
                 if (cloud instanceof DockerCloud) {
                     final DockerCloud dockerCloud = (DockerCloud) cloud;
                     Version verResult = dockerCloud.getConnector().getClient().versionCmd().exec();
@@ -71,7 +71,7 @@ public class CloudNameDockerConnector extends YADockerConnector {
 
         public ListBoxModel doFillCloudNameItems() {
             ListBoxModel items = new ListBoxModel();
-            Jenkins.getInstance().clouds.getAll(DockerCloud.class)
+            Jenkins.get().clouds.getAll(DockerCloud.class)
                 .forEach(dockerCloud ->
                     items.add(dockerCloud.getDisplayName())
                 );

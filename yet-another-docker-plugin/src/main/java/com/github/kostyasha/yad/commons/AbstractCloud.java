@@ -50,8 +50,8 @@ public abstract class AbstractCloud extends Cloud {
     }
 
     @Override
-    public boolean canProvision(Label label) {
-        return getTemplate(label) != null;
+    public boolean canProvision(CloudState state) {
+        return getTemplate(state.getLabel()) != null;
     }
 
     @CheckForNull

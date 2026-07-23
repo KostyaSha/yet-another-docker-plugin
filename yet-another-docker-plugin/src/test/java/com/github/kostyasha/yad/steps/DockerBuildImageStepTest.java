@@ -29,7 +29,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import java.io.File;
 
 import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
-import static com.jayway.awaitility.Awaitility.await;
+import static org.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -69,7 +69,7 @@ public class DockerBuildImageStepTest {
         );
         final DumbSlave dumbSlave = new DumbSlave("docker-daemon", "/home/vagrant/jenkins2", sshLauncher);
         jRule.getInstance().addNode(dumbSlave);
-        await().timeout(60, SECONDS).until(() -> assertThat(dumbSlave.getChannel(), notNullValue()));
+        await().atMost(60, SECONDS).untilAsserted(() -> assertThat(dumbSlave.getChannel(), notNullValue()));
         String dockerfilePath = dumbSlave.getChannel().call(new StringThrowableCallable());
 
 
@@ -118,7 +118,7 @@ public class DockerBuildImageStepTest {
                     "RUN mvn archetype:generate -DgroupId=com.mycompany.app -DartifactId=my-app -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.4 -DinteractiveMode=false\n" +
                     "RUN cd my-app && mvn install\n"
                     ;
-            FileUtils.writeStringToFile(dockerfile, dockerfileContent);
+            FileUtils.writeStringToFile(dockerfile, dockerfileContent, java.nio.charset.StandardCharsets.UTF_8);
             return tempFolder.getAbsolutePath();
         }
     }

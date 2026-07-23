@@ -4,6 +4,7 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.github.kostyasha.yad.commons.DockerContainerRestartPolicy;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
+import hudson.util.Secret;
 import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
 import com.github.kostyasha.yad.commons.DockerPullImage;
 import com.github.kostyasha.yad.commons.DockerRemoveContainer;
@@ -65,7 +66,7 @@ public class DockerCloudTest {
                     CredentialsScope.GLOBAL, // scope
                     null, // id
                     "description", //desc
-                    "keypem",
+                    Secret.fromString("keypem"),
                     "certpem",
                     "capem"
             );
@@ -80,7 +81,6 @@ public class DockerCloudTest {
             connector.setReadTimeout(1002);
 
             final DockerPullImage pullImage = new DockerPullImage();
-            pullImage.setCredentialsId("");
             pullImage.setPullStrategy(DockerImagePullStrategy.PULL_ALWAYS);
 
             final DockerComputerJNLPLauncher launcher = new DockerComputerJNLPLauncher();
@@ -147,12 +147,12 @@ public class DockerCloudTest {
             dockerSlaveTemplates.add(dockerSlaveTemplate);
             before = new DockerCloud("docker-cloud", dockerSlaveTemplates, 17, connector);
 
-            j.getInstance().clouds.add(before);
-            j.getInstance().save();
+            j.jenkins.clouds.add(before);
+            j.jenkins.save();
 
             j.configRoundtrip();
 
-            after = (DockerCloud) j.getInstance().getCloud("docker-cloud");
+            after = (DockerCloud) j.jenkins.getCloud("docker-cloud");
         }
     }
 

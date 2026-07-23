@@ -10,7 +10,8 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.Cr
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.ExecStartResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.async.ResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.TaskListener;
@@ -18,9 +19,9 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
-import hudson.util.TimeUnit2;
+import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
-import org.apache.commons.io.Charsets;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
@@ -182,7 +183,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         final DockerSlaveTemplate dockerSlaveTemplate = node.getDockerSlaveTemplate();
         final DockerComputerJNLPLauncher launcher = (DockerComputerJNLPLauncher) dockerSlaveTemplate.getLauncher();
 
-        final String rootUrl = launcher.getJenkinsUrl(Jenkins.getInstance().getRootUrl());
+        final String rootUrl = launcher.getJenkinsUrl(Jenkins.get().getRootUrl());
 //        Objects.requireNonNull(rootUrl, "Jenkins root url is not specified!");
         if (isNull(rootUrl)) {
             throw new IllegalStateException("Jenkins root url is not specified!");
@@ -244,11 +245,17 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             LOG.info("Starting connection command for {}...", containerId);
             logger.println("Starting connection command for " + containerId);
 
-            try (ExecStartResultCallback exec = client
+            try (ResultCallback.Adapter<Frame> exec = client
                     .execStartCmd(response.getId())
                     .withDetach(true)
                     .withTty(true)
-                    .exec(new ExecStartResultCallback(logger, logger))
+                    .exec(new ResultCallback.Adapter<Frame>() {
+                        @Override
+                        public void onNext(Frame item) {
+                            logger.print(new String(item.getPayload(), StandardCharsets.UTF_8));
+                            super.onNext(item);
+                        }
+                    })
             ) {
                 exec.awaitCompletion();
             } catch (NotFoundException ex) {
@@ -270,7 +277,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         // TODO better strategy
         final long launchTime = System.currentTimeMillis();
         while (!dockerComputer.isOnline() &&
-                TimeUnit2.SECONDS.toMillis(launchTimeout) > System.currentTimeMillis() - launchTime) {
+                TimeUnit.SECONDS.toMillis(launchTimeout) > System.currentTimeMillis() - launchTime) {
             logger.println("Waiting slave connection...");
             Thread.sleep(1000);
         }
@@ -344,7 +351,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
         if (dockerSlaveTemplate.getOsType() == OsType.WINDOWS) {
             try (InputStream inStream = DockerComputerJNLPLauncher.class.getResourceAsStream("DockerComputerJNLPLauncher/init.ps1")) {
-                final String initCmd = IOUtils.toString(inStream, Charsets.UTF_8);
+                final String initCmd = IOUtils.toString(inStream, StandardCharsets.UTF_8);
                 if (initCmd == null) {
                     throw new IllegalStateException("Resource file 'init.ps1' not found");
                 }
@@ -356,7 +363,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             }
         } else { // default is OsType.LINUX
             try (InputStream inStream = DockerComputerJNLPLauncher.class.getResourceAsStream("DockerComputerJNLPLauncher/init.sh")) {
-                final String initCmd = IOUtils.toString(inStream, Charsets.UTF_8);
+                final String initCmd = IOUtils.toString(inStream, StandardCharsets.UTF_8);
                 if (initCmd == null) {
                     throw new IllegalStateException("Resource file 'init.sh' not found");
                 }

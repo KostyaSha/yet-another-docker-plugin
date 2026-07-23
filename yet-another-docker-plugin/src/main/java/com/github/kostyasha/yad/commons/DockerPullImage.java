@@ -15,7 +15,8 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Imag
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
+import jenkins.model.Jenkins;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.model.TaskListener;
@@ -50,7 +51,7 @@ import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
  * @author Kanstantsin Shautsou
  */
 @DockerCmd
-public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
+public class DockerPullImage implements Describable<DockerPullImage> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerPullImage.class);
 
     @CheckForNull
@@ -163,7 +164,7 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
             try {
                 pullImageCmd
                             .exec(new DockerPullImageListenerLogger(listener))
-                        .awaitSuccess();
+                        .awaitCompletion();
             } catch (DockerClientException exception) {
                 String exMsg = exception.getMessage();
                 if (exMsg.contains("Could not pull image: Digest:") ||
@@ -176,6 +177,9 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
                 } else {
                     throw exception;
                 }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted while pulling image '" + imageName + "'", e);
             }
 
             long pullTime = System.currentTimeMillis() - startTime;
@@ -229,6 +233,12 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
         return HashCodeBuilder.reflectionHashCode(this);
     }
 
+
+    @Override
+    public Descriptor<DockerPullImage> getDescriptor() {
+        return Jenkins.get().getDescriptorOrDie(getClass());
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerPullImage> {
         @Nonnull
@@ -238,12 +248,10 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-            List<DockerRegistryAuthCredentials> credentials =
-                    CredentialsProvider.lookupCredentials(DockerRegistryAuthCredentials.class, context, ACL.SYSTEM,
-                            Collections.emptyList());
-
-            return new StandardListBoxModel().withEmptySelection()
-                    .withMatching(CredentialsMatchers.instanceOf(DockerRegistryAuthCredentials.class), credentials);
+            return new StandardListBoxModel().includeEmptyValue()
+                    .includeMatchingAs(ACL.SYSTEM2, context, DockerRegistryAuthCredentials.class,
+                            Collections.emptyList(),
+                            CredentialsMatchers.instanceOf(DockerRegistryAuthCredentials.class));
         }
     }
 }

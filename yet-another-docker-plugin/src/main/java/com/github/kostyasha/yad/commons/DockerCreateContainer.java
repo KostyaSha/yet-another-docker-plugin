@@ -1,7 +1,7 @@
 package com.github.kostyasha.yad.commons;
 
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
@@ -19,7 +19,7 @@ import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
 import com.trilead.ssh2.Connection;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHLauncher;
@@ -68,7 +68,7 @@ import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
  * @see com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.CreateContainerCmdImpl
  */
 @DockerCmd
-public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateContainer> {
+public class DockerCreateContainer implements Describable<DockerCreateContainer> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerCreateContainer.class);
 
     /**
@@ -722,6 +722,12 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         return dockerCommandArray;
     }
 
+
+    @Override
+    public Descriptor<DockerCreateContainer> getDescriptor() {
+        return Jenkins.get().getDescriptorOrDie(getClass());
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerCreateContainer> {
 
@@ -807,19 +813,15 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         }
 
         public static ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
+            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get());
             if (!ac.hasPermission(Jenkins.ADMINISTER)) {
                 return new ListBoxModel();
             }
 
-            return new SSHUserListBoxModel().withMatching(
-                    SSHAuthenticator.matcher(Connection.class),
-                    CredentialsProvider.lookupCredentials(
-                            StandardUsernameCredentials.class,
-                            context,
-                            ACL.SYSTEM,
-                            SSHLauncher.SSH_SCHEME)
-            );
+            return new StandardUsernameListBoxModel()
+                    .includeMatchingAs(ACL.SYSTEM2, context, StandardUsernameCredentials.class,
+                            Collections.singletonList(SSHLauncher.SSH_SCHEME),
+                            SSHAuthenticator.matcher(Connection.class));
         }
 
         @Nonnull

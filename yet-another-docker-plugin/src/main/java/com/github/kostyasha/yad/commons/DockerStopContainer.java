@@ -4,7 +4,8 @@ import com.github.kostyasha.yad.connector.YADockerConnector;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.StopContainerCmdImpl;
 import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
+import jenkins.model.Jenkins;
 import hudson.model.Descriptor;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
@@ -27,7 +28,7 @@ import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
  * @see StopContainerCmdImpl
  */
 @DockerCmd
-public class DockerStopContainer extends AbstractDescribableImpl<DockerStopContainer> implements Serializable {
+public class DockerStopContainer implements Describable<DockerStopContainer>, Serializable {
     private static final Logger LOG = LoggerFactory.getLogger(DockerStopContainer.class);
     private static final long serialVersionUID = 1L;
 
@@ -95,6 +96,12 @@ public class DockerStopContainer extends AbstractDescribableImpl<DockerStopConta
     @Override
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
+    }
+
+
+    @Override
+    public Descriptor<DockerStopContainer> getDescriptor() {
+        return Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     @Extension

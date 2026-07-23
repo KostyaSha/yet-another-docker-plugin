@@ -2,7 +2,6 @@ package com.github.kostyasha.yad.credentials;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
-import com.google.common.base.Throwables;
 import hudson.Extension;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
@@ -41,7 +40,7 @@ public class DockerDaemonFileCredentials extends BaseStandardCredentials impleme
 
     public String getClientKey() {
         resolveCredentialsOnSlave();
-        return credentials.getClientKey();
+        return credentials.getClientKeySecret().getPlainText();
     }
 
     public String getClientCertificate() {
@@ -64,13 +63,14 @@ public class DockerDaemonFileCredentials extends BaseStandardCredentials impleme
             throw new IllegalStateException(dockerCertPath + " isn't directory!");
         }
         try {
-            String caPem = FileUtils.readFileToString(new File(credDir, "ca.pem"));
-            String keyPem = FileUtils.readFileToString(new File(credDir, "key.pem"));
-            String certPem = FileUtils.readFileToString(new File(credDir, "cert.pem"));
-            this.credentials = new DockerServerCredentials(null, "remote-docker", null, caPem, keyPem, certPem);
+            String caPem = FileUtils.readFileToString(new File(credDir, "ca.pem"), java.nio.charset.StandardCharsets.UTF_8);
+            String keyPem = FileUtils.readFileToString(new File(credDir, "key.pem"), java.nio.charset.StandardCharsets.UTF_8);
+            String certPem = FileUtils.readFileToString(new File(credDir, "cert.pem"), java.nio.charset.StandardCharsets.UTF_8);
+            this.credentials = new DockerServerCredentials(null, "remote-docker", null,
+                    hudson.util.Secret.fromString(caPem), keyPem, certPem);
         } catch (IOException ex) {
             LOG.error("", ex);
-            Throwables.propagate(ex);
+            throw new RuntimeException(ex);
         }
     }
 
