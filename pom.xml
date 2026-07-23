@@ -6,7 +6,7 @@
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
         <version>6.2211.v27f680c93c53</version>
-        <relativePath/>
+        <relativePath />
     </parent>
 
     <groupId>com.github.kostyasha.yet-another-docker</groupId>
@@ -15,7 +15,7 @@
     <packaging>pom</packaging>
 
     <name>Yet Another Docker Plugin Parent</name>
-    <url>https://github.com/jenkinsci/yet-another-docker-plugin</url>
+    <url>https://github.com/KostyaSha/yet-another-docker-plugin</url>
 
     <licenses>
         <license>
@@ -48,7 +48,7 @@
     <properties>
         <jenkins.baseline>2.541</jenkins.baseline>
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
-        <gitHubRepo>jenkinsci/yet-another-docker-plugin</gitHubRepo>
+        <gitHubRepo>KostyaSha/yet-another-docker-plugin</gitHubRepo>
         <!-- TODO: fix spotbugs warnings and drop this override -->
         <spotbugs.failOnError>false</spotbugs.failOnError>
     </properties>
