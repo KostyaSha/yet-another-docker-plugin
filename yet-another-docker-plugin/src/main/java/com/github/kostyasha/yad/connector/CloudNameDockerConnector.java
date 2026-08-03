@@ -16,8 +16,8 @@ import javax.annotation.Nonnull;
 
 import static hudson.util.FormValidation.error;
 import static hudson.util.FormValidation.ok;
-import static org.apache.commons.lang.builder.ToStringBuilder.reflectionToString;
-import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
+import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
+import static org.apache.commons.lang3.builder.ToStringStyle.MULTI_LINE_STYLE;
 
 /**
  * Should be under {@link com.github.kostyasha.yad.connector} package,

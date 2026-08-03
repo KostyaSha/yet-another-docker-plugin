@@ -13,7 +13,7 @@ import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.plugins.cloudstats.CloudStatistics;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;

@@ -18,6 +18,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>commons-lang3-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.github.kostyasha.yet-another-docker</groupId>
             <artifactId>yet-another-docker-java</artifactId>
             <version>${project.version}</version>

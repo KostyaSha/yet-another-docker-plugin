@@ -5,7 +5,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.model.Executor;
 import hudson.model.Queue;
 import hudson.slaves.AbstractCloudComputer;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.slf4j.Logger;
