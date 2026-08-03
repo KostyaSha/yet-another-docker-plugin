@@ -20,7 +20,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.okhttp.OkHttpD
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +39,7 @@ import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
 import static com.github.kostyasha.yad.other.ConnectorType.OKHTTP;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static org.apache.commons.lang.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  * Builds ClientConfig with helper methods that extracts info for plugin routines.

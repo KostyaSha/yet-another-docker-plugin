@@ -26,7 +26,7 @@ import java.io.PrintStream;
 
 import static com.github.kostyasha.yad.steps.DockerImageComboStepFileCallable.newDockerImageComboStepFileCallableBuilder;
 import static java.util.Objects.isNull;
-import static org.apache.commons.lang.StringUtils.trimToEmpty;
+import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 /**
  * Let's assume that user wants:

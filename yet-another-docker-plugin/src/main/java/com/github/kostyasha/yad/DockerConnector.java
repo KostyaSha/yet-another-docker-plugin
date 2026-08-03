@@ -23,8 +23,8 @@ import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -44,8 +44,8 @@ import static com.github.kostyasha.yad.other.ConnectorType.NETTY;
 import static com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.RemoteApiVersion.parseConfig;
 import static hudson.util.FormValidation.ok;
 import static hudson.util.FormValidation.warning;
-import static org.apache.commons.lang.builder.ToStringBuilder.reflectionToString;
-import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
+import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
+import static org.apache.commons.lang3.builder.ToStringStyle.MULTI_LINE_STYLE;
 
 /**
  * Settings for connecting to docker via docker-java configured connection.

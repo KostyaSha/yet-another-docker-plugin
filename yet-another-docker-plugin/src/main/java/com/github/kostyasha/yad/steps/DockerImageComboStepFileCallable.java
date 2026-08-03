@@ -21,8 +21,8 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +39,8 @@ import static com.github.kostyasha.yad.utils.DockerJavaUtils.getAuthConfig;
 import static com.github.kostyasha.yad.utils.LogUtils.printResponseItemToListener;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static org.apache.commons.lang.StringUtils.isEmpty;
-import static org.apache.commons.lang.StringUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 /**
  * All actions happening on remote.
@@ -231,7 +231,7 @@ public class DockerImageComboStepFileCallable extends MasterToSlaveFileCallable<
             response.setSuccess(false);
             llog.println(t.getMessage());
             response.setErrorMessage(t.getMessage());
-            response.setErrorTrace(ExceptionUtils.getFullStackTrace(t));
+            response.setErrorTrace(ExceptionUtils.getStackTrace(t));
         } finally {
             builtImages.add(imageId);
             response.setImages(builtImages);

@@ -13,7 +13,7 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.FormValidation;
-import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 

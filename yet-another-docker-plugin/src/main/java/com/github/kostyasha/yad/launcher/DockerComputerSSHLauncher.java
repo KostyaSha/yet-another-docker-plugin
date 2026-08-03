@@ -20,7 +20,7 @@ import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.util.ListBoxModel;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;

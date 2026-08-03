@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
 
-import static org.apache.commons.lang.StringUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 public class DockerImageCleanupFileCallable extends MasterToSlaveFileCallable<Void> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerImageCleanupFileCallable.class);
