@@ -17,7 +17,8 @@ import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.Hash
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.ToStringBuilder;
 import com.github.kostyasha.yad_docker_java.org.apache.http.auth.UsernamePasswordCredentials;
 import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
+import jenkins.model.Jenkins;
 import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -36,14 +37,14 @@ import java.util.Map;
 import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 /**
  * @author Kanstantsin Shautsou
  */
 @DockerCmd
 @Beta
-public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> implements Serializable {
+public class DockerBuildImage implements Describable<DockerBuildImage>, Serializable {
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(DockerBuildImage.class);
 
@@ -311,6 +312,12 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
     @Override
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
+    }
+
+
+    @Override
+    public Descriptor<DockerBuildImage> getDescriptor() {
+        return Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     @Extension

@@ -3,7 +3,6 @@ package com.github.kostyasha.yad.steps;
 import com.github.kostyasha.yad.connector.YADockerConnector;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
-import com.google.common.base.Throwables;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
@@ -15,7 +14,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
 
-import static org.apache.commons.lang.StringUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 public class DockerImageCleanupFileCallable extends MasterToSlaveFileCallable<Void> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerImageCleanupFileCallable.class);
@@ -40,10 +39,8 @@ public class DockerImageCleanupFileCallable extends MasterToSlaveFileCallable<Vo
         try (DockerClient client = connector.getClient()) {
             return invoke(client);
         } catch (Exception ex) {
-            Throwables.propagate(ex);
+            throw new RuntimeException(ex);
         }
-
-        return null;
     }
 
     private Void invoke(DockerClient client) {

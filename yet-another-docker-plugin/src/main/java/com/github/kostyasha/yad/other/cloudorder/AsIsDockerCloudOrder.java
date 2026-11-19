@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static jenkins.model.Jenkins.getInstance;
+import static jenkins.model.Jenkins.get;
 
 public class AsIsDockerCloudOrder extends DockerCloudOrder {
 
@@ -21,7 +21,7 @@ public class AsIsDockerCloudOrder extends DockerCloudOrder {
     @Nonnull
     @Override
     public List<DockerCloud> getDockerClouds(Label label) {
-        return getInstance().clouds.stream()
+        return get().clouds.stream()
                 .filter(Objects::nonNull)
                 .filter(DockerCloud.class::isInstance)
                 .map(cloud -> (DockerCloud) cloud)

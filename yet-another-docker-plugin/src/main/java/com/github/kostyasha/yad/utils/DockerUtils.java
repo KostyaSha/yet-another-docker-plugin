@@ -20,7 +20,7 @@ public class DockerUtils {
 
         while (retries >= 0) {
             try {
-                Jenkins.getInstance().addNode(slave);
+                Jenkins.get().addNode(slave);
                 return;
             } catch (IOException ex) {
                 lastException = ex;

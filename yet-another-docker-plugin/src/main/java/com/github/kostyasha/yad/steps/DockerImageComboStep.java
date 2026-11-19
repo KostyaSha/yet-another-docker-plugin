@@ -5,6 +5,7 @@ import com.github.kostyasha.yad.connector.YADockerConnector;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.AbortException;
 import hudson.FilePath;
+import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
 import hudson.model.Run;
@@ -25,7 +26,7 @@ import java.io.PrintStream;
 
 import static com.github.kostyasha.yad.steps.DockerImageComboStepFileCallable.newDockerImageComboStepFileCallableBuilder;
 import static java.util.Objects.isNull;
-import static org.apache.commons.lang.StringUtils.trimToEmpty;
+import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 /**
  * Let's assume that user wants:
@@ -101,7 +102,7 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
     }
 
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher,
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars env, @Nonnull Launcher launcher,
                         @Nonnull TaskListener listener) throws InterruptedException, IOException {
         PrintStream llog = listener.getLogger();
         final DockerImageComboStepFileCallable comboCallable = newDockerImageComboStepFileCallableBuilder()

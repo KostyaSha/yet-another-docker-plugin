@@ -3,6 +3,7 @@ package com.github.kostyasha.yad.steps;
 import com.github.kostyasha.yad.commons.cmds.DockerBuildImage;
 import com.github.kostyasha.yad.connector.YADockerConnector;
 import hudson.FilePath;
+import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
 import hudson.model.Run;
@@ -46,7 +47,7 @@ public class DockerBuildImageStep extends Builder implements SimpleBuildStep {
     }
 
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher,
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars env, @Nonnull Launcher launcher,
                         @Nonnull TaskListener listener) throws InterruptedException, IOException {
         PrintStream llog = listener.getLogger();
         try {

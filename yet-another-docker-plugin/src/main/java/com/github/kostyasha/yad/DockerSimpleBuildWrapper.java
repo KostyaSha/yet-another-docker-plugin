@@ -91,7 +91,7 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
 
             jenkinsAddNodeWithRetry(getDockerSlaveSingleWithRetry(run, activityId, futureName));
 
-            final Node futureNode = Jenkins.getInstance().getNode(futureName);
+            final Node futureNode = Jenkins.get().getNode(futureName);
             if (!(futureNode instanceof DockerSlaveSingle)) {
                 logger.println("Can't get node" + futureName);
                 throw new IllegalStateException("Can't get Node " + futureName);
@@ -176,7 +176,7 @@ public class DockerSimpleBuildWrapper extends SimpleBuildWrapper {
 
             LOG.info("Shutting down slave");
             logger.println("Shutting down slave '" + slaveName + "'.");
-            final Node slaveNode = Jenkins.getInstance().getNode(slaveName);
+            final Node slaveNode = Jenkins.get().getNode(slaveName);
             if (isNull(slaveNode)) {
                 throw new IllegalStateException("Can't get node " + slaveName);
             }

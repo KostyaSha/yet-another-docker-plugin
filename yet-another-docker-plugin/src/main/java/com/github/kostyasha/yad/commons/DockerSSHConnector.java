@@ -20,7 +20,7 @@ import hudson.tools.JDKInstaller;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -29,6 +29,8 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 
 import static hudson.Util.fixEmpty;
+import java.util.Collections;
+
 import static hudson.plugins.sshslaves.SSHLauncher.SSH_SCHEME;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -230,13 +232,14 @@ public class DockerSSHConnector extends ComputerConnector {
                     return new ListBoxModel();
                 }
             } else {
-                if (!Jenkins.getInstance().hasPermission(Computer.CONFIGURE)) {
+                if (!Jenkins.get().hasPermission(Computer.CONFIGURE)) {
                     return new ListBoxModel();
                 }
             }
-            return new StandardUsernameListBoxModel().withMatching(SSHAuthenticator.matcher(Connection.class),
-                    CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context,
-                            ACL.SYSTEM, SSH_SCHEME));
+            return new StandardUsernameListBoxModel()
+                    .includeMatchingAs(ACL.SYSTEM2, context, StandardUsernameCredentials.class,
+                            Collections.singletonList(SSH_SCHEME),
+                            SSHAuthenticator.matcher(Connection.class));
         }
 
         public FormValidation doCheckLaunchTimeoutSeconds(String value) {

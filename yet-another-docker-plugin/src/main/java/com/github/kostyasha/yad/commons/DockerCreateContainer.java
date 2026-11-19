@@ -1,7 +1,7 @@
 package com.github.kostyasha.yad.commons;
 
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
@@ -19,7 +19,7 @@ import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
 import com.trilead.ssh2.Connection;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHLauncher;
@@ -29,11 +29,11 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.BooleanUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -59,8 +59,8 @@ import static com.github.kostyasha.yad.utils.BindUtils.joinToStr;
 import static com.github.kostyasha.yad.utils.BindUtils.splitAndFilterEmpty;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static org.apache.commons.lang.StringUtils.trimToNull;
-import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
+import static org.apache.commons.lang3.StringUtils.trimToNull;
+import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 /**
  * Contains docker container create related settings.
@@ -68,7 +68,7 @@ import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
  * @see com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.CreateContainerCmdImpl
  */
 @DockerCmd
-public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateContainer> {
+public class DockerCreateContainer implements Describable<DockerCreateContainer> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerCreateContainer.class);
 
     /**
@@ -741,6 +741,12 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         return dockerCommandArray;
     }
 
+
+    @Override
+    public Descriptor<DockerCreateContainer> getDescriptor() {
+        return Jenkins.get().getDescriptorOrDie(getClass());
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerCreateContainer> {
 
@@ -826,19 +832,15 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         }
 
         public static ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
+            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get());
             if (!ac.hasPermission(Jenkins.ADMINISTER)) {
                 return new ListBoxModel();
             }
 
-            return new SSHUserListBoxModel().withMatching(
-                    SSHAuthenticator.matcher(Connection.class),
-                    CredentialsProvider.lookupCredentials(
-                            StandardUsernameCredentials.class,
-                            context,
-                            ACL.SYSTEM,
-                            SSHLauncher.SSH_SCHEME)
-            );
+            return new StandardUsernameListBoxModel()
+                    .includeMatchingAs(ACL.SYSTEM2, context, StandardUsernameCredentials.class,
+                            Collections.singletonList(SSHLauncher.SSH_SCHEME),
+                            SSHAuthenticator.matcher(Connection.class));
         }
 
         @Nonnull
