@@ -1,11 +1,8 @@
+param([long]$ConfigTimeoutSeconds)
+
 $progressPreference = 'silentlyContinue'  # no progress bars
 
 $CONFIG="c:\config.ps1"
-while (-not (Test-Path $CONFIG)) {
-   Write-Output "No config, sleeping for 1 second"
-   sleep 1
-}
-
 function Test-FileLock {
    param (
       [parameter(Mandatory=$true)]
@@ -30,8 +27,13 @@ function Test-FileLock {
    }
 }
 
-while (Test-FileLock $CONFIG) {
-   Write-Output "Config file is still being created, sleeping for 1 second"
+$timer = [System.Diagnostics.Stopwatch]::StartNew()
+while ((-not (Test-Path -LiteralPath $CONFIG -PathType Leaf)) -or (Test-FileLock $CONFIG)) {
+   if ($timer.Elapsed.TotalSeconds -ge $ConfigTimeoutSeconds) {
+      Write-Output "Timed out waiting for $CONFIG after $ConfigTimeoutSeconds seconds"
+      exit 1
+   }
+   Write-Output "Waiting for config file, sleeping for 1 second"
    sleep 1
 }
 

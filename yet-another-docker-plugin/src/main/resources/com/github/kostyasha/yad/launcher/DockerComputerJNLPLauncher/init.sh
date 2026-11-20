@@ -3,9 +3,15 @@
 set -uxe
 
 export CONFIG="/tmp/config.sh"
+remaining=$1
 while [ ! -f "$CONFIG" ]; do
+    if [ "$remaining" -le 0 ]; then
+        echo "Timed out waiting for $CONFIG after $1 seconds" >&2
+        exit 1
+    fi
     echo "No config, sleeping for 1 second"
     sleep 1
+    remaining=$((remaining - 1))
 done
 
 echo "Found config file"

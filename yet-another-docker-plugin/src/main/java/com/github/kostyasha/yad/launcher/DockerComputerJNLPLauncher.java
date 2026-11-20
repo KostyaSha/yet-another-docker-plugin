@@ -359,7 +359,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                 createContainerCmd.withEntrypoint("powershell.exe")
                         .withCmd("powershell.exe", "-NoLogo", "-ExecutionPolicy", "bypass", "-Command", "{@\"\n" +
                         initCmd.replace("$", "`$") +
-                        "\n\"@ | Out-File -FilePath c:\\init.ps1 ; if($?) {c:\\init.ps1}}");
+                        "\n\"@ | Out-File -FilePath c:\\init.ps1 ; if($?) {c:\\init.ps1 " + getLaunchTimeout() + "}}");
             }
         } else { // default is OsType.LINUX
             try (InputStream inStream = DockerComputerJNLPLauncher.class.getResourceAsStream("DockerComputerJNLPLauncher/init.sh")) {
@@ -371,7 +371,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                 // wait for params
                 createContainerCmd.withEntrypoint("/bin/sh",
                         "-cxe",
-                        "cat << EOF >> /tmp/init.sh && chmod +x /tmp/init.sh && exec /tmp/init.sh\n" +
+                        "cat << EOF >> /tmp/init.sh && chmod +x /tmp/init.sh && exec /tmp/init.sh " + getLaunchTimeout() + "\n" +
                                 initCmd.replace("$", "\\$") + "\n" +
                                 "EOF" + "\n");
             }
