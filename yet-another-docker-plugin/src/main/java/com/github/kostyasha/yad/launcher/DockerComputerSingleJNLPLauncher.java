@@ -247,9 +247,11 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
 
         // exec jnlp connection in running container
         // TODO implement PID 1 replacement
+        String inboundArgs = InboundAgentArguments.forAlternateUrl(jenkinsUrl, computer, this);
         String startCmd =
                 "cat << EOF > /tmp/config.sh.tmp && cd /tmp && mv config.sh.tmp config.sh\n" +
                         "JENKINS_URL=\"" + rootUrl + NL +
+                        "INBOUND_ARGS_B64=\"" + inboundArgs + NL +
                         "JENKINS_USER=\"" + getUser() + NL +
                         "JENKINS_HOME=\"" + node.getRemoteFS() + NL +
                         "COMPUTER_URL=\"" + computer.getUrl() + NL +

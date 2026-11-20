@@ -2,7 +2,8 @@
 
 set -uxe
 
-export CONFIG="/tmp/config.sh"
+CONFIG="$(dirname "$0")/config.sh"
+export CONFIG
 remaining=$1
 while [ ! -f "$CONFIG" ]; do
     if [ "$remaining" -le 0 ]; then
@@ -25,6 +26,8 @@ if [ -z "$JENKINS_URL" ]; then
     echo "JENKINS_URL is not defined! Exiting."
     exit 1
 fi
+
+JENKINS_URL=${JENKINS_URL%/}
 
 if [ -z "$COMPUTER_URL" ]; then
     echo "COMPUTER_URL is not defined! Exiting."
@@ -94,7 +97,15 @@ if [ -n "$JAVA_OPTS" ] ; then
    RUN_CMD="$RUN_CMD $JAVA_OPTS"
 fi
 
-RUN_CMD="$RUN_CMD -jar slave.jar"
+if [ -n "${INBOUND_ARGS_B64:-}" ]; then
+    inbound_args_file=$(mktemp /tmp/yad-inbound.XXXXXXXX)
+    printf '%s' "$INBOUND_ARGS_B64" | base64 -d > "$inbound_args_file"
+    # The unprivileged Jenkins user needs to read the launcher arguments.
+    chmod 644 "$inbound_args_file"
+    RUN_CMD="$RUN_CMD @$inbound_args_file"
+else
+    RUN_CMD="$RUN_CMD -jar slave.jar"
+fi
 
 if [ "$NO_RECONNECT_SLAVE" = "true" ]; then
     RUN_CMD="$RUN_CMD -noReconnect"
@@ -106,7 +117,9 @@ if [ -n "$SLAVE_OPTS" ] ; then
    RUN_CMD="$RUN_CMD $SLAVE_OPTS"
 fi
 
-RUN_CMD="$RUN_CMD -jnlpUrl ${JENKINS_URL}/${COMPUTER_URL}/slave-agent.jnlp"
+if [ -z "${INBOUND_ARGS_B64:-}" ]; then
+    RUN_CMD="$RUN_CMD -jnlpUrl ${JENKINS_URL}/${COMPUTER_URL}/slave-agent.jnlp"
+fi
 if [ -n "$COMPUTER_SECRET" ]; then
  RUN_CMD="$RUN_CMD -secret $COMPUTER_SECRET"
 fi
