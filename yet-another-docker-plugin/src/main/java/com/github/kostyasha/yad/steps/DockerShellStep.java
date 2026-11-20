@@ -225,6 +225,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             }
 
             try {
+                createContainer.connectNetworks(client, cId);
                 // start cmd
                 StartContainerCmd startCommand = client.startContainerCmd(cId);
                 startCommand.exec();

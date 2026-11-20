@@ -4,6 +4,7 @@ import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Bind;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Device;
@@ -49,6 +50,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -138,6 +140,8 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
 
     @CheckForNull
     private String networkMode;
+
+    private List<String> connectNetworks;
 
     @CheckForNull
     private List<String> devices;
@@ -462,6 +466,30 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
     @DataBoundSetter
     public void setNetworkMode(String networkMode) {
         this.networkMode = trimToNull(networkMode);
+    }
+
+    @Nonnull
+    public String getConnectNetworks() {
+        return joinToStr(connectNetworks);
+    }
+
+    @DataBoundSetter
+    public void setConnectNetworks(String networks) {
+        List<String> names = Splitter.onPattern("[,\\r\\n]").trimResults().omitEmptyStrings()
+                .splitToList(StringUtils.defaultString(networks));
+        connectNetworks = names.isEmpty() ? null : new ArrayList<>(new LinkedHashSet<>(names));
+    }
+
+    public void connectNetworks(DockerClient client, String containerId) {
+        if (CollectionUtils.isEmpty(connectNetworks)) {
+            return;
+        }
+        String primaryNetwork = getNetworkMode();
+        for (String network : connectNetworks) {
+            if (!network.equals(primaryNetwork)) {
+                client.connectToNetworkCmd().withContainerId(containerId).withNetworkId(network).exec();
+            }
+        }
     }
 
     // devices

@@ -90,6 +90,10 @@ f.advanced(title: _("Create Container settings"), align: "left") {
         f.textbox()
     }
 
+    f.entry(title: _("Connect networks"), field: "connectNetworks") {
+        f.textarea()
+    }
+
     f.entry(title: _("Devices"), field: "devicesString") {
         f.textarea()
     }

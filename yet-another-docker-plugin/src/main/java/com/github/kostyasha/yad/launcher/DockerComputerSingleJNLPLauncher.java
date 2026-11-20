@@ -9,7 +9,6 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.Cr
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.async.ResultCallback;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
@@ -197,9 +196,22 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         setContainerId(cId);
         logger.println("Created container " + cId + ", for " + run.getDisplayName());
         LOG.debug("Created container {}, for {}", cId, run.getDisplayName());
-        // start
-        StartContainerCmd startCommand = client.startContainerCmd(cId);
-        startCommand.exec();
+        try {
+            createContainer.connectNetworks(client, cId);
+            client.startContainerCmd(cId).exec();
+        } catch (RuntimeException failure) {
+            try {
+                containerLifecycle.getRemoveContainer().exec(client, cId);
+                setContainerId(null);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                failure.addSuppressed(ex);
+            } catch (Exception ex) {
+                failure.addSuppressed(ex);
+            }
+            throw failure;
+        }
+
         logger.println("Started container " + cId);
         LOG.debug("Started container '{}', for '{}'.", cId, run.getDisplayName());
 

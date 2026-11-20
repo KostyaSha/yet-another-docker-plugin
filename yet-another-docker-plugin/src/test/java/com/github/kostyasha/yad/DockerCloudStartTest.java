@@ -3,6 +3,7 @@ package com.github.kostyasha.yad;
 import com.github.kostyasha.yad.launcher.DockerComputerLauncher;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.async.ResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.ConnectToNetworkCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.LogContainerCmd;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InOrder;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -24,6 +26,7 @@ import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
@@ -34,6 +37,7 @@ public class DockerCloudStartTest {
     private static final String CONTAINER_ID = "agent-container";
     private static final String IMAGE = "jenkins-agent:latest";
 
+    private final HostConfig hostConfig = HostConfig.newHostConfig();
     private final DockerConnector connector = mock(DockerConnector.class);
     private final DockerClient client = mock(DockerClient.class);
     private final DockerSlaveTemplate template = mock(DockerSlaveTemplate.class);
@@ -41,11 +45,11 @@ public class DockerCloudStartTest {
     private final StartContainerCmd start = mock(StartContainerCmd.class);
     private final LogContainerCmd logs = mock(LogContainerCmd.class, RETURNS_SELF);
     private final RemoveContainerCmd remove = mock(RemoveContainerCmd.class, RETURNS_SELF);
+    private final DockerContainerLifecycle lifecycle = new DockerContainerLifecycle();
     private final DockerCloud cloud = new DockerCloud("docker-cloud", List.of(), 1, connector);
 
     @Before
     public void setUp() {
-        DockerContainerLifecycle lifecycle = new DockerContainerLifecycle();
         lifecycle.setImage(IMAGE);
         when(template.getDockerContainerLifecycle()).thenReturn(lifecycle);
         when(template.getLauncher()).thenReturn(launcher);
@@ -53,7 +57,7 @@ public class DockerCloudStartTest {
         CreateContainerResponse response = mock(CreateContainerResponse.class);
         when(response.getId()).thenReturn(CONTAINER_ID);
         CreateContainerCmd create = mock(CreateContainerCmd.class);
-        when(create.getHostConfig()).thenReturn(HostConfig.newHostConfig());
+        when(create.getHostConfig()).thenReturn(hostConfig);
         when(create.exec()).thenReturn(response);
         when(connector.getClient()).thenReturn(client);
         when(client.createContainerCmd(IMAGE)).thenReturn(create);
@@ -67,8 +71,61 @@ public class DockerCloudStartTest {
         assertEquals(CONTAINER_ID, cloud.runContainer(template));
 
         verify(start).exec();
+        verify(client, never()).connectToNetworkCmd();
         verify(client, never()).removeContainerCmd(CONTAINER_ID);
         verify(client, never()).logContainerCmd(CONTAINER_ID);
+    }
+
+    @Test
+    public void connectsAdditionalNetworksBeforeStartingContainer() throws Exception {
+        lifecycle.getCreateContainer().setNetworkMode("bridge");
+        lifecycle.getCreateContainer().setConnectNetworks("special_net ,\r\n backend\nspecial_net\nbridge");
+        ConnectToNetworkCmd connect = mock(ConnectToNetworkCmd.class, RETURNS_SELF);
+        when(client.connectToNetworkCmd()).thenReturn(connect);
+
+        assertEquals(CONTAINER_ID, cloud.runContainer(template));
+
+        assertEquals("bridge", hostConfig.getNetworkMode());
+        InOrder calls = inOrder(connect, start);
+        calls.verify(connect).withContainerId(CONTAINER_ID);
+        calls.verify(connect).withNetworkId("special_net");
+        calls.verify(connect).exec();
+        calls.verify(connect).withContainerId(CONTAINER_ID);
+        calls.verify(connect).withNetworkId("backend");
+        calls.verify(connect).exec();
+        calls.verify(start).exec();
+        verify(connect, never()).withNetworkId("bridge");
+        verify(client, never()).removeContainerCmd(CONTAINER_ID);
+    }
+
+    @Test
+    public void usesLegacyNetworkModeAsTheOnlyNetwork() throws Exception {
+        lifecycle.getCreateContainer().setNetworkMode("legacy-net");
+
+        assertEquals(CONTAINER_ID, cloud.runContainer(template));
+
+        assertEquals("legacy-net", hostConfig.getNetworkMode());
+        assertEquals("", lifecycle.getCreateContainer().getConnectNetworks());
+        verify(client, never()).connectToNetworkCmd();
+    }
+
+    @Test
+    public void failedNetworkConnectionRemovesContainerBeforeStart() {
+        lifecycle.getCreateContainer().setConnectNetworks("missing-network");
+        ConnectToNetworkCmd connect = mock(ConnectToNetworkCmd.class, RETURNS_SELF);
+        when(client.connectToNetworkCmd()).thenReturn(connect);
+        IllegalStateException failure = new IllegalStateException("network not found");
+        doThrow(failure).when(connect).exec();
+        when(logs.exec(any())).thenAnswer(invocation -> {
+            ResultCallback<Frame> callback = invocation.getArgument(0);
+            callback.onComplete();
+            return callback;
+        });
+
+        assertSame(failure, assertThrows(IllegalStateException.class, () -> cloud.runContainer(template)));
+
+        verify(start, never()).exec();
+        verify(remove).exec();
     }
 
     @Test(timeout = 15_000)
