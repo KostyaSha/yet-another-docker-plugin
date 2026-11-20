@@ -323,7 +323,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
             // wait for params
             createContainerCmd.withEntrypoint("/bin/sh",
                     "-cxe",
-                    "cat << EOF >> /tmp/init.sh && chmod +x /tmp/init.sh && exec /tmp/init.sh\n" +
+                    "cat << EOF >> /tmp/init.sh && chmod +x /tmp/init.sh && exec /tmp/init.sh " + getLaunchTimeout() + "\n" +
                             initCmd.replace("$", "\\$") + "\n" +
                             "EOF" + "\n"
             );
