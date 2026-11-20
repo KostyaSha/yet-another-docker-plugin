@@ -1,13 +1,15 @@
 package com.github.kostyasha.it.tests;
 
-import com.github.kostyasha.it.other.WaitMessageResultCallback;
 import com.github.kostyasha.it.rule.DockerRule;
+import com.github.kostyasha.yad.client.ClientBuilderForConnector;
+import com.github.kostyasha.yad.other.ConnectorType;
+import com.github.kostyasha.yad.other.VariableSSLConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.ExposedPort;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.HostConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Version;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.VolumesFrom;
@@ -17,17 +19,16 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DockerCli
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.io.FileUtils;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
-import com.github.kostyasha.yad.other.VariableSSLConfig;
-import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,11 +38,14 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
-import java.util.concurrent.TimeUnit;
+import java.util.Arrays;
 
 import static com.github.kostyasha.it.rule.DockerRule.getDockerItDir;
 import static com.github.kostyasha.it.utils.DockerHPIContainerUtil.getResource;
 import static com.github.kostyasha.it.utils.DockerUtils.getExposedPort;
+import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
+import static com.github.kostyasha.yad.other.ConnectorType.NETTY;
+import static com.github.kostyasha.yad.other.ConnectorType.OKHTTP;
 import static com.jayway.awaitility.Awaitility.await;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -52,6 +56,7 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Kanstantsin Shautsou
  */
+@RunWith(Parameterized.class)
 public class ShortTLSKeyTest {
     private static final Logger LOG = LoggerFactory.getLogger(ShortTLSKeyTest.class);
     private static final String DATA_IMAGE_TAG = ShortTLSKeyTest.class.getSimpleName().toLowerCase();
@@ -63,17 +68,31 @@ public class ShortTLSKeyTest {
     private String dataContainerId;
     private String hostContainerId;
 
-    @ClassRule
-    public static DockerRule d = new DockerRule(false);
+    @Parameterized.Parameters(name = "{0}")
+    public static Iterable<ConnectorType> connectorTypes() {
+        return Arrays.asList(
+                NETTY,
+                JERSEY,
+                OKHTTP
+        );
+    }
+
+    @Parameterized.Parameter
+    public static ConnectorType connectorType;
+
+    @Rule
+    public DockerRule d = new DockerRule(false);
 
     @ClassRule
     public static TemporaryFolder folder = new TemporaryFolder(new File(getDockerItDir()));
 
     @Before
     public void before() throws IOException, InterruptedException {
+        d.setConnectorType(connectorType);
+        d.prepareDockerCli();
         after();
 
-        final File buildDir = folder.newFolder(getClass().getName());
+        final File buildDir = folder.newFolder(connectorType.toString() + getClass().getName());
 
         File resources = new File("src/test/resources/" + getClass().getName().replace(".", "/") + "/data_container");
         FileUtils.copyDirectory(resources, buildDir);
@@ -102,7 +121,10 @@ public class ShortTLSKeyTest {
 
         hostContainerId = d.getDockerCli().createContainerCmd(HOST_IMAGE_NAME)
                 .withName(HOST_CONTAINER_NAME)
-                .withPrivileged(true)
+                .withHostConfig(HostConfig.newHostConfig()
+                        .withPrivileged(true)
+                        .withPortBindings(PortBinding.parse("0.0.0.0:" + CONTAINER_PORT + ":" + CONTAINER_PORT))
+                        .withVolumesFrom(new VolumesFrom(dataContainerId)))
                 .withEnv("DOCKER_DAEMON_ARGS=" +
                                 "--tlsverify " +
                                 "--tlscacert=/var/keys/ca.pem " +
@@ -110,14 +132,12 @@ public class ShortTLSKeyTest {
                                 "--tlskey=/var/keys/server-key.pem",
                         "PORT=" + CONTAINER_PORT)
                 .withExposedPorts(new ExposedPort(CONTAINER_PORT))
-                .withPortBindings(PortBinding.parse("0.0.0.0:" + CONTAINER_PORT + ":" + CONTAINER_PORT))
                 .withPortSpecs(String.format("%d/tcp", CONTAINER_PORT))
-                .withVolumesFrom(new VolumesFrom(dataContainerId))
                 .exec()
                 .getId();
 
         d.getDockerCli().startContainerCmd(hostContainerId).exec();
-        
+
         d.waitDindStarted(hostContainerId);
     }
 
@@ -175,12 +195,16 @@ public class ShortTLSKeyTest {
                 .withCustomSslConfig(sslConfig)
                 .build();
 
-//        DockerCmdExecFactory dockerCmdExecFactory = new NettyDockerCmdExecFactory();
-        DockerCmdExecFactory dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
-
-        DockerClient dockerClient = DockerClientBuilder.getInstance(clientConfig)
-                .withDockerCmdExecFactory(dockerCmdExecFactory)
+        DockerClient dockerClient = ClientBuilderForConnector.newClientBuilderForConnector()
+                .withDockerClientConfig(clientConfig)
+                .withConnectorType(connectorType)
                 .build();
+
+//        DockerCmdExecFactory dockerCmdExecFactory = new NettyDockerCmdExecFactory();
+//        DockerCmdExecFactory dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
+//        DockerClient dockerClient = DockerClientBuilder.getInstance(clientConfig)
+//                .withDockerCmdExecFactory(dockerCmdExecFactory)
+//                .build();
 
         await().timeout(10, SECONDS).until(() -> {
             final Version version = dockerClient.versionCmd().exec();

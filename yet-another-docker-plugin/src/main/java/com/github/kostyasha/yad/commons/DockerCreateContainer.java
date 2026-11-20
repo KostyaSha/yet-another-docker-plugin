@@ -1,12 +1,13 @@
 package com.github.kostyasha.yad.commons;
 
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Bind;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Device;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.HostConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Link;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Volume;
@@ -18,19 +19,21 @@ import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
 import com.trilead.ssh2.Connection;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
+import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.BooleanUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -42,10 +45,11 @@ import javax.annotation.CheckForNull;
 import javax.annotation.CheckReturnValue;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,15 +60,16 @@ import static com.github.kostyasha.yad.utils.BindUtils.joinToStr;
 import static com.github.kostyasha.yad.utils.BindUtils.splitAndFilterEmpty;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static org.apache.commons.lang.StringUtils.trimToNull;
-import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
+import static org.apache.commons.lang3.StringUtils.trimToNull;
+import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 /**
  * Contains docker container create related settings.
  *
  * @see com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.CreateContainerCmdImpl
  */
-public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateContainer> {
+@DockerCmd
+public class DockerCreateContainer implements Describable<DockerCreateContainer> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerCreateContainer.class);
 
     /**
@@ -131,6 +136,9 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
 
     @CheckForNull
     private List<String> devices;
+
+    @CheckForNull
+    private BigDecimal cpus;
 
     @CheckForNull
     private String cpusetCpus;
@@ -312,6 +320,19 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
     @DataBoundSetter
     public void setMacAddress(String macAddress) {
         this.macAddress = trimToNull(macAddress);
+    }
+
+    //cpus
+    @CheckForNull
+    public String getCpus() {
+        return cpus == null ? null : cpus.toString();
+    }
+
+    @DataBoundSetter
+    public void setCpus(String cpus) {
+        // Jenkins submits an empty string when the optional number field is cleared.
+        String value = trimToNull(cpus);
+        this.cpus = value == null ? null : new BigDecimal(value);
     }
 
     //cpuShares
@@ -543,27 +564,33 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
             containerConfig.withCmd(cmd);
         }
 
-        containerConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
+        HostConfig hostConfig = containerConfig.getHostConfig();
+
+        hostConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
 
         if (BooleanUtils.isTrue(getBindAllPorts())) {
-            containerConfig.withPublishAllPorts(getBindAllPorts());
+            hostConfig.withPublishAllPorts(getBindAllPorts());
         }
 
         if (BooleanUtils.isTrue(getPrivileged())) {
-            containerConfig.withPrivileged(getPrivileged());
+            hostConfig.withPrivileged(getPrivileged());
         }
 
         if (getCpuShares() != null && getCpuShares() > 0) {
-            containerConfig.withCpuShares(getCpuShares());
+            hostConfig.withCpuShares(getCpuShares());
+        }
+
+        if (cpus != null && cpus.signum() > 0) {
+            hostConfig.withNanoCPUs(cpus.movePointRight(9).longValueExact());
         }
 
         if (getMemoryLimit() != null && getMemoryLimit() > 0) {
             Long memoryInByte = getMemoryLimit() * 1024 * 1024;
-            containerConfig.withMemory(memoryInByte);
+            hostConfig.withMemory(memoryInByte);
         }
 
         if (CollectionUtils.isNotEmpty(getDnsHosts())) {
-            containerConfig.withDns(getDnsHosts().toArray(new String[getDnsHosts().size()]));
+            hostConfig.withDns(getDnsHosts().toArray(new String[0]));
         }
 
         if (CollectionUtils.isNotEmpty(getDockerLabels())) {
@@ -601,8 +628,8 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
                 }
             }
 
-            containerConfig.withVolumes(vols.toArray(new Volume[vols.size()]));
-            containerConfig.withBinds(binds.toArray(new Bind[binds.size()]));
+            containerConfig.withVolumes(vols.toArray(new Volume[0]));
+            hostConfig.withBinds(binds.toArray(new Bind[0]));
         }
 
         if (CollectionUtils.isNotEmpty(getVolumesFrom())) {
@@ -611,7 +638,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
                 volFrom.add(new VolumesFrom(volFromStr));
             }
 
-            containerConfig.withVolumesFrom(volFrom.toArray(new VolumesFrom[volFrom.size()]));
+            hostConfig.withVolumesFrom(volFrom.toArray(new VolumesFrom[0]));
         }
 
         if (BooleanUtils.isTrue(getTty())) {
@@ -619,7 +646,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         }
 
         if (CollectionUtils.isNotEmpty(getEnvironment())) {
-            containerConfig.withEnv(getEnvironment().toArray(new String[getEnvironment().size()]));
+            containerConfig.withEnv(getEnvironment().toArray(new String[0]));
         }
 
         if (StringUtils.isNotBlank(getMacAddress())) {
@@ -627,39 +654,39 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         }
 
         if (CollectionUtils.isNotEmpty(getExtraHosts())) {
-            containerConfig.withExtraHosts(getExtraHosts().toArray(new String[getExtraHosts().size()]));
+            hostConfig.withExtraHosts(getExtraHosts().toArray(new String[0]));
         }
 
         if (StringUtils.isNotBlank(getNetworkMode())) {
-            containerConfig.withNetworkMode(getNetworkMode());
+            hostConfig.withNetworkMode(getNetworkMode());
         }
 
         if (!getDevices().isEmpty()) {
-            containerConfig.withDevices(
+            hostConfig.withDevices(
                     getDevices().stream().map(Device::parse).collect(Collectors.toList())
             );
         }
 
         if (StringUtils.isNotBlank(getCpusetCpus())) {
-            containerConfig.withCpusetCpus(getCpusetCpus());
+            hostConfig.withCpusetCpus(getCpusetCpus());
         }
 
         if (StringUtils.isNotBlank(getCpusetMems())) {
-            containerConfig.withCpusetMems(getCpusetMems());
+            hostConfig.withCpusetMems(getCpusetMems());
         }
 
         if (!getLinks().isEmpty()) {
-            containerConfig.withLinks(
+            hostConfig.withLinks(
                     getLinks().stream().map(Link::parse).collect(Collectors.toList())
             );
         }
 
         if (nonNull(shmSize)) {
-            containerConfig.getHostConfig().withShmSize(shmSize);
+            hostConfig.withShmSize(shmSize);
         }
 
         if (nonNull(restartPolicy)) {
-            containerConfig.withRestartPolicy(restartPolicy.getRestartPolicy());
+            hostConfig.withRestartPolicy(restartPolicy.getRestartPolicy());
         }
 
         if (StringUtils.isNotBlank(getWorkdir())) {
@@ -716,6 +743,12 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         return dockerCommandArray;
     }
 
+
+    @Override
+    public Descriptor<DockerCreateContainer> getDescriptor() {
+        return Jenkins.get().getDescriptorOrDie(getClass());
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerCreateContainer> {
 
@@ -737,7 +770,7 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
                         }
                         Bind.parse(s);
                     } else if (group.length == 1) {
-                        final Volume ignore = new Volume(s);
+//                        new Volume(s);
                     } else {
                         return FormValidation.error("Wrong line: " + s);
                     }
@@ -801,14 +834,15 @@ public class DockerCreateContainer extends AbstractDescribableImpl<DockerCreateC
         }
 
         public static ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-            return new SSHUserListBoxModel().withMatching(
-                    SSHAuthenticator.matcher(Connection.class),
-                    CredentialsProvider.lookupCredentials(
-                            StandardUsernameCredentials.class,
-                            context,
-                            ACL.SYSTEM,
-                            SSHLauncher.SSH_SCHEME)
-            );
+            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get());
+            if (!ac.hasPermission(Jenkins.ADMINISTER)) {
+                return new ListBoxModel();
+            }
+
+            return new StandardUsernameListBoxModel()
+                    .includeMatchingAs(ACL.SYSTEM2, context, StandardUsernameCredentials.class,
+                            Collections.singletonList(SSHLauncher.SSH_SCHEME),
+                            SSHAuthenticator.matcher(Connection.class));
         }
 
         @Nonnull

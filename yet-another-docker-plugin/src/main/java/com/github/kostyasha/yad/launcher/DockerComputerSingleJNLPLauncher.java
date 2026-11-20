@@ -11,16 +11,16 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.Ex
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.ExecStartResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.async.ResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
 import com.github.kostyasha.yad_docker_java.javax.ws.rs.ProcessingException;
-import com.google.common.base.Throwables;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
-import hudson.util.TimeUnit2;
+import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
-import org.apache.commons.io.Charsets;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
@@ -32,11 +32,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils.isNotEmpty;
-import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils.trimToEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static java.util.Objects.isNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.apache.commons.lang.BooleanUtils.isTrue;
+import static org.apache.commons.lang3.BooleanUtils.isTrue;
+import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 /**
  * Alternative {@link DockerComputerJNLPLauncher}.
@@ -156,7 +156,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         } catch (Throwable e) {
             LOG.error("Can't launch ", e);
             listener.error("Can't launch " + e.getMessage());
-            Throwables.propagate(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -201,17 +201,17 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         StartContainerCmd startCommand = client.startContainerCmd(cId);
         startCommand.exec();
         logger.println("Started container " + cId);
-        LOG.debug("Start container {}, for {}", cId, run.getDisplayName());
+        LOG.debug("Started container '{}', for '{}'.", cId, run.getDisplayName());
 
         boolean running = false;
         long launchTime = System.currentTimeMillis();
         while (!running &&
-                TimeUnit2.SECONDS.toMillis(launchTimeout) > System.currentTimeMillis() - launchTime) {
+                TimeUnit.SECONDS.toMillis(launchTimeout) > System.currentTimeMillis() - launchTime) {
             try {
                 InspectContainerResponse inspectResp = client.inspectContainerCmd(cId).exec();
                 if (isTrue(inspectResp.getState().getRunning())) {
-                    logger.println("Container is running!");
-                    LOG.debug("Container {} is running", cId);
+                    logger.println("Container is running.");
+                    LOG.debug("Container '{}' is running.", cId);
                     running = true;
                 } else {
                     logger.println("Container is not running...");
@@ -229,7 +229,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         }
 
         // now real launch
-        final String rootUrl = getJenkinsUrl(Jenkins.getInstance().getRootUrl());
+        final String rootUrl = getJenkinsUrl(Jenkins.get().getRootUrl());
 //        Objects.requireNonNull(rootUrl, "Jenkins root url is not specified!");
         if (isNull(rootUrl)) {
             listener.fatalError("Jenkins root url is not specified!");
@@ -272,10 +272,10 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
             logger.println("Starting connection command for " + cId);
             LOG.info("Starting connection command for {}", cId);
 
-            try (ExecStartResultCallback exec = client.execStartCmd(createCmdResponse.getId())
+            try (ResultCallback.Adapter<Frame> exec = client.execStartCmd(createCmdResponse.getId())
                     .withDetach(true)
                     .withTty(true)
-                    .exec(new ExecStartResultCallback())
+                    .exec(new ResultCallback.Adapter<Frame>())
             ) {
                 exec.awaitCompletion(10, SECONDS);
             } catch (NotFoundException ex) {
@@ -295,7 +295,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         // TODO better strategy
         launchTime = System.currentTimeMillis();
         while (computer.isReallyOffline() &&
-                TimeUnit2.SECONDS.toMillis(launchTimeout) > System.currentTimeMillis() - launchTime) {
+                TimeUnit.SECONDS.toMillis(launchTimeout) > System.currentTimeMillis() - launchTime) {
             logger.println("Waiting slave connection...");
             Thread.sleep(1000);
         }
@@ -315,7 +315,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
     public void appendContainerConfig(CreateContainerCmd createContainerCmd)
             throws IOException {
         try (InputStream instream = DockerComputerJNLPLauncher.class.getResourceAsStream("DockerComputerJNLPLauncher/init.sh")) {
-            final String initCmd = IOUtils.toString(instream, Charsets.UTF_8);
+            final String initCmd = IOUtils.toString(instream, StandardCharsets.UTF_8);
             if (initCmd == null) {
                 throw new IllegalStateException("Resource file 'init.sh' not found");
             }

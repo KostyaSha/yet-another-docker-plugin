@@ -2,6 +2,7 @@ package com.github.kostyasha.yad.step;
 
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
 import hudson.model.Queue;
@@ -30,7 +31,7 @@ public class TaskBuildStep extends Builder implements SimpleBuildStep {
     }
 
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath filePath, @Nonnull Launcher launcher,
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath filePath, @Nonnull EnvVars env, @Nonnull Launcher launcher,
                         @Nonnull TaskListener taskListener) throws InterruptedException, IOException {
         taskListener.getLogger().println("Entering task producer");
         Queue.getInstance().schedule(new DockerTask(), 0);

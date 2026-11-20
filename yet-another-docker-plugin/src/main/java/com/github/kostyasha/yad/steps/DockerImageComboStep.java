@@ -2,10 +2,10 @@ package com.github.kostyasha.yad.steps;
 
 import com.github.kostyasha.yad.commons.cmds.DockerBuildImage;
 import com.github.kostyasha.yad.connector.YADockerConnector;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.BooleanUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.AbortException;
 import hudson.FilePath;
+import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
 import hudson.model.Run;
@@ -19,11 +19,14 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintStream;
 
 import static com.github.kostyasha.yad.steps.DockerImageComboStepFileCallable.newDockerImageComboStepFileCallableBuilder;
+import static java.util.Objects.isNull;
+import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 /**
  * Let's assume that user wants:
@@ -38,10 +41,18 @@ import static com.github.kostyasha.yad.steps.DockerImageComboStepFileCallable.ne
 public class DockerImageComboStep extends Builder implements SimpleBuildStep {
     private static final Logger LOG = LoggerFactory.getLogger(DockerBuildImageStep.class);
 
-    private YADockerConnector connector = null;
+    @Nonnull
+    private YADockerConnector connector;
     private DockerBuildImage buildImage = null;
     private boolean clean = true;
+    private boolean cleanupDangling = true;
     private boolean push = true;
+
+    /**
+     * For programmatic usage.
+     */
+    @CheckForNull
+    private transient DockerImageComboStepResponse response;
 
     @DataBoundConstructor
     public DockerImageComboStep(@Nonnull YADockerConnector connector, @Nonnull DockerBuildImage buildImage) {
@@ -49,6 +60,7 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
         this.buildImage = buildImage;
     }
 
+    @Nonnull
     public YADockerConnector getConnector() {
         return connector;
     }
@@ -66,6 +78,15 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
         this.clean = clean;
     }
 
+    public boolean isCleanupDangling() {
+        return cleanupDangling;
+    }
+
+    @DataBoundSetter
+    public void setCleanupDangling(boolean cleanupDangling) {
+        this.cleanupDangling = cleanupDangling;
+    }
+
     public boolean isPush() {
         return push;
     }
@@ -75,8 +96,13 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
         this.push = push;
     }
 
+    @CheckForNull
+    public DockerImageComboStepResponse getResponse() {
+        return response;
+    }
+
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher,
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars env, @Nonnull Launcher launcher,
                         @Nonnull TaskListener listener) throws InterruptedException, IOException {
         PrintStream llog = listener.getLogger();
         final DockerImageComboStepFileCallable comboCallable = newDockerImageComboStepFileCallableBuilder()
@@ -86,14 +112,21 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
                 .withConnector(connector)
                 .withPushAll(push)
                 .withCleanAll(clean)
+                .withCleanupDangling(cleanupDangling)
                 .build();
         try {
             llog.println("Executing remote combo builder...");
-            if (BooleanUtils.isFalse(
-                    workspace.act(
-                            comboCallable
-                    ))) {
-                throw new AbortException("Something failed");
+
+            response = workspace.act(comboCallable);
+
+            if (!response.isSuccess()) {
+                throw new IOException(trimToEmpty(response.getErrorMessage()),
+                        new Exception(trimToEmpty(response.getErrorTrace())));
+            }
+
+            if (isNull(response)) {
+                throw new AbortException("Something failed.");
+
             }
         } catch (Exception ex) {
             LOG.error("Can't build image", ex);
@@ -101,7 +134,7 @@ public class DockerImageComboStep extends Builder implements SimpleBuildStep {
         }
     }
 
-//    @Extension
+    //    @Extension
     @Symbol("docker-image-producer")
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 

@@ -1,5 +1,6 @@
 package com.github.kostyasha.yad.strategy;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
@@ -12,9 +13,9 @@ import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.CloudRetentionStrategy;
 import hudson.slaves.EphemeralNode;
 import hudson.slaves.RetentionStrategy;
-import hudson.util.TimeUnit2;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
@@ -22,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.GuardedBy;
 import java.io.IOException;
-import java.util.concurrent.Future;
 
 /**
  * Mix of {@link org.jenkinsci.plugins.durabletask.executors.OnceRetentionStrategy} (1.3) and {@link CloudRetentionStrategy}
@@ -61,7 +61,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
         // terminate. If it's not already trying to terminate then lets terminate manually.
         if (acc.isIdle() && !disabled) {
             final long idleMilliseconds = System.currentTimeMillis() - acc.getIdleStartMilliseconds();
-            if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(idleMinutes)) {
+            if (idleMilliseconds > TimeUnit.MINUTES.toMillis(idleMinutes)) {
                 LOG.debug("Disconnecting {}", acc.getName());
                 done(acc);
             }
@@ -110,6 +110,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
         done(c);
     }
 
+    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
     protected void done(final AbstractCloudComputer<?> c) {
         c.setAcceptingTasks(false); // just in case
         synchronized (this) {
@@ -119,7 +120,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
             terminating = true;
         }
 
-        final Future<?> submit = Computer.threadPoolForRemoting.submit(() -> {
+        Computer.threadPoolForRemoting.submit(() -> {
                 try {
                     AbstractCloudSlave node = c.getNode();
                     if (node != null) {

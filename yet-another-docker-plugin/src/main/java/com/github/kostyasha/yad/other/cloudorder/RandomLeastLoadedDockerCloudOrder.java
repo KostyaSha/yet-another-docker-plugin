@@ -60,7 +60,7 @@ public class RandomLeastLoadedDockerCloudOrder extends DockerCloudOrder {
     protected List<DockerCloud> getAvailableDockerClouds(Label label) {
         return getAllDockerClouds().stream()
                 .filter(cloud ->
-                        cloud.canProvision(label) &&
+                        cloud.canProvision(new hudson.slaves.Cloud.CloudState(label, 0)) &&
                                 (countCurrentDockerSlaves(cloud) >= 0) &&
                                 (countCurrentDockerSlaves(cloud) < cloud.getContainerCap()))
                 .collect(Collectors.toList());

@@ -6,6 +6,35 @@ while (-not (Test-Path $CONFIG)) {
    sleep 1
 }
 
+function Test-FileLock {
+   param (
+      [parameter(Mandatory=$true)]
+      [string]$Path
+   )
+
+   $oFile = New-Object System.IO.FileInfo $Path
+
+   try
+   {
+      $oStream = $oFile.Open([System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+      if ($oStream)
+      {
+         $oStream.Close()
+      }
+      $false
+   }
+   catch
+   {
+      # file is locked by a process.
+      $true
+   }
+}
+
+while (Test-FileLock $CONFIG) {
+   Write-Output "Config file is still being created, sleeping for 1 second"
+   sleep 1
+}
+
 Write-Output "Found config file $CONFIG"
 . "$CONFIG"
 
@@ -66,11 +95,21 @@ if ($COMPUTER_SECRET) {
 cd $JENKINS_HOME
 
 try {
-   Write-Output "Invoke-WebRequest -Uri $JENKINS_URL/jnlpJars/slave.jar -Outfile $JENKINS_HOME/slave.jar"
-   Invoke-WebRequest -Uri "$JENKINS_URL/jnlpJars/slave.jar" -Outfile "$JENKINS_HOME/slave.jar"
+   Write-Host "Enabling TLS 1.2 ...";
+   $tls12RegBase = "HKLM:\\\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\SCHANNEL\\Protocols\\TLS 1.2";
+   if (Test-Path $tls12RegBase) { throw ("'{0}' already exists!" -f $tls12RegBase) }
+   New-Item -Path ("{0}/Client" -f $tls12RegBase) -Force;
+   New-Item -Path ("{0}/Server" -f $tls12RegBase) -Force;
+   New-ItemProperty -Path ("{0}/Client" -f $tls12RegBase) -Name "DisabledByDefault" -PropertyType DWORD -Value 0 -Force;
+   New-ItemProperty -Path ("{0}/Client" -f $tls12RegBase) -Name "Enabled" -PropertyType DWORD -Value 1 -Force;
+   New-ItemProperty -Path ("{0}/Server" -f $tls12RegBase) -Name "DisabledByDefault" -PropertyType DWORD -Value 0 -Force;
+   New-ItemProperty -Path ("{0}/Server" -f $tls12RegBase) -Name "Enabled" -PropertyType DWORD -Value 1 -Force;
 
-   Write-Output "$RUN_CMD"
-   Invoke-Expression "$RUN_CMD"
+   Write-Output "Invoke-WebRequest -Uri $JENKINS_URL/jnlpJars/slave.jar -Outfile $JENKINS_HOME/slave.jar";
+   Invoke-WebRequest -Uri "$JENKINS_URL/jnlpJars/slave.jar" -Outfile "$JENKINS_HOME/slave.jar";
+
+   Write-Output "$RUN_CMD";
+   Invoke-Expression "$RUN_CMD";
 
    exit 0
 } catch {

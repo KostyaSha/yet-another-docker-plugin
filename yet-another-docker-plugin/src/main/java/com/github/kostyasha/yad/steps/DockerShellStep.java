@@ -13,8 +13,8 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.St
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.DockerException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.AttachContainerResultCallback;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.WaitContainerResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.async.ResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.WaitResponse;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.AbortException;
 import hudson.EnvVars;
@@ -65,6 +65,9 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
     private static final Logger LOG = LoggerFactory.getLogger(DockerShellStep.class);
 
     private YADockerConnector connector = null;
+    @CheckForNull
+    private YADockerConnector longConnector = null; // connector that used during long running operations
+
     private DockerContainerLifecycle containerLifecycle = new DockerContainerLifecycle();
 
     private String shellScript = "";
@@ -81,6 +84,16 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
     @DataBoundSetter
     public void setConnector(YADockerConnector connector) {
         this.connector = connector;
+    }
+
+    @CheckForNull
+    public YADockerConnector getLongConnector() {
+        return longConnector;
+    }
+
+    @DataBoundSetter
+    public void setLongConnector(@CheckForNull YADockerConnector longConnector) {
+        this.longConnector = longConnector;
     }
 
     public DockerContainerLifecycle getContainerLifecycle() {
@@ -114,16 +127,16 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
 
     @SuppressFBWarnings("REC_CATCH_EXCEPTION")
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher,
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars env, @Nonnull Launcher launcher,
                         @Nonnull TaskListener listener) throws InterruptedException, IOException {
         PrintStream llog = listener.getLogger();
         final String imageId = containerLifecycle.getImage();
 
         try (DockerClient client = (connector instanceof DockerConnector) ?
-                ((DockerConnector) connector).getFreshClient() :
-                connector.getClient()) {
+                ((DockerConnector) connector).getFreshClient() : connector.getClient();
+            DockerClient longClient = (longConnector == null) ? client : longConnector.getClient()
+        ) {
             //pull image
-            llog.println("Pulling image " + imageId + "...");
             containerLifecycle.getPullImage().exec(client, imageId, listener);
 
             llog.println("Trying to create container for " + imageId);
@@ -212,22 +225,23 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             }
 
             try {
-                // start
+                // start cmd
                 StartContainerCmd startCommand = client.startContainerCmd(cId);
                 startCommand.exec();
                 llog.println("Started container " + cId);
-                LOG.debug("Start container {}, for {}", cId, run.getDisplayName());
+                LOG.debug("Start container '{}', for '{}'", cId, run.getDisplayName());
 
-                try (AttachContainerResultCallback callback = new MyAttachContainerResultCallback(llog)) {
-                    client.attachContainerCmd(cId)
+                // attach cmd
+                try (MyAttachContainerResultCallback callback = new MyAttachContainerResultCallback(llog)) {
+                    longClient.attachContainerCmd(cId)
                             .withStdErr(true)
                             .withStdOut(true)
                             .withFollowStream(true)
                             .withLogs(true)
                             .exec(callback);
 
-                    WaitContainerResultCallback waitCallback = new WaitContainerResultCallback();
-                    client.waitContainerCmd(cId).exec(waitCallback);
+                    MyWaitContainerResultCallback waitCallback = new MyWaitContainerResultCallback();
+                    longClient.waitContainerCmd(cId).exec(waitCallback);
                     final Integer statusCode = waitCallback.awaitStatusCode();
                     callback.awaitCompletion(1, TimeUnit.SECONDS);
                     if (isNull(statusCode) || statusCode != 0) {
@@ -302,7 +316,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
                 // exclude executor computer related vars
                 envVars.put("BUILD_DISPLAY_NAME", run.getDisplayName());
 
-                String rootUrl = Jenkins.getInstance().getRootUrl();
+                String rootUrl = Jenkins.get().getRootUrl();
                 if (rootUrl != null) {
                     envVars.put("BUILD_URL", rootUrl + run.getUrl());
                 }
@@ -320,7 +334,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
     }
 
     /**
-     * Append some tags to identify who create this container.
+     * Append some tags to identify who created this container.
      */
     protected static void insertLabels(CreateContainerCmd containerConfig, Run run) {
         // add tags
@@ -337,7 +351,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
 
     @Extension
     @Symbol("dockerShell")
-    public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
+    public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
         @Nonnull
         @Override
         public String getDisplayName() {
@@ -350,7 +364,7 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
         }
     }
 
-    public static class MyAttachContainerResultCallback extends AttachContainerResultCallback {
+    public static class MyAttachContainerResultCallback extends ResultCallback.Adapter<Frame> {
         private final PrintStream llog;
 
         public MyAttachContainerResultCallback(PrintStream llog) {
@@ -361,6 +375,27 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
         public void onNext(Frame frame) {
             super.onNext(frame);
             llog.println(new String(frame.getPayload(), UTF_8).trim());
+        }
+    }
+
+    private static class MyWaitContainerResultCallback extends ResultCallback.Adapter<WaitResponse> {
+        private WaitResponse waitResponse;
+
+        @Override
+        public void onNext(WaitResponse item) {
+            this.waitResponse = item;
+            super.onNext(item);
+        }
+
+        public Integer awaitStatusCode() {
+            try {
+                awaitCompletion();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.DockerClientException(
+                        "Interrupted while waiting for container", e);
+            }
+            return waitResponse == null ? null : waitResponse.getStatusCode();
         }
     }
 }

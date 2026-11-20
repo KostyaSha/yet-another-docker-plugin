@@ -2,11 +2,12 @@ package com.github.kostyasha.yad.commons;
 
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.RestartPolicy;
 import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
+import jenkins.model.Jenkins;
 import hudson.model.Descriptor;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,12 +18,12 @@ import javax.annotation.Nonnull;
 import java.util.Locale;
 
 import static java.util.Objects.isNull;
-import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
+import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 /**
  * @author Kanstantsin Shautsou
  */
-public class DockerContainerRestartPolicy extends AbstractDescribableImpl<DockerContainerRestartPolicy> {
+public class DockerContainerRestartPolicy implements Describable<DockerContainerRestartPolicy> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerContainerRestartPolicy.class);
 
     @CheckForNull
@@ -78,6 +79,12 @@ public class DockerContainerRestartPolicy extends AbstractDescribableImpl<Docker
     @Override
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
+    }
+
+
+    @Override
+    public Descriptor<DockerContainerRestartPolicy> getDescriptor() {
+        return Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     @Extension

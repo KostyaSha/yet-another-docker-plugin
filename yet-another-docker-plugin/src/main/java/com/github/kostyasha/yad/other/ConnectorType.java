@@ -5,5 +5,7 @@ package com.github.kostyasha.yad.other;
  */
 public enum ConnectorType {
     JERSEY,
-    NETTY
+    NETTY,
+    OKHTTP,
+    HTTPCLIENT5
 }

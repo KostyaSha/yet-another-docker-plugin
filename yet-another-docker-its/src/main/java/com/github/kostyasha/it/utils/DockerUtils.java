@@ -8,6 +8,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Port
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.util.Map;
 
 /**
@@ -19,7 +20,7 @@ public class DockerUtils {
     private DockerUtils() {
     }
 
-    public static void ensureContainerRemoved(DockerClient cli, String containerName) {
+    public static void ensureContainerRemoved(@Nonnull DockerClient cli, String containerName) {
         LOG.info("Ensuring container '{}' is removed", containerName);
         try {
             cli.removeContainerCmd(containerName)

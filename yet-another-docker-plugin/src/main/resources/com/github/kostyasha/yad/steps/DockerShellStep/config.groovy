@@ -30,7 +30,7 @@ f.entry(title: _("Shell Script"), field: "shellScript") {
     )
 }
 
-// connection
+// default connection
 f.dropdownList(name: "connector", title: _("Connection Source"),
         help: descriptor.getHelpFile('connector')) {
     allDockerConnectorDescriptors().each { ld ->
@@ -42,6 +42,28 @@ f.dropdownList(name: "connector", title: _("Connection Source"),
                 descriptor = ld
                 if (instance.connector != null && instance.connector.descriptor.equals(ld)) {
                     instance = instance.connector
+                }
+                f.invisibleEntry() {
+                    input(type: "hidden", name: "stapler-class", value: ld.clazz.name)
+                }
+                st.include(from: ld, page: ld.configPage, optional: "true")
+            }
+        }
+    }
+}
+
+// long running connection
+f.dropdownList(name: "longConnector", title: _("Connection Source"),
+        help: descriptor.getHelpFile('longConnector')) {
+    allDockerConnectorDescriptors().each { ld ->
+        if (ld != null) {
+            f.dropdownListBlock(value: ld.clazz.name,
+                    name: ld.displayName,
+                    selected: instance.longConnector == null ? false : instance.longConnector.descriptor.equals(ld),
+                    title: ld.displayName) {
+                descriptor = ld
+                if (instance.longConnector != null && instance.longConnector.descriptor.equals(ld)) {
+                    instance = instance.longConnector
                 }
                 f.invisibleEntry() {
                     input(type: "hidden", name: "stapler-class", value: ld.clazz.name)

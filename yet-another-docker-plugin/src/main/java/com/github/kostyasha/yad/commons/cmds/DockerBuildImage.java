@@ -1,21 +1,25 @@
 package com.github.kostyasha.yad.commons.cmds;
 
 import com.cloudbees.plugins.credentials.Credentials;
+import com.github.kostyasha.yad.NoStapler;
 import com.github.kostyasha.yad.client.ClientBuilderForConnector;
+import com.github.kostyasha.yad.commons.DockerCmd;
+import com.github.kostyasha.yad.connector.YADockerConnector;
 import com.github.kostyasha.yad.credentials.DockerRegistryAuthCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfigurations;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.EqualsBuilder;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.HashCodeBuilder;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import com.github.kostyasha.yad_docker_java.org.apache.http.auth.UsernamePasswordCredentials;
 import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
+import jenkins.model.Jenkins;
 import hudson.model.Descriptor;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
@@ -30,16 +34,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 /**
  * @author Kanstantsin Shautsou
  */
+@DockerCmd
 @Beta
-public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> implements Serializable {
+public class DockerBuildImage implements Describable<DockerBuildImage>, Serializable {
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(DockerBuildImage.class);
 
@@ -64,6 +69,9 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
     private Map<String, String> buildArgs;
 
     private AuthConfigurations authConfigurations;
+
+    @NoStapler
+    private YADockerConnector connector;
 
     @DataBoundConstructor
     public DockerBuildImage() {
@@ -227,6 +235,15 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
         return authConfigurations;
     }
 
+    @CheckForNull
+    public YADockerConnector getConnector() {
+        return connector;
+    }
+
+    public void setConnector(YADockerConnector connector) {
+        this.connector = connector;
+    }
+
     /**
      * Fill additional object with resolved creds.
      * For example before transfering object to remote.
@@ -295,6 +312,12 @@ public class DockerBuildImage extends AbstractDescribableImpl<DockerBuildImage> 
     @Override
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
+    }
+
+
+    @Override
+    public Descriptor<DockerBuildImage> getDescriptor() {
+        return Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     @Extension

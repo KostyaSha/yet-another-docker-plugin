@@ -1,7 +1,7 @@
 package com.github.kostyasha.yad.commons;
 
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PullResponseItem;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.async.ResultCallback;
 import hudson.model.TaskListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +13,7 @@ import static java.util.Objects.nonNull;
 /**
  * @author Kanstantsin Shautsou
  */
-public class DockerPullImageListenerLogger extends PullImageResultCallback {
+public class DockerPullImageListenerLogger extends ResultCallback.Adapter<PullResponseItem> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerPullImageListenerLogger.class);
 
     private TaskListener listener;

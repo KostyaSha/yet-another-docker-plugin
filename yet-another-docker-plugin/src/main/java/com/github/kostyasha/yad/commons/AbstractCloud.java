@@ -50,14 +50,24 @@ public abstract class AbstractCloud extends Cloud {
     }
 
     @Override
-    public boolean canProvision(Label label) {
-        return getTemplate(label) != null;
+    public boolean canProvision(CloudState state) {
+        return getTemplate(state.getLabel()) != null;
     }
 
     @CheckForNull
     public DockerSlaveTemplate getTemplate(String template) {
         for (DockerSlaveTemplate t : templates) {
             if (t.getDockerContainerLifecycle().getImage().equals(template)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
+    @CheckForNull
+    public DockerSlaveTemplate getTemplateById(String id) {
+        for (DockerSlaveTemplate t : templates) {
+            if (t.getId().equals(id)) {
                 return t;
             }
         }

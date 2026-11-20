@@ -12,11 +12,10 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.St
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.DockerException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Container;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.LogContainerResultCallback;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.async.ResultCallback;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Throwables;
 import com.github.kostyasha.yad_docker_java.javax.ws.rs.ProcessingException;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.StringUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Computer;
@@ -25,9 +24,9 @@ import hudson.model.Label;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
-import hudson.util.NullStream;
-import hudson.util.StreamTaskListener;
+import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedPlannedNode;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -98,7 +97,8 @@ public class DockerCloud extends AbstractCloud implements Serializable {
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "docker-java uses runtime exceptions")
     @Nonnull
     @Override
-    public synchronized Collection<PlannedNode> provision(@CheckForNull Label label, int excessWorkload) {
+    public synchronized Collection<PlannedNode> provision(CloudState state, int excessWorkload) {
+        final Label label = state.getLabel();
         LOG.info("Asked to provision load: '{}', for: '{}' label", excessWorkload, label);
 
         List<PlannedNode> r = new ArrayList<>(excessWorkload);
@@ -220,13 +220,13 @@ public class DockerCloud extends AbstractCloud implements Serializable {
      * Provision slave container and wait for it's availability.
      */
     private DockerSlave provisionWithWait(DockerSlaveTemplate template, ProvisioningActivity.Id id)
-            throws IOException, Descriptor.FormException {
+            throws Exception {
         final DockerContainerLifecycle dockerContainerLifecycle = template.getDockerContainerLifecycle();
         final String imageId = dockerContainerLifecycle.getImage();
         final DockerComputerLauncher computerLauncher = template.getLauncher();
 
         //pull image
-        dockerContainerLifecycle.getPullImage().exec(getClient(), imageId, new StreamTaskListener(new NullStream()));
+        dockerContainerLifecycle.getPullImage().exec(getClient(), imageId, TaskListener.NULL);
 
         // set the operating system if it's not already cached
         if (template.getOsType() == null) {
@@ -240,30 +240,53 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         try {
             ir = getClient().inspectContainerCmd(containerId).exec();
         } catch (ProcessingException ex) {
-            LOG.error("Failed to run container for {}, clean-up container", imageId);
+            LOG.error("Failed to run container for {}, removing container", imageId);
             dockerContainerLifecycle.getRemoveContainer().exec(getClient(), containerId);
             throw ex;
         }
 
-        // Build a description up:
-        String nodeDescription = "Docker Node [" + imageId + " on ";
-        try {
-            nodeDescription += getDisplayName();
-        } catch (Exception ex) {
-            nodeDescription += "???";
-        }
-        nodeDescription += "]";
+        String nodeDescription = String.format("Docker Node [%s on %s]", imageId, getDisplayName());
 
         String slaveName = String.format("%s-%s", getDisplayName(), containerId.substring(0, 12));
 
-        if (computerLauncher.waitUp(getDisplayName(), template, ir)) {
-            LOG.debug("Container {} is ready for slave connection", containerId);
-        } else {
-            LOG.error("Container {} is not ready for slave connection.", containerId);
+        try {
+            if (computerLauncher.waitUp(getDisplayName(), template, ir)) {
+                LOG.debug("Container {} is ready for slave connection", containerId);
+            } else {
+                LOG.error("Container {} is not ready for slave connection.", containerId);
+                throw new IllegalStateException("Failed to run container.");
+            }
+        } catch (RuntimeException ex) {
+            LOG.error("Removing {} container.", containerId);
+            dockerContainerLifecycle.getRemoveContainer().exec(getClient(), containerId);
+            throw ex;
         }
 
         final DockerComputerLauncher launcher = computerLauncher.getPreparedLauncher(getDisplayName(), template, ir);
-        return new DockerSlave(slaveName, nodeDescription, launcher, containerId, template, getDisplayName(), id);
+
+        return getDockerSlaveWithRetry(template, id, containerId, nodeDescription, slaveName, launcher);
+    }
+
+    private DockerSlave getDockerSlaveWithRetry(DockerSlaveTemplate template, ProvisioningActivity.Id id,
+                                                String containerId, String nodeDescription, String slaveName,
+                                                DockerComputerLauncher launcher)
+            throws IOException, Descriptor.FormException, InterruptedException {
+        int retries = 6;
+        while (retries >= 0) {
+            try {
+                return new DockerSlave(slaveName, nodeDescription, launcher, containerId, template, getDisplayName(), id);
+            } catch (IOException t) {
+                if (retries <= 0) {
+                    throw t;
+                }
+                LOG.trace("Failed to create DockerSlaveSingle, retrying...", t);
+                Thread.sleep(1000);
+            } finally {
+                retries--;
+            }
+        }
+
+        throw new IllegalStateException("Max creation retries");
     }
 
     /**
@@ -294,8 +317,8 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
         for (Container container : containers) {
             final Map<String, String> labels = container.getLabels();
-
-            if (labels.containsKey(DOCKER_CLOUD_LABEL) && labels.get(DOCKER_CLOUD_LABEL).equals(getDisplayName())) {
+            // broken container in daemon may return null labels
+            if (labels != null && labels.containsKey(DOCKER_CLOUD_LABEL) && labels.get(DOCKER_CLOUD_LABEL).equals(getDisplayName())) {
                 if (template == null) {
                     // count only total cloud capacity
                     count++;
@@ -354,7 +377,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
     //    @CheckForNull
     public static DockerCloud getCloudByName(String name) {
-        final Cloud cloud = Jenkins.getInstance().getCloud(name);
+        final Cloud cloud = Jenkins.get().getCloud(name);
         if (cloud instanceof DockerCloud) {
             return (DockerCloud) cloud;
         }
@@ -418,16 +441,17 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         }
 
         public List<Descriptor> getTemplatesDescriptors() {
-            return Arrays.asList(jenkins.model.Jenkins.getInstance().getDescriptor(DockerSlaveTemplate.class));
+            return Arrays.asList(jenkins.model.Jenkins.get().getDescriptor(DockerSlaveTemplate.class));
         }
 
+        @Nonnull
         @Override
         public String getDisplayName() {
             return "Yet Another Docker";
         }
     }
 
-    private static class MyLogContainerResultCallback extends LogContainerResultCallback {
+    private static class MyLogContainerResultCallback extends ResultCallback.Adapter<Frame> {
         private ArrayList<String> logLines = new ArrayList<>();
 
         @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING")

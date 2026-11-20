@@ -13,7 +13,7 @@ import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.plugins.cloudstats.CloudStatistics;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;
@@ -50,10 +50,13 @@ public class DockerSlaveSingle extends AbstractCloudSlave implements TrackedItem
                              @Nonnull YADockerConnector connector,
                              @Nonnull ProvisioningActivity.Id activityId)
             throws IOException, Descriptor.FormException {
-        super(name, nodeDescription,
-                config.getRemoteFs(), config.getNumExecutors(), config.getMode(),
-                "",
-                config.getLauncher(), config.getRetentionStrategy(), config.getNodeProperties());
+        super(name, config.getRemoteFs(), config.getLauncher());
+        setNodeDescription(nodeDescription);
+        setNumExecutors(config.getNumExecutors());
+        setMode(config.getMode());
+        setLabelString("");
+        setRetentionStrategy(config.getRetentionStrategy());
+        setNodeProperties(config.getNodeProperties());
         this.connector = connector;
         this.activityId = activityId;
         this.config = config;
@@ -101,7 +104,7 @@ public class DockerSlaveSingle extends AbstractCloudSlave implements TrackedItem
             _terminate(getListener());
         } finally {
             try {
-                Jenkins.getInstance().removeNode(this);
+                Jenkins.get().removeNode(this);
             } catch (IOException e) {
                 LOG.warn("Failed to remove {}", name, e);
                 getListener().error("Failed to remove " + name);
@@ -156,9 +159,15 @@ public class DockerSlaveSingle extends AbstractCloudSlave implements TrackedItem
                 LOG.info("Removed container {}", getContainerId());
                 listener.getLogger().println("Removed container " + getContainerId());
             } catch (Exception ex) {
-                LOG.error("Failed to remove instance '{}' for slave '{}' due to exception: {}",
-                        getContainerId(), name, ex.getMessage());
-                listener.error("failed to remove " + getContainerId());
+                String inProgress = "removal of container " + getContainerId() + " is already in progress";
+                if (ex.getMessage().contains(inProgress)) {
+                    LOG.debug("Removing", ex);
+                    listener.getLogger().println(inProgress);
+                } else {
+                    LOG.error("Failed to remove instance '{}' for slave '{}' due to exception: {}",
+                            getContainerId(), name, ex.getMessage());
+                    listener.error("failed to remove " + getContainerId());
+                }
             }
         } else {
             LOG.error("ContainerId is absent, no way to remove/stop container");

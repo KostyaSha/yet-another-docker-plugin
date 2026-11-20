@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * @author Kanstantsin Shautsou
  */
-public class BindUtils {
+public final class BindUtils {
     private BindUtils() {
     }
 

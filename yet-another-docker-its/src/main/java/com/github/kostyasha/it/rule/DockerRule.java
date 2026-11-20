@@ -5,6 +5,7 @@ import com.github.kostyasha.it.other.JenkinsDockerImage;
 import com.github.kostyasha.it.other.WaitMessageResultCallback;
 import com.github.kostyasha.it.utils.DockerHPIContainerUtil;
 import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
+import com.github.kostyasha.yad.other.ConnectorType;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.DockerCmdExecFactory;
@@ -14,6 +15,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Container;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.ExposedPort;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.HostConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Image;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PortBinding;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Ports;
@@ -25,6 +27,8 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParse
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.okhttp.OkHttpDockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.google.common.collect.Iterables;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.codec.digest.DigestUtils;
 import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
@@ -33,7 +37,6 @@ import hudson.cli.CLIConnectionFactory;
 import hudson.cli.DockerCLI;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.settings.building.SettingsBuildingException;
-import org.hamcrest.MatcherAssert;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.Description;
@@ -53,7 +56,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import static com.github.kostyasha.it.other.JenkinsDockerImage.JENKINS_DEFAULT;
 import static com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DefaultDockerClientConfig.createDefaultConfigBuilder;
@@ -101,8 +103,10 @@ public class DockerRule extends ExternalResource {
     public Description description;
     public DefaultDockerClientConfig clientConfig;
     private DockerCmdExecFactory dockerCmdExecFactory;
+    private ConnectorType connectorType;
 
-    public DockerRule() {
+    public DockerRule(boolean b, ConnectorType connectorType) {
+        this.connectorType = connectorType;
     }
 
     public DockerRule(boolean cleanup) {
@@ -115,6 +119,11 @@ public class DockerRule extends ExternalResource {
 //                .append(host).append(":").append(dockerPort)
 //                .toString();
 //    }
+
+
+    public void setConnectorType(ConnectorType connectorType) {
+        this.connectorType = connectorType;
+    }
 
     public String getHost() {
         return clientConfig.getDockerHost().getHost();
@@ -132,9 +141,9 @@ public class DockerRule extends ExternalResource {
 
     @Override
     protected void before() throws Throwable {
-        prepareDockerCli();
+//        prepareDockerCli();
         //check dockerClient
-        getDockerCli().infoCmd().exec();
+
         // ensure we have right ssh creds
 //        checkSsh();
     }
@@ -152,8 +161,8 @@ public class DockerRule extends ExternalResource {
 
         boolean hasImage = Iterables.any(
                 images, image ->
-                    nonNull(image.getRepoTags()) &&
-                    Arrays.asList(image.getRepoTags()).contains(fullImageName)
+                        nonNull(image.getRepoTags()) &&
+                                Arrays.asList(image.getRepoTags()).contains(fullImageName)
 
         );
 
@@ -177,17 +186,29 @@ public class DockerRule extends ExternalResource {
      * Prepare cached DockerClient `dockerClient`.
      * Pick system/file connection settings.
      */
-    private void prepareDockerCli() {
+    public void prepareDockerCli() {
         clientConfig = createDefaultConfigBuilder()
                 .build();
 
-        dockerCmdExecFactory = new JerseyDockerCmdExecFactory()
-                .withConnectTimeout(10 * 1000)
-                .withReadTimeout(100 * 1000);
+        if (nonNull(connectorType)) {
+            if (connectorType == ConnectorType.OKHTTP) {
+                dockerCmdExecFactory = new OkHttpDockerCmdExecFactory();
+            } else if (connectorType == ConnectorType.NETTY) {
+                dockerCmdExecFactory = new NettyDockerCmdExecFactory()
+                        .withConnectTimeout(10 * 1000)
+                        .withReadTimeout(100 * 1000);
+            }
+        } else {
+            dockerCmdExecFactory = new JerseyDockerCmdExecFactory()
+                    .withConnectTimeout(10 * 1000)
+                    .withReadTimeout(100 * 1000);
+        }
 
         dockerClient = DockerClientBuilder.getInstance(clientConfig)
                 .withDockerCmdExecFactory(dockerCmdExecFactory)
                 .build();
+
+        dockerClient.infoCmd().exec();
     }
 
 //    private void checkSsh() {
@@ -473,11 +494,12 @@ public class DockerRule extends ExternalResource {
                 .withEnv(CONTAINER_JAVA_OPTS)
                 .withExposedPorts(new ExposedPort(JENKINS_DEFAULT.tcpPort))
                 .withPortSpecs(String.format("%d/tcp", JENKINS_DEFAULT.tcpPort))
-                .withPortBindings(PortBinding.parse("0.0.0.0:48000:48000"))
-//                .withPortBindings(PortBinding.parse("0.0.0.0:48000:48000"), PortBinding.parse("0.0.0.0:50000:50000"))
-                .withVolumesFrom(new VolumesFrom(dataContainerId))
+                .withHostConfig(HostConfig.newHostConfig()
+                        .withPortBindings(PortBinding.parse("0.0.0.0:48000:48000"))
+                        .withVolumesFrom(new VolumesFrom(dataContainerId))
+                        .withPublishAllPorts(true))
                 .withLabels(labels)
-                .withPublishAllPorts(true)
+//                .withPortBindings(PortBinding.parse("0.0.0.0:48000:48000"), PortBinding.parse("0.0.0.0:50000:50000"))
                 .exec()
                 .getId();
         provisioned.add(id);

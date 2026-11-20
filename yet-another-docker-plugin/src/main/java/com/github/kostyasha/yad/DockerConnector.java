@@ -12,25 +12,28 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Vers
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.RemoteApiVersion;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Preconditions;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import com.github.kostyasha.yad_docker_java.org.glassfish.jersey.client.ClientProperties;
-import com.google.common.base.Throwables;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.ItemGroup;
 import hudson.security.ACL;
+import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import jenkins.model.Jenkins;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
@@ -41,8 +44,8 @@ import static com.github.kostyasha.yad.other.ConnectorType.NETTY;
 import static com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.RemoteApiVersion.parseConfig;
 import static hudson.util.FormValidation.ok;
 import static hudson.util.FormValidation.warning;
-import static org.apache.commons.lang.builder.ToStringBuilder.reflectionToString;
-import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
+import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
+import static org.apache.commons.lang3.builder.ToStringStyle.MULTI_LINE_STYLE;
 
 /**
  * Settings for connecting to docker via docker-java configured connection.
@@ -65,13 +68,13 @@ public class DockerConnector extends YADockerConnector {
     private String credentialsId = null;
 
     @CheckForNull
-    private ConnectorType connectorType = NETTY;
+    private ConnectorType connectorType = ConnectorType.HTTPCLIENT5;
 
     @CheckForNull
-    private Integer connectTimeout;
+    private Integer connectTimeout; //ms
 
     @CheckForNull
-    private Integer readTimeout;
+    private Integer readTimeout; //ms
 
     @CheckForNull
     private transient DockerClient client = null;
@@ -112,9 +115,10 @@ public class DockerConnector extends YADockerConnector {
     /**
      * @see #connectorType
      */
-    @CheckForNull
+    @Nonnull
     public ConnectorType getConnectorType() {
-        return connectorType;
+        // XStream leaves this field null when loading a configuration saved without a transport.
+        return connectorType != null ? connectorType : NETTY;
     }
 
     @DataBoundSetter
@@ -158,7 +162,7 @@ public class DockerConnector extends YADockerConnector {
                         .withDockerConnector(this)
                         .build();
             } catch (GeneralSecurityException e) {
-                Throwables.propagate(e);
+                throw new RuntimeException(e);
             }
         }
 
@@ -218,17 +222,21 @@ public class DockerConnector extends YADockerConnector {
     @Extension(ordinal = 100)
     public static class DescriptorImpl extends YADockerConnectorDescriptor {
 
+        @RequirePOST
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-            List<StandardCredentials> credentials =
-                    CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM,
-                            Collections.emptyList());
+            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get());
+            if (!ac.hasPermission(Jenkins.ADMINISTER)) {
+                return new ListBoxModel();
+            }
 
             return new CredentialsListBoxModel()
-                    .withEmptySelection()
-                    .withMatching(CredentialsMatchers.always(), credentials);
+                    .includeEmptyValue()
+                    .includeMatchingAs(ACL.SYSTEM2, context, StandardCredentials.class,
+                            Collections.emptyList(), CredentialsMatchers.always());
         }
 
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "docker-java uses runtime exceptions")
+        @RequirePOST
         public FormValidation doTestConnection(
                 @QueryParameter String serverUrl,
                 @QueryParameter String apiVersion,

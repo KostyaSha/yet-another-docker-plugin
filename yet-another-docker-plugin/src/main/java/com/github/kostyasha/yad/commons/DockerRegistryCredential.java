@@ -9,7 +9,8 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.github.kostyasha.yad.credentials.DockerRegistryAuthCredentials;
 import com.github.kostyasha.yad.utils.CredentialsListBoxModel;
 import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
+import jenkins.model.Jenkins;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.security.ACL;
@@ -26,7 +27,7 @@ import java.util.List;
  *
  * @author Kanstantsin Shautsou
  */
-public class DockerRegistryCredential extends AbstractDescribableImpl<DockerRegistryCredential> {
+public class DockerRegistryCredential implements Describable<DockerRegistryCredential> {
 
     private final String registryAddr;
     private final String credentialsId;
@@ -45,17 +46,20 @@ public class DockerRegistryCredential extends AbstractDescribableImpl<DockerRegi
         return credentialsId;
     }
 
+
+    @Override
+    public Descriptor<DockerRegistryCredential> getDescriptor() {
+        return Jenkins.get().getDescriptorOrDie(getClass());
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerRegistryCredential> {
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-            List<DockerRegistryAuthCredentials> credentials =
-                    CredentialsProvider.lookupCredentials(DockerRegistryAuthCredentials.class, context, ACL.SYSTEM,
-                            Collections.emptyList());
-
             return new CredentialsListBoxModel()
                     .includeEmptyValue()
-                    .withMatching(CredentialsMatchers.always(), credentials);
+                    .includeMatchingAs(ACL.SYSTEM2, context, DockerRegistryAuthCredentials.class,
+                            Collections.emptyList(), CredentialsMatchers.always());
         }
 
         @Nonnull

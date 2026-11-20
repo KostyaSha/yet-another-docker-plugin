@@ -50,7 +50,7 @@ public class HostAndPortChecker {
      * @return true if socket opened successfully, false otherwise
      */
     public boolean openSocket() {
-        try (Socket ignored = new Socket(hostAndPort.getHostText(), hostAndPort.getPort())) {
+        try (Socket ignored = new Socket(hostAndPort.getHost(), hostAndPort.getPort())) {
             return true;
         } catch (IOException e) {
             return false;
@@ -84,14 +84,14 @@ public class HostAndPortChecker {
         checkState(withEveryRetryWaitFor(time, units), "Port %s is not opened to connect to", hostAndPort.getPort());
 
         for (int i = 1; i <= retries; i++) {
-            Connection connection = new Connection(hostAndPort.getHostText(), hostAndPort.getPort());
+            Connection connection = new Connection(hostAndPort.getHost(), hostAndPort.getPort());
             try {
                 connection.connect(null, 0, sshTimeoutMillis, sshTimeoutMillis);
-                LOG.info("SSH port is open on {}:{}", hostAndPort.getHostText(), hostAndPort.getPort());
+                LOG.info("SSH port is open on {}:{}", hostAndPort.getHost(), hostAndPort.getPort());
                 return;
             } catch (IOException e) {
                 LOG.error("Failed to connect to {}:{} (try {}/{}) - {}",
-                        hostAndPort.getHostText(), hostAndPort.getPort(), i, retries, e.getMessage());
+                        hostAndPort.getHost(), hostAndPort.getPort(), i, retries, e.getMessage());
                 if (i == retries) {
                     throw e;
                 }

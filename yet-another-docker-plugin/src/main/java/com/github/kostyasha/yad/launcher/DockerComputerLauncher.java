@@ -8,10 +8,12 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.In
 import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.BooleanUtils.isFalse;
+import static org.apache.commons.lang3.BooleanUtils.isFalse;
 
 
 /**
@@ -22,6 +24,7 @@ import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.Boole
  */
 @Beta
 public abstract class DockerComputerLauncher extends DelegatingComputerLauncher {
+    private static final Logger LOG = LoggerFactory.getLogger(DockerComputerLauncher.class);
 
     protected DockerComputerLauncher(ComputerLauncher launcher) {
         super(launcher);
@@ -49,11 +52,14 @@ public abstract class DockerComputerLauncher extends DelegatingComputerLauncher 
 
     /**
      * Wait until slave is up and ready for connection.
+     *
+     * @return false - slave is not ready.
      */
     public boolean waitUp(String cloudId, DockerSlaveTemplate dockerSlaveTemplate,
                           InspectContainerResponse containerInspect) {
         if (isFalse(containerInspect.getState().getRunning())) {
-            throw new IllegalStateException("Container '" + containerInspect.getId() + "' is not running!");
+            LOG.error("Container {} is not running!", containerInspect.getId());
+            return false;
         }
 
         return true;

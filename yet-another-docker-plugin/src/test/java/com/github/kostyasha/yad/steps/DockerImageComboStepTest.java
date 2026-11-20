@@ -12,6 +12,7 @@ import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.sshslaves.SSHLauncher;
+import hudson.plugins.sshslaves.verifiers.NonVerifyingKeyVerificationStrategy;
 import hudson.remoting.Callable;
 import hudson.slaves.DumbSlave;
 import org.apache.commons.io.FileUtils;
@@ -26,7 +27,7 @@ import java.io.File;
 import java.util.Collections;
 
 import static com.github.kostyasha.yad.other.ConnectorType.JERSEY;
-import static com.jayway.awaitility.Awaitility.await;
+import static org.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -82,11 +83,12 @@ public class DockerImageComboStepTest {
                 "", //      String suffixStartSlaveCmd,
                 20, //      Integer launchTimeoutSeconds,
                 1, //      Integer maxNumRetries,
-                3//      Integer retryWaitTime
+                3,//      Integer retryWaitTime
+                new NonVerifyingKeyVerificationStrategy()
         );
         final DumbSlave dumbSlave = new DumbSlave("docker-daemon", "/home/vagrant/jenkins2", sshLauncher);
         jRule.getInstance().addNode(dumbSlave);
-        await().timeout(60, SECONDS).until(() -> assertThat(dumbSlave.getChannel(), notNullValue()));
+        await().atMost(60, SECONDS).untilAsserted(() -> assertThat(dumbSlave.getChannel(), notNullValue()));
         String dockerfilePath = dumbSlave.getChannel().call(new StringThrowableCallable());
 
 
@@ -104,6 +106,7 @@ public class DockerImageComboStepTest {
 
         DockerImageComboStep comboStep = new DockerImageComboStep(dockerConnector, buildImage);
         comboStep.setClean(true);
+        comboStep.setCleanupDangling(true);
         comboStep.setPush(true);
 
         FreeStyleProject project = jRule.createFreeStyleProject("test");
@@ -130,7 +133,7 @@ public class DockerImageComboStepTest {
             File tempFolder = new File("/home/vagrant/jenkins2/docker");
             File dockerfile = new File(tempFolder, "Dockerfile");
             String dockerfileContent = "FROM busybox\nRUN echo hello";
-            FileUtils.writeStringToFile(dockerfile, dockerfileContent);
+            FileUtils.writeStringToFile(dockerfile, dockerfileContent, java.nio.charset.StandardCharsets.UTF_8);
             return tempFolder.getAbsolutePath();
         }
     }

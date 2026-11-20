@@ -18,11 +18,11 @@ import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.plugins.cloudstats.CloudStatistics;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,16 +66,13 @@ public class DockerSlave extends AbstractCloudSlave implements TrackedItem {
     public DockerSlave(String slaveName, String nodeDescription, ComputerLauncher launcher, String containerId,
                        DockerSlaveTemplate dockerSlaveTemplate, String cloudId, ProvisioningActivity.Id provisioningId)
             throws IOException, Descriptor.FormException {
-        super(slaveName,
-                nodeDescription, //description
-                dockerSlaveTemplate.getRemoteFs(),
-                dockerSlaveTemplate.getNumExecutors(),
-                dockerSlaveTemplate.getMode(),
-                dockerSlaveTemplate.getLabelString(),
-                launcher,
-                dockerSlaveTemplate.getRetentionStrategyCopy(),
-                dockerSlaveTemplate.getNodeProperties()
-        );
+        super(slaveName, dockerSlaveTemplate.getRemoteFs(), launcher);
+        setNodeDescription(nodeDescription);
+        setNumExecutors(dockerSlaveTemplate.getNumExecutors());
+        setMode(dockerSlaveTemplate.getMode());
+        setLabelString(dockerSlaveTemplate.getLabelString());
+        setRetentionStrategy(dockerSlaveTemplate.getRetentionStrategyCopy());
+        setNodeProperties(dockerSlaveTemplate.getNodeProperties());
         this.displayName = slaveName; // initial value
         this.containerId = containerId;
         this.cloudId = cloudId;
@@ -101,7 +98,7 @@ public class DockerSlave extends AbstractCloudSlave implements TrackedItem {
 
     @Nonnull
     public DockerCloud getCloud() {
-        final Cloud cloud = Jenkins.getInstance().getCloud(getCloudId());
+        final Cloud cloud = Jenkins.get().getCloud(getCloudId());
 
         if (cloud == null) {
             throw new RuntimeException("Docker template " + dockerSlaveTemplate + " has no assigned Cloud.");
@@ -144,7 +141,7 @@ public class DockerSlave extends AbstractCloudSlave implements TrackedItem {
     }
 
     @Override
-    public Node reconfigure(StaplerRequest req, JSONObject form) throws Descriptor.FormException {
+    public Node reconfigure(StaplerRequest2 req, JSONObject form) throws Descriptor.FormException {
         return null;
     }
 
@@ -187,8 +184,14 @@ public class DockerSlave extends AbstractCloudSlave implements TrackedItem {
                 dockerContainerLifecycle.getRemoveContainer().exec(getClient(), containerId);
                 LOG.info("Removed container {}", getContainerId());
             } catch (Exception ex) {
-                LOG.error("Failed to remove instance '{}' for slave '{}' due to exception: {}",
-                        getContainerId(), name, ex.getMessage());
+                String inProgress = "removal of container " + getContainerId() + " is already in progress";
+                if (ex.getMessage().contains(inProgress)) {
+                    LOG.debug("Removing", ex);
+                    listener.getLogger().println(inProgress);
+                } else {
+                    LOG.error("Failed to remove instance '{}' for slave '{}' due to exception: {}",
+                            getContainerId(), name, ex.getMessage());
+                }
             }
         } else {
             LOG.error("ContainerId is absent, no way to remove/stop container");

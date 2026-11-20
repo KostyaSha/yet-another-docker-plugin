@@ -40,6 +40,6 @@ f.entry(title: _("Ignore certificate check"), field: "noCertificateCheck", defau
     f.checkbox()
 }
 
-f.entry(title: _("Reconnect"), field: "reconnect", default: false) {
+f.entry(title: _("Disable reconnect"), field: "noReconnect", default: true) {
     f.checkbox()
 }

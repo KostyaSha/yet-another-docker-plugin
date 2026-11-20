@@ -16,7 +16,7 @@ import java.security.UnrecoverableKeyException;
 
 import static com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.util.CertificateUtils.createKeyStore;
 import static com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.util.CertificateUtils.createTrustStore;
-import static org.apache.commons.lang.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  * @author Kanstantsin Shautsou

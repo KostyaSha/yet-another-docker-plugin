@@ -11,9 +11,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.Ex
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.StreamType;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.command.AttachContainerResultCallback;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
-import com.google.common.base.Throwables;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.async.ResultCallback;
 import hudson.Extension;
 import hudson.model.Slave;
 import hudson.model.TaskListener;
@@ -24,6 +22,7 @@ import hudson.slaves.SlaveComputer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -38,9 +37,9 @@ import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.Objects;
 
-import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils.trimToEmpty;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 public class DockerComputerIOLauncher extends DockerComputerLauncher {
     protected String javaPath = "";
@@ -81,7 +80,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
              TarArchiveOutputStream tarOut = new TarArchiveOutputStream(byteArrayOutputStream)) {
 
             // @see hudson.model.Slave.JnlpJar.getURL()
-//            byte[] slavejar = IOUtils.toByteArray(Jenkins.getInstance().servletContext.getResourceAsStream("/WEB-INF/slave.jar"));
+//            byte[] slavejar = IOUtils.toByteArray(Jenkins.get().servletContext.getResourceAsStream("/WEB-INF/slave.jar"));
 //            if (isNull(null)) {
 //                // during the development this path doesn't have the files.
 //                slavejar = Files.readAllBytes(Paths.get("./target/jenkins/WEB-INF/slave.jar"));
@@ -173,13 +172,13 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
                 try {
                     callback.close();
                 } catch (IOException e) {
-                    Throwables.propagate(e);
+                    throw new RuntimeException(e);
                 }
             }
         });
     }
 
-    private static final class IOCallback extends AttachContainerResultCallback {
+    private static final class IOCallback extends ResultCallback.Adapter<Frame> {
         private TaskListener listener;
         private OutputStream outputStream;
 
@@ -204,7 +203,7 @@ public class DockerComputerIOLauncher extends DockerComputerLauncher {
                     outputStream.flush();
                 } catch (IOException e) {
                     listener.error("Can't write container stdout to channel");
-                    Throwables.propagate(e);
+                    throw new RuntimeException(e);
                 }
             }
             super.onNext(item);

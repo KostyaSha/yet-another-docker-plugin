@@ -34,7 +34,7 @@ public class DockerRegistryAuthCredentials extends UsernamePasswordCredentialsIm
                                          @CheckForNull String description,
                                          @CheckForNull String username,
                                          @CheckForNull String password,
-                                         @CheckForNull String email) {
+                                         @CheckForNull String email) throws hudson.model.Descriptor.FormException {
         super(scope, id, description, username, password);
         this.email = Util.fixNull(email);
     }

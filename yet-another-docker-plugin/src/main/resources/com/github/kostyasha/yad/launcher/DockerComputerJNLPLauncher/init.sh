@@ -90,7 +90,7 @@ fi
 
 RUN_CMD="$RUN_CMD -jar slave.jar"
 
-if [ "$NO_RECONNECT_SLAVE" == "true" ]; then
+if [ "$NO_RECONNECT_SLAVE" = "true" ]; then
     RUN_CMD="$RUN_CMD -noReconnect"
 fi
 
@@ -113,4 +113,4 @@ if [ "$(id -nu)" != "$JENKINS_USER" ]; then
     fi
 fi
 
-eval "$RUN_CMD"
+eval "exec $RUN_CMD"

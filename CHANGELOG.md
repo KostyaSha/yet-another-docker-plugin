@@ -1,4 +1,40 @@
-##
+
+## 0.1.5
+- fix credentials binding
+
+## 0.1.4
+- Migrate data to plugin class. Attempt to move from ssh-slaves-plugin
+
+## 0.1.3
+- attempt to fix ssh-slaves-plugin broken compatibility
+
+## 0.1.2
+- Docker build logs new lines
+- Make sure that the config.ps1 is not locked before accessing it from the init.ps1 script.
+- Cleanup when wait failed
+
+## 0.1.1
+- return from method
+
+## 0.1.0
+- Strip new lines.
+- Print error message.
+
+## 0.1.0-rc53
+failed release
+
+## 0.1.0-rc51
+- Explicitly set the SecurityProtocol when getting slave.jar
+- fresh docker-java
+- more logging
+
+## 0.1.0-rc50
+- (internal) Timeout per command. Cleanup dangling images. 
+
+## 0.1.0-rc49
+- Avoid touching entrypoint on DockerComputerIOLauncher
+- Fix wrong handling of java and slave options in powershell script
+- fresh versions.
 
 ## 0.1.0-rc48
 - Allow add additional labels to created containers.

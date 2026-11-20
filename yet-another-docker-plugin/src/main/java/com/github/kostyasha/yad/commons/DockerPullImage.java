@@ -4,7 +4,8 @@ import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.github.kostyasha.yad.NoStapler;
+import com.github.kostyasha.yad.connector.YADockerConnector;
 import com.github.kostyasha.yad.credentials.DockerRegistryAuthCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.PullImageCmd;
@@ -12,16 +13,18 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Image;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
+import jenkins.model.Jenkins;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -40,13 +43,15 @@ import static com.github.kostyasha.yad.client.ClientBuilderForConnector.lookupSy
 import static java.util.Collections.emptyList;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 /**
  * Contains docker pull image related settings:
  *
  * @author Kanstantsin Shautsou
  */
-public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
+@DockerCmd
+public class DockerPullImage implements Describable<DockerPullImage> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerPullImage.class);
 
     @CheckForNull
@@ -58,6 +63,9 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
 
     @CheckForNull
     private List<DockerRegistryCredential> registriesCreds;
+
+    @NoStapler
+    private YADockerConnector connector;
 
     @DataBoundConstructor
     public DockerPullImage() {
@@ -94,10 +102,34 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
         this.registriesCreds = registriesCreds;
     }
 
+    public YADockerConnector getConnector() {
+        return connector;
+    }
+
+    @DataBoundSetter
+    public void setConnector(YADockerConnector connector) {
+        this.connector = connector;
+    }
+
+    public void exec(@Nonnull final DockerClient client, @Nonnull final String imageName, TaskListener listener)
+            throws Exception {
+        if (nonNull(connector)) {
+            try (DockerClient altClient = connector.getClient()) {
+                if (nonNull(altClient)) {
+                    LOG.debug("Using alternative client {} for {}", client, imageName);
+                    execInternal(altClient, imageName, listener);
+                    return;
+                }
+            }
+        }
+
+        execInternal(client, imageName, listener);
+    }
+
     /**
      * Action around image with defined configuration
      */
-    public void exec(@Nonnull final DockerClient client, @Nonnull final String imageName, TaskListener listener)
+    public void execInternal(@Nonnull final DockerClient client, @Nonnull final String imageName, TaskListener listener)
             throws IOException {
         PrintStream llog = listener.getLogger();
 
@@ -131,8 +163,8 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
 
             try {
                 pullImageCmd
-                        .exec(new DockerPullImageListenerLogger(listener))
-                        .awaitSuccess();
+                            .exec(new DockerPullImageListenerLogger(listener))
+                        .awaitCompletion();
             } catch (DockerClientException exception) {
                 String exMsg = exception.getMessage();
                 if (exMsg.contains("Could not pull image: Digest:") ||
@@ -145,6 +177,9 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
                 } else {
                     throw exception;
                 }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted while pulling image '" + imageName + "'", e);
             }
 
             long pullTime = System.currentTimeMillis() - startTime;
@@ -184,6 +219,11 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
     }
 
     @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this, SHORT_PREFIX_STYLE);
+    }
+
+    @Override
     public boolean equals(Object o) {
         return EqualsBuilder.reflectionEquals(this, o);
     }
@@ -191,6 +231,12 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
     @Override
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
+    }
+
+
+    @Override
+    public Descriptor<DockerPullImage> getDescriptor() {
+        return Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     @Extension
@@ -202,12 +248,10 @@ public class DockerPullImage extends AbstractDescribableImpl<DockerPullImage> {
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-            List<DockerRegistryAuthCredentials> credentials =
-                    CredentialsProvider.lookupCredentials(DockerRegistryAuthCredentials.class, context, ACL.SYSTEM,
-                            Collections.<DomainRequirement>emptyList());
-
-            return new StandardListBoxModel().withEmptySelection()
-                    .withMatching(CredentialsMatchers.instanceOf(DockerRegistryAuthCredentials.class), credentials);
+            return new StandardListBoxModel().includeEmptyValue()
+                    .includeMatchingAs(ACL.SYSTEM2, context, DockerRegistryAuthCredentials.class,
+                            Collections.emptyList(),
+                            CredentialsMatchers.instanceOf(DockerRegistryAuthCredentials.class));
         }
     }
 }

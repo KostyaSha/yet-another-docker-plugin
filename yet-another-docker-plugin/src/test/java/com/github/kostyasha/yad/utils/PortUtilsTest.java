@@ -2,7 +2,6 @@ package com.github.kostyasha.yad.utils;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.ExternalResource;
 
 import java.io.IOException;
@@ -20,20 +19,19 @@ import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThan;
+import static org.junit.Assert.assertThrows;
 
 /**
  * @author lanwen (Merkushev Kirill)
  */
-public class PortUtilsTest {
+public class    PortUtilsTest {
 
     public static final int RETRY_COUNT = 2;
-    public static final int DELAY = (int) SECONDS.toMillis(1);
+    public static final int DELAY = (int) SECONDS.toMillis(6);
+    public static final int RETRY_DELAY = (int) SECONDS.toMillis(1);
 
     @Rule
     public SomeServerRule server = new SomeServerRule();
-
-    @Rule
-    public ExpectedException ex = ExpectedException.none();
 
     @Test
     public void shouldConnectToServerSuccessfully() throws Exception {
@@ -57,29 +55,25 @@ public class PortUtilsTest {
 
     @Test
     public void shouldThrowIllegalStateExOnNotAvailPort() throws Exception {
-        ex.expect(IllegalStateException.class);
-        create("localhost", 0).withRetries(RETRY_COUNT).bySshWithEveryRetryWaitFor(DELAY, MILLISECONDS);
+        assertThrows(IllegalStateException.class, () ->
+                create("localhost", 0).withRetries(RETRY_COUNT).bySshWithEveryRetryWaitFor(DELAY, MILLISECONDS));
     }
 
     @Test
     public void shouldWaitIfPortAvailableButNotSshUntilTimeoutAndThrowEx() throws Exception {
-        ex.expect(IOException.class);
         long before = currentTimeMillis();
-        try {
-            create(server.host(), server.port()).withRetries(RETRY_COUNT)
-                    .bySshWithEveryRetryWaitFor(DELAY, MILLISECONDS);
-        } catch (IOException e) {
-            assertThat("Should wait for timeout", new Date(currentTimeMillis()),
-                    greaterThanOrEqualTo(new Date(before + RETRY_COUNT * DELAY)));
-            throw e;
-        }
+        assertThrows(IOException.class, () ->
+                create(server.host(), server.port()).withRetries(RETRY_COUNT)
+                        .bySshWithEveryRetryWaitFor(RETRY_DELAY, MILLISECONDS));
+        assertThat("Should wait for timeout", new Date(currentTimeMillis()),
+                greaterThanOrEqualTo(new Date(before + RETRY_COUNT * RETRY_DELAY)));
     }
 
     @Test
     public void shouldReturnWithoutWaitIfPortAvailable() throws Exception {
         long before = currentTimeMillis();
         assertThat("Used port should be connectible",
-                create(server.host(), server.port()).withEveryRetryWaitFor(DELAY, MILLISECONDS), is(true));
+                create(server.host(), server.port()).withEveryRetryWaitFor(RETRY_DELAY, MILLISECONDS), is(true));
         assertThat("Should not wait", new Date(currentTimeMillis()), lessThan(new Date(before + DELAY)));
     }
 

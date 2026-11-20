@@ -2,7 +2,9 @@ package com.github.kostyasha.yad.commons;
 
 import com.github.kostyasha.yad.commons.cmds.DockerBuildImage;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfigurations;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
+import jenkins.model.Jenkins;
+import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +16,7 @@ import java.util.List;
 /**
  * @author Kanstantsin Shautsou
  */
-public class DockerAuthConfigs extends AbstractDescribableImpl<DockerAuthConfigs> {
+public class DockerAuthConfigs implements Describable<DockerAuthConfigs> {
     private static final Logger LOG = LoggerFactory.getLogger(DockerBuildImage.class);
 
     private List<DockerAuthConfig> dockerAuthConfigs;
@@ -44,4 +46,10 @@ public class DockerAuthConfigs extends AbstractDescribableImpl<DockerAuthConfigs
         }
         return authConfigurations;
     }
+
+    @Override
+    public Descriptor<DockerAuthConfigs> getDescriptor() {
+        return Jenkins.get().getDescriptorOrDie(getClass());
+    }
+
 }
