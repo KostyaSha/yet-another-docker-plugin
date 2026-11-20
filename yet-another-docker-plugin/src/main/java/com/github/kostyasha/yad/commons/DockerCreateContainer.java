@@ -468,17 +468,23 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
         this.networkMode = trimToNull(networkMode);
     }
 
-    // devices
     @Nonnull
-    public String getAdditionalNetworksString() {
-        return joinToStr(additionalNetworks);
+    public String getNetworksString() {
+        String primary = StringUtils.defaultString(getNetworkMode());
+        if (CollectionUtils.isEmpty(additionalNetworks)) {
+            return primary;
+        }
+        return primary + "\n" + joinToStr(additionalNetworks);
     }
 
     @DataBoundSetter
-    public void setAdditionalNetworksString(String networks) {
+    public void setNetworksString(String networks) {
         var names = Splitter.onPattern("[,\\r\\n]").trimResults().omitEmptyStrings()
                 .splitToList(StringUtils.defaultString(networks));
-        additionalNetworks = names.isEmpty() ? null : new ArrayList<>(new LinkedHashSet<>(names));
+        networkMode = names.isEmpty() ? null : names.get(0);
+        var additional = new LinkedHashSet<>(names);
+        additional.remove(networkMode);
+        additionalNetworks = additional.isEmpty() ? null : new ArrayList<>(additional);
     }
 
     public void connectAdditionalNetworks(DockerClient client, String containerId) {
@@ -493,6 +499,7 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
         }
     }
 
+    // devices
     @Nonnull
     public List<String> getDevices() {
         return isNull(devices) ? Collections.EMPTY_LIST : devices;

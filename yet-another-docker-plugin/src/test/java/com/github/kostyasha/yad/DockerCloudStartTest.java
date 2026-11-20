@@ -37,6 +37,7 @@ public class DockerCloudStartTest {
     private static final String CONTAINER_ID = "agent-container";
     private static final String IMAGE = "jenkins-agent:latest";
 
+    private final HostConfig hostConfig = HostConfig.newHostConfig();
     private final DockerConnector connector = mock(DockerConnector.class);
     private final DockerClient client = mock(DockerClient.class);
     private final DockerSlaveTemplate template = mock(DockerSlaveTemplate.class);
@@ -56,7 +57,7 @@ public class DockerCloudStartTest {
         CreateContainerResponse response = mock(CreateContainerResponse.class);
         when(response.getId()).thenReturn(CONTAINER_ID);
         CreateContainerCmd create = mock(CreateContainerCmd.class);
-        when(create.getHostConfig()).thenReturn(HostConfig.newHostConfig());
+        when(create.getHostConfig()).thenReturn(hostConfig);
         when(create.exec()).thenReturn(response);
         when(connector.getClient()).thenReturn(client);
         when(client.createContainerCmd(IMAGE)).thenReturn(create);
@@ -77,13 +78,13 @@ public class DockerCloudStartTest {
 
     @Test
     public void connectsAdditionalNetworksBeforeStartingContainer() throws Exception {
-        lifecycle.getCreateContainer().setNetworkMode("bridge");
-        lifecycle.getCreateContainer().setAdditionalNetworksString(" special_net, bridge ,\r\n backend\nspecial_net");
+        lifecycle.getCreateContainer().setNetworksString(" bridge, special_net ,\r\n backend\nspecial_net\nbridge");
         ConnectToNetworkCmd connect = mock(ConnectToNetworkCmd.class, RETURNS_SELF);
         when(client.connectToNetworkCmd()).thenReturn(connect);
 
         assertEquals(CONTAINER_ID, cloud.runContainer(template));
 
+        assertEquals("bridge", hostConfig.getNetworkMode());
         InOrder calls = inOrder(connect, start);
         calls.verify(connect).withContainerId(CONTAINER_ID);
         calls.verify(connect).withNetworkId("special_net");
@@ -97,8 +98,19 @@ public class DockerCloudStartTest {
     }
 
     @Test
+    public void usesLegacyNetworkModeAsTheOnlyNetwork() throws Exception {
+        lifecycle.getCreateContainer().setNetworkMode("legacy-net");
+
+        assertEquals(CONTAINER_ID, cloud.runContainer(template));
+
+        assertEquals("legacy-net", hostConfig.getNetworkMode());
+        assertEquals("legacy-net", lifecycle.getCreateContainer().getNetworksString());
+        verify(client, never()).connectToNetworkCmd();
+    }
+
+    @Test
     public void failedNetworkConnectionRemovesContainerBeforeStart() {
-        lifecycle.getCreateContainer().setAdditionalNetworksString("missing-network");
+        lifecycle.getCreateContainer().setNetworksString("bridge\nmissing-network");
         ConnectToNetworkCmd connect = mock(ConnectToNetworkCmd.class, RETURNS_SELF);
         when(client.connectToNetworkCmd()).thenReturn(connect);
         IllegalStateException failure = new IllegalStateException("network not found");

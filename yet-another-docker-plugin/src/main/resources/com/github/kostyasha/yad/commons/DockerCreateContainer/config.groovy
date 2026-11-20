@@ -86,11 +86,7 @@ f.advanced(title: _("Create Container settings"), align: "left") {
         f.textarea()
     }
 
-    f.entry(title: _("Network Mode"), field: "networkMode") {
-        f.textbox()
-    }
-
-    f.entry(title: _("Additional networks"), field: "additionalNetworksString") {
+    f.entry(title: _("Networks"), field: "networksString") {
         f.textarea()
     }
 
