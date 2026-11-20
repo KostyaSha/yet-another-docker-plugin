@@ -8,7 +8,6 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.Cr
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectImageResponse;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.DockerException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Container;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
@@ -45,6 +44,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.isNull;
 import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.get;
@@ -58,6 +58,8 @@ public class DockerCloud extends AbstractCloud implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private static final Logger LOG = LoggerFactory.getLogger(DockerCloud.class);
+
+    private static final int START_FAILURE_LOG_TIMEOUT_SECONDS = 5;
 
     private static final String DOCKER_CLOUD_LABEL = DockerCloud.class.getName();
     private static final String DOCKER_TEMPLATE_LABEL = DockerSlave.class.getName();
@@ -159,10 +161,11 @@ public class DockerCloud extends AbstractCloud implements Serializable {
      * @return container id
      */
     public String runContainer(DockerSlaveTemplate slaveTemplate) throws DockerException, IOException {
-        final DockerCreateContainer dockerCreateContainer = slaveTemplate.getDockerContainerLifecycle().getCreateContainer();
-        final String image = slaveTemplate.getDockerContainerLifecycle().getImage();
+        DockerContainerLifecycle lifecycle = slaveTemplate.getDockerContainerLifecycle();
+        DockerCreateContainer dockerCreateContainer = lifecycle.getCreateContainer();
+        DockerClient client = getClient();
 
-        CreateContainerCmd containerConfig = getClient().createContainerCmd(image);
+        CreateContainerCmd containerConfig = client.createContainerCmd(lifecycle.getImage());
 
         // template specific options
         dockerCreateContainer.fillContainerConfig(containerConfig, null);
@@ -178,28 +181,50 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         String containerId = response.getId();
         LOG.debug("Created container {}, for {}", containerId, getDisplayName());
 
-        slaveTemplate.getLauncher().afterContainerCreate(getClient(), containerId);
-
-        // start
-        StartContainerCmd startCommand = getClient().startContainerCmd(containerId);
         try {
-            startCommand.exec();
+            slaveTemplate.getLauncher().afterContainerCreate(client, containerId);
+            client.startContainerCmd(containerId).exec();
             LOG.debug("Running container {}, for {}", containerId, getDisplayName());
-        } catch (Exception ex) {
-            try {
-                getClient().logContainerCmd(containerId)
-                        .withStdErr(true)
-                        .withStdOut(true)
-                        .exec(new MyLogContainerResultCallback())
-                        .awaitCompletion();
-            } catch (Throwable t) {
-                LOG.warn("Can't get logs for container start", t);
-            }
-
-            throw ex;
+        } catch (Exception failure) {
+            cleanUpFailedStart(client, lifecycle, containerId, failure);
+            throw failure;
         }
 
         return containerId;
+    }
+
+    private void cleanUpFailedStart(DockerClient client, DockerContainerLifecycle lifecycle,
+                                   String containerId, Exception failure) {
+        boolean interrupted = false;
+        try (MyLogContainerResultCallback callback = new MyLogContainerResultCallback()) {
+            client.logContainerCmd(containerId)
+                    .withStdErr(true)
+                    .withStdOut(true)
+                    .exec(callback);
+            if (!callback.awaitCompletion(START_FAILURE_LOG_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                LOG.warn("Timed out reading logs after failed start of container {}", containerId);
+            }
+        } catch (InterruptedException ex) {
+            interrupted = true;
+            failure.addSuppressed(ex);
+        } catch (Exception ex) {
+            LOG.warn("Can't get logs for failed container {}", containerId, ex);
+            failure.addSuppressed(ex);
+        } finally {
+            try {
+                lifecycle.getRemoveContainer().exec(client, containerId);
+            } catch (InterruptedException ex) {
+                interrupted = true;
+                failure.addSuppressed(ex);
+            } catch (Exception ex) {
+                LOG.warn("Can't remove container {} after failed start", containerId, ex);
+                failure.addSuppressed(ex);
+            } finally {
+                if (interrupted) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
     }
 
     /**
@@ -452,19 +477,12 @@ public class DockerCloud extends AbstractCloud implements Serializable {
     }
 
     private static class MyLogContainerResultCallback extends ResultCallback.Adapter<Frame> {
-        private ArrayList<String> logLines = new ArrayList<>();
-
         @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING")
         @Override
         public void onNext(Frame item) {
             final String line = new String(item.getPayload()).trim();
-            logLines.add(line);
             LOG.debug("Log container: {}", line);
             super.onNext(item);
-        }
-
-        public ArrayList<String> getLogLines() {
-            return logLines;
         }
     }
 }
