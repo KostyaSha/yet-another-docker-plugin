@@ -132,6 +132,9 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
     private List<String> extraHosts;
 
     @CheckForNull
+    private List<String> securityOpts;
+
+    @CheckForNull
     private String networkMode;
 
     @CheckForNull
@@ -414,6 +417,17 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
         return isNull(dockerLabels) ? Collections.EMPTY_LIST : dockerLabels;
     }
 
+    @Nonnull
+    public String getSecurityOptsString() {
+        return joinToStr(securityOpts);
+    }
+
+    @DataBoundSetter
+    public void setSecurityOptsString(String securityOptsString) {
+        securityOpts = Splitter.on('\n').trimResults().omitEmptyStrings()
+                .splitToList(StringUtils.defaultString(securityOptsString));
+    }
+
     // extrahosts
     @CheckForNull
     public List<String> getExtraHosts() {
@@ -651,6 +665,10 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
 
         if (StringUtils.isNotBlank(getMacAddress())) {
             containerConfig.withMacAddress(getMacAddress());
+        }
+
+        if (CollectionUtils.isNotEmpty(securityOpts)) {
+            hostConfig.withSecurityOpts(securityOpts);
         }
 
         if (CollectionUtils.isNotEmpty(getExtraHosts())) {
