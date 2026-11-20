@@ -13,6 +13,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Host
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -82,7 +84,27 @@ public class DockerCloudStartTest {
 
         assertSame(failure, assertThrows(IllegalStateException.class, () -> cloud.runContainer(template)));
 
-        verify(stream).close();
+        verify(stream, timeout(1000)).close();
+        verify(remove).exec();
+    }
+
+    @Test(timeout = 15_000)
+    public void timeoutAlsoCoversOpeningLogStream() {
+        IllegalStateException failure = new IllegalStateException("start failed");
+        doThrow(failure).when(start).exec();
+        CountDownLatch logRequest = new CountDownLatch(1);
+        when(logs.exec(any())).thenAnswer(invocation -> {
+            logRequest.await();
+            return invocation.getArgument(0);
+        });
+
+        try {
+            assertSame(failure, assertThrows(IllegalStateException.class, () -> cloud.runContainer(template)));
+        } finally {
+            logRequest.countDown();
+        }
+
+        verify(logs).exec(any());
         verify(remove).exec();
     }
 

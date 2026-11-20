@@ -44,7 +44,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static java.util.Objects.isNull;
 import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.get;
@@ -196,14 +199,13 @@ public class DockerCloud extends AbstractCloud implements Serializable {
     private void cleanUpFailedStart(DockerClient client, DockerContainerLifecycle lifecycle,
                                    String containerId, Exception failure) {
         boolean interrupted = false;
-        try (MyLogContainerResultCallback callback = new MyLogContainerResultCallback()) {
-            client.logContainerCmd(containerId)
-                    .withStdErr(true)
-                    .withStdOut(true)
-                    .exec(callback);
-            if (!callback.awaitCompletion(START_FAILURE_LOG_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                LOG.warn("Timed out reading logs after failed start of container {}", containerId);
-            }
+        try {
+            readFailedStartLogs(client, containerId);
+        } catch (TimeoutException ex) {
+            LOG.warn("Timed out reading logs after failed start of container {}", containerId);
+        } catch (ExecutionException ex) {
+            LOG.warn("Can't get logs for failed container {}", containerId, ex.getCause());
+            failure.addSuppressed(ex.getCause());
         } catch (InterruptedException ex) {
             interrupted = true;
             failure.addSuppressed(ex);
@@ -224,6 +226,26 @@ public class DockerCloud extends AbstractCloud implements Serializable {
                     Thread.currentThread().interrupt();
                 }
             }
+        }
+    }
+
+    private void readFailedStartLogs(DockerClient client, String containerId)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        // Include opening the stream in the deadline, since some transports connect synchronously.
+        Future<?> logs = Computer.threadPoolForRemoting.submit(() -> {
+            try (MyLogContainerResultCallback callback = new MyLogContainerResultCallback()) {
+                client.logContainerCmd(containerId)
+                        .withStdErr(true)
+                        .withStdOut(true)
+                        .exec(callback);
+                callback.awaitCompletion();
+            }
+            return null;
+        });
+        try {
+            logs.get(START_FAILURE_LOG_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } finally {
+            logs.cancel(true);
         }
     }
 
