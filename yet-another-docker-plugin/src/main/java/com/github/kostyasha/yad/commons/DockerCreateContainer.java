@@ -45,6 +45,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.CheckReturnValue;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -137,7 +138,7 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
     private List<String> devices;
 
     @CheckForNull
-    private Float cpus;
+    private BigDecimal cpus;
 
     @CheckForNull
     private String cpusetCpus;
@@ -323,12 +324,12 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
 
     //cpus
     @CheckForNull
-    public Float getCpus() {
+    public BigDecimal getCpus() {
         return cpus;
     }
 
     @DataBoundSetter
-    public void setCpus(Float cpus) {
+    public void setCpus(BigDecimal cpus) {
         this.cpus = cpus;
     }
 
@@ -577,9 +578,8 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
             hostConfig.withCpuShares(getCpuShares());
         }
 
-        if (getCpus() != null && getCpus() > 0) {
-            Float nanoCpus = getCpus() * 1000000000;
-            hostConfig.withNanoCPUs(Long.valueOf(nanoCpus.longValue()));
+        if (cpus != null && cpus.signum() > 0) {
+            hostConfig.withNanoCPUs(cpus.movePointRight(9).longValueExact());
         }
 
         if (getMemoryLimit() != null && getMemoryLimit() > 0) {

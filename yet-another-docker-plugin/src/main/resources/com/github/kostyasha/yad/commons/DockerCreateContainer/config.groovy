@@ -91,7 +91,7 @@ f.advanced(title: _("Create Container settings"), align: "left") {
     }
 
     f.entry(title: _("CPUs"), field: "cpus") {
-        f.number(name: "cpus", min: "0.1", step: "0.1")
+        f.number(name: "cpus", min: "0", step: "any")
     }
 
     f.entry(title: _("Cpuset constraint: CPUs"), field: "cpusetCpus") {

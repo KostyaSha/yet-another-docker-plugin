@@ -21,6 +21,7 @@ import org.junit.rules.ExternalResource;
 import org.junit.rules.RuleChain;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 
 import static com.github.kostyasha.yad.commons.DockerContainerRestartPolicyName.NO;
@@ -97,7 +98,7 @@ public class DockerCloudTest {
             createContainer.setBindPorts("234");
             createContainer.setCommand("sdfff");
             createContainer.setCpuShares(3);
-            createContainer.setCpus(2.0F);
+            createContainer.setCpus(new BigDecimal("0.25"));
             createContainer.setDnsHosts(singletonList("dsf"));
             createContainer.setEnvironment(singletonList("sdf"));
             createContainer.setExtraHosts(singletonList("hoststs"));
