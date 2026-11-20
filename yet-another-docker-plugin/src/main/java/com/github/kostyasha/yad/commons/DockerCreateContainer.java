@@ -45,6 +45,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.CheckReturnValue;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -135,6 +136,9 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
 
     @CheckForNull
     private List<String> devices;
+
+    @CheckForNull
+    private BigDecimal cpus;
 
     @CheckForNull
     private String cpusetCpus;
@@ -316,6 +320,19 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
     @DataBoundSetter
     public void setMacAddress(String macAddress) {
         this.macAddress = trimToNull(macAddress);
+    }
+
+    //cpus
+    @CheckForNull
+    public String getCpus() {
+        return cpus == null ? null : cpus.toString();
+    }
+
+    @DataBoundSetter
+    public void setCpus(String cpus) {
+        // Jenkins submits an empty string when the optional number field is cleared.
+        String value = trimToNull(cpus);
+        this.cpus = value == null ? null : new BigDecimal(value);
     }
 
     //cpuShares
@@ -561,6 +578,10 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
 
         if (getCpuShares() != null && getCpuShares() > 0) {
             hostConfig.withCpuShares(getCpuShares());
+        }
+
+        if (cpus != null && cpus.signum() > 0) {
+            hostConfig.withNanoCPUs(cpus.movePointRight(9).longValueExact());
         }
 
         if (getMemoryLimit() != null && getMemoryLimit() > 0) {
