@@ -141,9 +141,9 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         try {
             final HostAndPort hostAndPort = getHostAndPort(cloudId, inspect);
             LOG.info("Creating slave SSH launcher for '{}:{}'. Cloud: '{}'. Template: '{}'",
-                    hostAndPort.getHostText(), hostAndPort.getPort(), cloudId,
+                    hostAndPort.getHost(), hostAndPort.getPort(), cloudId,
                     template.getDockerContainerLifecycle().getImage());
-            return new SSHLauncher(hostAndPort.getHostText(), hostAndPort.getPort(),
+            return new SSHLauncher(hostAndPort.getHost(), hostAndPort.getPort(),
                     sshConnector.getCredentialsId(),
                     sshConnector.getJvmOptions(),
                     sshConnector.getJavaPath(),

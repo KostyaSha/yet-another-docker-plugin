@@ -32,11 +32,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils.isNotEmpty;
-import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils.trimToEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static java.util.Objects.isNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
+import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 /**
  * Alternative {@link DockerComputerJNLPLauncher}.

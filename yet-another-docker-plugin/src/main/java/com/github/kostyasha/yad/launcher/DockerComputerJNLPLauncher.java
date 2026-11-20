@@ -37,10 +37,10 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Objects;
 
-import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils.isNotEmpty;
-import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils.trimToEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 /**
  * JNLP launcher. Doesn't require open ports on docker host.

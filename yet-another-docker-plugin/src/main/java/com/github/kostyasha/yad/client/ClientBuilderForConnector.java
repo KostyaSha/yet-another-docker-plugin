@@ -14,9 +14,9 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DockerCli
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DockerClientImpl;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.KeystoreSSLConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.SSLConfig;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.jaxrs.JerseyDockerHttpClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.okhttp.OkHttpDockerCmdExecFactory;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.okhttp.OkDockerHttpClient;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
@@ -195,14 +195,29 @@ public class ClientBuilderForConnector {
 
     public DockerClient build() {
 
-        if (isNull(dockerCmdExecFactory)) {
+        if (isNull(clientConfig)) {
+            Validate.notNull(configBuilder, "configBuilder must be set");
+            clientConfig = configBuilder.build();
+        }
+
+        if (dockerCmdExecFactory == null) {
             if (connectorType == JERSEY) {
-                dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
-            } else if (connectorType == OKHTTP) {
-                dockerCmdExecFactory = new OkHttpDockerCmdExecFactory();
-            } else {
-                dockerCmdExecFactory = new NettyDockerCmdExecFactory();
+                return DockerClientImpl.getInstance(clientConfig, new JerseyDockerHttpClient.Builder()
+                        .dockerHost(clientConfig.getDockerHost())
+                        .sslConfig(clientConfig.getSSLConfig())
+                        .connectTimeout(connectTimeout)
+                        .readTimeout(readTimeout)
+                        .build());
             }
+            if (connectorType == OKHTTP) {
+                return DockerClientImpl.getInstance(clientConfig, new OkDockerHttpClient.Builder()
+                        .dockerHost(clientConfig.getDockerHost())
+                        .sslConfig(clientConfig.getSSLConfig())
+                        .connectTimeout(connectTimeout)
+                        .readTimeout(readTimeout)
+                        .build());
+            }
+            dockerCmdExecFactory = new NettyDockerCmdExecFactory();
         }
 
         if (nonNull(connectTimeout)) {
@@ -210,13 +225,6 @@ public class ClientBuilderForConnector {
         }
         if (nonNull(readTimeout)) {
             dockerCmdExecFactory.withReadTimeout(readTimeout);
-        }
-
-        if (isNull(clientConfig)) {
-            Validate.notNull(configBuilder, "configBuilder must be set");
-            clientConfig = configBuilder.build();
-        } else {
-            Validate.notNull(clientConfig, "clientConfig must be defined");
         }
 
         return DockerClientImpl.getInstance(clientConfig)

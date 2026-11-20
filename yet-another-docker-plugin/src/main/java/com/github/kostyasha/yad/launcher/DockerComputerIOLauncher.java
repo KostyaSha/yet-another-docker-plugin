@@ -12,7 +12,6 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.In
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Frame;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.StreamType;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.async.ResultCallback;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import hudson.Extension;
 import hudson.model.Slave;
 import hudson.model.TaskListener;
@@ -23,6 +22,7 @@ import hudson.slaves.SlaveComputer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -37,9 +37,9 @@ import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.Objects;
 
-import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils.trimToEmpty;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 public class DockerComputerIOLauncher extends DockerComputerLauncher {
     protected String javaPath = "";

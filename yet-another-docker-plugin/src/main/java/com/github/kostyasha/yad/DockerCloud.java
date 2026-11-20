@@ -15,8 +15,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Fram
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.async.ResultCallback;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Throwables;
 import com.github.kostyasha.yad_docker_java.javax.ws.rs.ProcessingException;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.StringUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Computer;
@@ -27,6 +26,7 @@ import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedPlannedNode;
 import org.kohsuke.stapler.DataBoundConstructor;

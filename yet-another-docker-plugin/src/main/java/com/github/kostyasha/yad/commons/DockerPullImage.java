@@ -13,7 +13,6 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Image;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import hudson.Extension;
 import hudson.model.Describable;
 import jenkins.model.Jenkins;
@@ -22,6 +21,7 @@ import hudson.model.ItemGroup;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
