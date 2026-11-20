@@ -15,7 +15,7 @@
         <maven.compiler.release>17</maven.compiler.release>
         <shade-prefix>com.github.kostyasha.yad_docker_java</shade-prefix>
         <maven-shade-plugin.version>3.6.0</maven-shade-plugin.version>
-        <docker-java.version>3.2.0</docker-java.version>
+        <docker-java.version>3.7.1</docker-java.version>
     </properties>
 
     <repositories>
@@ -64,6 +64,12 @@
         <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java-transport-netty</artifactId>
+            <version>${docker-java.version}</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-transport-httpclient5</artifactId>
             <version>${docker-java.version}</version>
             <optional>true</optional>
         </dependency>
@@ -158,6 +164,10 @@
                         </relocation>
 
                         <relocation>
+                            <pattern>org.apache.hc</pattern>
+                            <shadedPattern>${shade-prefix}.org.apache.hc</shadedPattern>
+                        </relocation>
+                        <relocation>
                             <pattern>org.apache.http</pattern>
                             <shadedPattern>${shade-prefix}.org.apache.http</shadedPattern>
                         </relocation>
@@ -237,7 +247,12 @@
                             <pattern>jersey.repackaged</pattern>
                             <shadedPattern>${shade-prefix}.jersey.repackaged</shadedPattern>
                         </relocation>
-                        <!-- netty -->
+                        <!-- Netty looks up JNI resources using the relocated package prefix,
+                             encoding dots as underscores and literal underscores as _1. -->
+                        <relocation>
+                            <pattern>META-INF/native/libnetty</pattern>
+                            <shadedPattern>META-INF/native/libcom_github_kostyasha_yad_1docker_1java_netty</shadedPattern>
+                        </relocation>
                         <relocation>
                             <pattern>io.netty</pattern>
                             <shadedPattern>${shade-prefix}.io.netty</shadedPattern>

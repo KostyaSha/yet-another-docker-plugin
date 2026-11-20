@@ -14,9 +14,10 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DockerCli
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DockerClientImpl;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.KeystoreSSLConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.SSLConfig;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.jaxrs.JerseyDockerHttpClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
-import com.github.kostyasha.yad_docker_java.com.github.dockerjava.okhttp.OkHttpDockerCmdExecFactory;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.okhttp.OkDockerHttpClient;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
@@ -31,6 +32,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
+import java.time.Duration;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
@@ -54,7 +56,7 @@ public class ClientBuilderForConnector {
     // fallback to builder
     private Builder configBuilder = new Builder();
 
-    private ConnectorType connectorType = null;
+    private ConnectorType connectorType = ConnectorType.HTTPCLIENT5;
     private Integer connectTimeout = null; // ms
     private Integer readTimeout = null; // ms
 
@@ -195,14 +197,41 @@ public class ClientBuilderForConnector {
 
     public DockerClient build() {
 
-        if (isNull(dockerCmdExecFactory)) {
-            if (connectorType == JERSEY) {
-                dockerCmdExecFactory = new JerseyDockerCmdExecFactory();
-            } else if (connectorType == OKHTTP) {
-                dockerCmdExecFactory = new OkHttpDockerCmdExecFactory();
-            } else {
-                dockerCmdExecFactory = new NettyDockerCmdExecFactory();
+        if (isNull(clientConfig)) {
+            Validate.notNull(configBuilder, "configBuilder must be set");
+            clientConfig = configBuilder.build();
+        }
+
+        if (dockerCmdExecFactory == null) {
+            if (connectorType == ConnectorType.HTTPCLIENT5) {
+                ApacheDockerHttpClient.Builder builder = new ApacheDockerHttpClient.Builder()
+                        .dockerHost(clientConfig.getDockerHost())
+                        .sslConfig(clientConfig.getSSLConfig());
+                if (connectTimeout != null) {
+                    builder.connectionTimeout(Duration.ofMillis(connectTimeout));
+                }
+                if (readTimeout != null) {
+                    builder.responseTimeout(Duration.ofMillis(readTimeout));
+                }
+                return DockerClientImpl.getInstance(clientConfig, builder.build());
             }
+            if (connectorType == JERSEY) {
+                return DockerClientImpl.getInstance(clientConfig, new JerseyDockerHttpClient.Builder()
+                        .dockerHost(clientConfig.getDockerHost())
+                        .sslConfig(clientConfig.getSSLConfig())
+                        .connectTimeout(connectTimeout)
+                        .readTimeout(readTimeout)
+                        .build());
+            }
+            if (connectorType == OKHTTP) {
+                return DockerClientImpl.getInstance(clientConfig, new OkDockerHttpClient.Builder()
+                        .dockerHost(clientConfig.getDockerHost())
+                        .sslConfig(clientConfig.getSSLConfig())
+                        .connectTimeout(connectTimeout)
+                        .readTimeout(readTimeout)
+                        .build());
+            }
+            dockerCmdExecFactory = new NettyDockerCmdExecFactory();
         }
 
         if (nonNull(connectTimeout)) {
@@ -210,13 +239,6 @@ public class ClientBuilderForConnector {
         }
         if (nonNull(readTimeout)) {
             dockerCmdExecFactory.withReadTimeout(readTimeout);
-        }
-
-        if (isNull(clientConfig)) {
-            Validate.notNull(configBuilder, "configBuilder must be set");
-            clientConfig = configBuilder.build();
-        } else {
-            Validate.notNull(clientConfig, "clientConfig must be defined");
         }
 
         return DockerClientImpl.getInstance(clientConfig)

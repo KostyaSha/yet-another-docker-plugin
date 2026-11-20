@@ -24,7 +24,7 @@ f.entry(title: _("Host Credentials"), field: "credentialsId") {
 }
 
 f.entry(title: "Type", field: "connectorType") {
-    f.enum() {
+    f.enum(default: "HTTPCLIENT5") {
         text(my.name())
     }
 }
@@ -39,5 +39,5 @@ f.entry(title: _("Read timeout"), field: "readTimeout", default: "0") {
 
 f.validateButton(title: _("Test Connection"), progress: _("Testing..."),
         method: "testConnection",
-        with: "serverUrl,credentialsId,version,connectorType"
+        with: "serverUrl,credentialsId,apiVersion,connectorType,connectTimeout,readTimeout"
 )

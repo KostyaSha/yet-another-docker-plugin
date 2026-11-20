@@ -12,7 +12,6 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Vers
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.RemoteApiVersion;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.Preconditions;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
 import com.github.kostyasha.yad_docker_java.org.glassfish.jersey.client.ClientProperties;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -23,6 +22,7 @@ import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.kohsuke.stapler.AncestorInPath;
@@ -68,7 +68,7 @@ public class DockerConnector extends YADockerConnector {
     private String credentialsId = null;
 
     @CheckForNull
-    private ConnectorType connectorType = NETTY;
+    private ConnectorType connectorType = ConnectorType.HTTPCLIENT5;
 
     @CheckForNull
     private Integer connectTimeout; //ms
@@ -115,9 +115,10 @@ public class DockerConnector extends YADockerConnector {
     /**
      * @see #connectorType
      */
-    @CheckForNull
+    @Nonnull
     public ConnectorType getConnectorType() {
-        return connectorType;
+        // XStream leaves this field null when loading a configuration saved without a transport.
+        return connectorType != null ? connectorType : NETTY;
     }
 
     @DataBoundSetter

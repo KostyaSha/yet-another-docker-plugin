@@ -11,15 +11,15 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Auth
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfigurations;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
 import com.github.kostyasha.yad_docker_java.com.google.common.annotations.Beta;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.StringUtils;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.EqualsBuilder;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.HashCodeBuilder;
-import com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import com.github.kostyasha.yad_docker_java.org.apache.http.auth.UsernamePasswordCredentials;
 import hudson.Extension;
 import hudson.model.Describable;
 import jenkins.model.Jenkins;
 import hudson.model.Descriptor;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
@@ -34,10 +34,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.github.kostyasha.yad_docker_java.org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 /**
  * @author Kanstantsin Shautsou
