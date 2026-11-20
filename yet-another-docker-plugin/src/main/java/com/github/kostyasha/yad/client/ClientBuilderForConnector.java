@@ -14,6 +14,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DockerCli
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.DockerClientImpl;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.KeystoreSSLConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.SSLConfig;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.jaxrs.JerseyDockerHttpClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.okhttp.OkDockerHttpClient;
@@ -31,6 +32,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
+import java.time.Duration;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
@@ -201,6 +203,18 @@ public class ClientBuilderForConnector {
         }
 
         if (dockerCmdExecFactory == null) {
+            if (connectorType == ConnectorType.HTTPCLIENT5) {
+                ApacheDockerHttpClient.Builder builder = new ApacheDockerHttpClient.Builder()
+                        .dockerHost(clientConfig.getDockerHost())
+                        .sslConfig(clientConfig.getSSLConfig());
+                if (connectTimeout != null) {
+                    builder.connectionTimeout(Duration.ofMillis(connectTimeout));
+                }
+                if (readTimeout != null) {
+                    builder.responseTimeout(Duration.ofMillis(readTimeout));
+                }
+                return DockerClientImpl.getInstance(clientConfig, builder.build());
+            }
             if (connectorType == JERSEY) {
                 return DockerClientImpl.getInstance(clientConfig, new JerseyDockerHttpClient.Builder()
                         .dockerHost(clientConfig.getDockerHost())

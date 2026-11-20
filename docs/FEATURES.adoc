@@ -2,8 +2,8 @@
 
 * TLS (RSA,ECDSA) based credentials connection to docker daemon.
 * Connection to docker daemon:
-** tcp or socket (socket works only for JERSEY impl)
-** JERSEY or NETTY implementations (provided by docker-java)
+** TCP or Unix socket
+** Docker transports: NETTY (default), JERSEY, OKHTTP and HTTPCLIENT5 (Apache HttpClient 5)
 * Slave image pulling strategies.
 * Exact configuration for container lifecycle:
 ** pull

@@ -69,6 +69,12 @@
         </dependency>
         <dependency>
             <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-transport-httpclient5</artifactId>
+            <version>${docker-java.version}</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java-transport-okhttp</artifactId>
             <version>${docker-java.version}</version>
             <optional>true</optional>
@@ -157,6 +163,10 @@
                             <shadedPattern>${shade-prefix}.org.bouncycastle</shadedPattern>
                         </relocation>
 
+                        <relocation>
+                            <pattern>org.apache.hc</pattern>
+                            <shadedPattern>${shade-prefix}.org.apache.hc</shadedPattern>
+                        </relocation>
                         <relocation>
                             <pattern>org.apache.http</pattern>
                             <shadedPattern>${shade-prefix}.org.apache.http</shadedPattern>
