@@ -51,7 +51,7 @@ JSONArray clouds_yadocker = [
         docker_api_version: '',
         host_credentials_id: '',
         //valid values: netty, jersey, okhttp, httpclient5
-        connection_type: 'netty',
+        connection_type: 'httpclient5',
         connect_timeout: 0,
         max_containers: 50,
         docker_templates: [
@@ -187,7 +187,7 @@ def newDockerCloud(JSONObject obj) {
     connector.setCredentialsId(obj.optString('host_credentials_id'))
     //select connection_type
     List<String> connection_types = ConnectorType.values()*.name()
-    String connection_type_default = 'NETTY'
+    String connection_type_default = connector.getConnectorType().name()
     String user_selected_connection_type = obj.optString('connection_type', connection_type_default).toUpperCase()
     String connection_type = (user_selected_connection_type in connection_types)? user_selected_connection_type : connection_type_default
     connector.setConnectorType(ConnectorType."${connection_type}")

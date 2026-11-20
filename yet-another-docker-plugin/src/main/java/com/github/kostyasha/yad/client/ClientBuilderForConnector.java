@@ -56,7 +56,7 @@ public class ClientBuilderForConnector {
     // fallback to builder
     private Builder configBuilder = new Builder();
 
-    private ConnectorType connectorType = null;
+    private ConnectorType connectorType = ConnectorType.HTTPCLIENT5;
     private Integer connectTimeout = null; // ms
     private Integer readTimeout = null; // ms
 

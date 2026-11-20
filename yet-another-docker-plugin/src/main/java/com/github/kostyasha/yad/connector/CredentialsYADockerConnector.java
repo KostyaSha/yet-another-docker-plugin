@@ -42,7 +42,7 @@ public class CredentialsYADockerConnector extends YADockerConnector {
     private Credentials credentials = null;
 
 
-    private ConnectorType connectorType = NETTY;
+    private ConnectorType connectorType = ConnectorType.HTTPCLIENT5;
 
     @CheckForNull
     private Integer connectTimeout;
@@ -59,9 +59,10 @@ public class CredentialsYADockerConnector extends YADockerConnector {
     public CredentialsYADockerConnector() {
     }
 
-    @CheckForNull
+    @Nonnull
     public ConnectorType getConnectorType() {
-        return connectorType;
+        // XStream leaves this field null when loading a configuration saved without a transport.
+        return connectorType != null ? connectorType : NETTY;
     }
 
     public CredentialsYADockerConnector withConnectorType(ConnectorType connectorType) {
@@ -158,7 +159,7 @@ public class CredentialsYADockerConnector extends YADockerConnector {
 
             ClientBuilderForConnector clientBuilder = newClientBuilderForConnector()
                     .withConfigBuilder(configBuilder)
-                    .withConnectorType(connectorType);
+                    .withConnectorType(getConnectorType());
             if (nonNull(credentials)) {
                 clientBuilder.withCredentials(credentials);
             }

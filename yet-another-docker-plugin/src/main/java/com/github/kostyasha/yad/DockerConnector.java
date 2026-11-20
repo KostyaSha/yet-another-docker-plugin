@@ -68,7 +68,7 @@ public class DockerConnector extends YADockerConnector {
     private String credentialsId = null;
 
     @CheckForNull
-    private ConnectorType connectorType = NETTY;
+    private ConnectorType connectorType = ConnectorType.HTTPCLIENT5;
 
     @CheckForNull
     private Integer connectTimeout; //ms
@@ -115,9 +115,10 @@ public class DockerConnector extends YADockerConnector {
     /**
      * @see #connectorType
      */
-    @CheckForNull
+    @Nonnull
     public ConnectorType getConnectorType() {
-        return connectorType;
+        // XStream leaves this field null when loading a configuration saved without a transport.
+        return connectorType != null ? connectorType : NETTY;
     }
 
     @DataBoundSetter
