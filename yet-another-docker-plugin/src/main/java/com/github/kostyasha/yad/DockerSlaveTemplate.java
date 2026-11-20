@@ -35,6 +35,7 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
     private static final Logger LOG = LoggerFactory.getLogger(DockerSlaveTemplate.class);
     private int configVersion = 1;
 
+    private String remoteFsMapping;
     private int maxCapacity = 10;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
@@ -101,6 +102,15 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
         return retentionStrategy;
     }
 
+    public String getRemoteFsMapping() {
+        return remoteFsMapping;
+    }
+
+    @DataBoundSetter
+    public void setRemoteFsMapping(String remoteFsMapping) {
+        this.remoteFsMapping = hudson.Util.fixEmptyAndTrim(remoteFsMapping);
+    }
+
     public int getMaxCapacity() {
         return maxCapacity;
     }
@@ -160,6 +170,7 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
         return new EqualsBuilder()
                 .appendSuper(true)
                 .append(maxCapacity, that.maxCapacity)
+                .append(remoteFsMapping, that.remoteFsMapping)
                 .isEquals();
     }
 
