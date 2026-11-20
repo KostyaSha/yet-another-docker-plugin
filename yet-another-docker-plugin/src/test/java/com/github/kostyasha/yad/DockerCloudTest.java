@@ -99,7 +99,8 @@ public class DockerCloudTest {
             createContainer.setCommand("sdfff");
             createContainer.setCpuShares(3);
             createContainer.setCpus("0.25");
-            createContainer.setNetworksString("bridge\nspecial_net\nbackend");
+            createContainer.setNetworkMode("bridge");
+            createContainer.setConnectNetworks("special_net\nbackend");
             createContainer.setDnsHosts(singletonList("dsf"));
             createContainer.setEnvironment(singletonList("sdf"));
             createContainer.setExtraHosts(singletonList("hoststs"));

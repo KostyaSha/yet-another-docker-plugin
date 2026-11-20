@@ -469,22 +469,15 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
     }
 
     @Nonnull
-    public String getNetworksString() {
-        String primary = StringUtils.defaultString(getNetworkMode());
-        if (CollectionUtils.isEmpty(connectNetworks)) {
-            return primary;
-        }
-        return primary + "\n" + joinToStr(connectNetworks);
+    public String getConnectNetworks() {
+        return joinToStr(connectNetworks);
     }
 
     @DataBoundSetter
-    public void setNetworksString(String networks) {
-        var names = Splitter.onPattern("[,\\r\\n]").trimResults().omitEmptyStrings()
+    public void setConnectNetworks(String networks) {
+        List<String> names = Splitter.onPattern("[,\\r\\n]").trimResults().omitEmptyStrings()
                 .splitToList(StringUtils.defaultString(networks));
-        networkMode = names.isEmpty() ? null : names.get(0);
-        var additional = new LinkedHashSet<>(names);
-        additional.remove(networkMode);
-        connectNetworks = additional.isEmpty() ? null : new ArrayList<>(additional);
+        connectNetworks = names.isEmpty() ? null : new ArrayList<>(new LinkedHashSet<>(names));
     }
 
     public void connectNetworks(DockerClient client, String containerId) {

@@ -78,7 +78,8 @@ public class DockerCloudStartTest {
 
     @Test
     public void connectsAdditionalNetworksBeforeStartingContainer() throws Exception {
-        lifecycle.getCreateContainer().setNetworksString(" bridge, special_net ,\r\n backend\nspecial_net\nbridge");
+        lifecycle.getCreateContainer().setNetworkMode("bridge");
+        lifecycle.getCreateContainer().setConnectNetworks("special_net ,\r\n backend\nspecial_net\nbridge");
         ConnectToNetworkCmd connect = mock(ConnectToNetworkCmd.class, RETURNS_SELF);
         when(client.connectToNetworkCmd()).thenReturn(connect);
 
@@ -104,13 +105,13 @@ public class DockerCloudStartTest {
         assertEquals(CONTAINER_ID, cloud.runContainer(template));
 
         assertEquals("legacy-net", hostConfig.getNetworkMode());
-        assertEquals("legacy-net", lifecycle.getCreateContainer().getNetworksString());
+        assertEquals("", lifecycle.getCreateContainer().getConnectNetworks());
         verify(client, never()).connectToNetworkCmd();
     }
 
     @Test
     public void failedNetworkConnectionRemovesContainerBeforeStart() {
-        lifecycle.getCreateContainer().setNetworksString("bridge\nmissing-network");
+        lifecycle.getCreateContainer().setConnectNetworks("missing-network");
         ConnectToNetworkCmd connect = mock(ConnectToNetworkCmd.class, RETURNS_SELF);
         when(client.connectToNetworkCmd()).thenReturn(connect);
         IllegalStateException failure = new IllegalStateException("network not found");
