@@ -1,7 +1,10 @@
 package com.github.kostyasha.yad.commons;
 
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AccessMode;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Bind;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.HostConfig;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PropagationMode;
 import org.junit.Test;
 
 import java.util.List;
@@ -48,6 +51,31 @@ public class DockerCreateContainerTest {
         settings.setSecurityOptsString("credentialspec=file://domain_gmsa-group.json");
         settings.setSecurityOptsString("  \r\n");
         assertNull(hostConfig(settings).getSecurityOpts());
+    }
+
+    @Test
+    public void readOnlyBindsSurviveTrailingSpacesAndWindowsLineEndings() {
+        DockerCreateContainer settings = new DockerCreateContainer();
+        settings.setVolumesString("/src1:/dst1:ro\n/src2:/dst2:ro \n/src3:/dst3:ro\r\n/src4:/dst4:rw");
+
+        Bind[] binds = hostConfig(settings).getBinds();
+        assertEquals(4, binds.length);
+        assertEquals(AccessMode.ro, binds[0].getAccessMode());
+        assertEquals(AccessMode.ro, binds[1].getAccessMode());
+        assertEquals(AccessMode.ro, binds[2].getAccessMode());
+        assertEquals(AccessMode.rw, binds[3].getAccessMode());
+    }
+
+    @Test
+    public void normalizesFlagsInStoredVolumesWithoutTrimmingPaths() {
+        DockerCreateContainer settings = new DockerCreateContainer();
+        settings.setVolumes(List.of("/host path :/container path : ro , rshared \r"));
+
+        Bind bind = hostConfig(settings).getBinds()[0];
+        assertEquals("/host path ", bind.getPath());
+        assertEquals("/container path ", bind.getVolume().getPath());
+        assertEquals(AccessMode.ro, bind.getAccessMode());
+        assertEquals(PropagationMode.RSHARED, bind.getPropagationMode());
     }
 
     private HostConfig hostConfig(DockerCreateContainer settings) {
