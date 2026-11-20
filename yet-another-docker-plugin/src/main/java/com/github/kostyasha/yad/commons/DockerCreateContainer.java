@@ -324,13 +324,15 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
 
     //cpus
     @CheckForNull
-    public BigDecimal getCpus() {
-        return cpus;
+    public String getCpus() {
+        return cpus == null ? null : cpus.toString();
     }
 
     @DataBoundSetter
-    public void setCpus(BigDecimal cpus) {
-        this.cpus = cpus;
+    public void setCpus(String cpus) {
+        // Jenkins submits an empty string when the optional number field is cleared.
+        String value = trimToNull(cpus);
+        this.cpus = value == null ? null : new BigDecimal(value);
     }
 
     //cpuShares
