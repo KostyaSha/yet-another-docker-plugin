@@ -209,6 +209,20 @@ public class DockerCloudTest {
     }
 
     @Test
+    public void persistsGmsaCredentialSpec() throws Exception {
+        try (JenkinsRule.WebClient client = j.createWebClient()) {
+            var form = client.goTo(clouds.after.getUrl() + "configure").getFormByName("config");
+            form.getTextAreaByName("_.securityOptsString").setText("credentialspec=file://domain_gmsa-group.json");
+            j.submit(form);
+        }
+        DockerCloud saved = (DockerCloud) j.jenkins.getCloud(clouds.after.name);
+        XStream2 xml = new XStream2();
+        DockerCloud restored = (DockerCloud) xml.fromXML(xml.toXML(saved));
+        assertThat(restored.getTemplates().get(0).getDockerContainerLifecycle()
+                .getCreateContainer().getSecurityOptsString(), is("credentialspec=file://domain_gmsa-group.json"));
+    }
+
+    @Test
     public void stopContainer() {
         assertThatConfig(clouds.getLifecycleAfter().getStopContainer(),
                 equalTo(clouds.getLifecycleBefore().getStopContainer()));

@@ -78,6 +78,10 @@ f.advanced(title: _("Create Container settings"), align: "left") {
         f.textbox()
     }
 
+    f.entry(title: _("Security options"), field: "securityOptsString") {
+        f.textarea()
+    }
+
     f.entry(title: _("Extra Hosts"), field: "extraHostsString") {
         f.textarea()
     }
