@@ -141,7 +141,7 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
     @CheckForNull
     private String networkMode;
 
-    private List<String> additionalNetworks;
+    private List<String> connectNetworks;
 
     @CheckForNull
     private List<String> devices;
@@ -471,10 +471,10 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
     @Nonnull
     public String getNetworksString() {
         String primary = StringUtils.defaultString(getNetworkMode());
-        if (CollectionUtils.isEmpty(additionalNetworks)) {
+        if (CollectionUtils.isEmpty(connectNetworks)) {
             return primary;
         }
-        return primary + "\n" + joinToStr(additionalNetworks);
+        return primary + "\n" + joinToStr(connectNetworks);
     }
 
     @DataBoundSetter
@@ -484,15 +484,15 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
         networkMode = names.isEmpty() ? null : names.get(0);
         var additional = new LinkedHashSet<>(names);
         additional.remove(networkMode);
-        additionalNetworks = additional.isEmpty() ? null : new ArrayList<>(additional);
+        connectNetworks = additional.isEmpty() ? null : new ArrayList<>(additional);
     }
 
-    public void connectAdditionalNetworks(DockerClient client, String containerId) {
-        if (CollectionUtils.isEmpty(additionalNetworks)) {
+    public void connectNetworks(DockerClient client, String containerId) {
+        if (CollectionUtils.isEmpty(connectNetworks)) {
             return;
         }
         String primaryNetwork = getNetworkMode();
-        for (String network : additionalNetworks) {
+        for (String network : connectNetworks) {
             if (!network.equals(primaryNetwork)) {
                 client.connectToNetworkCmd().withContainerId(containerId).withNetworkId(network).exec();
             }

@@ -197,7 +197,7 @@ public class DockerComputerSingleJNLPLauncher extends JNLPLauncher {
         logger.println("Created container " + cId + ", for " + run.getDisplayName());
         LOG.debug("Created container {}, for {}", cId, run.getDisplayName());
         try {
-            createContainer.connectAdditionalNetworks(client, cId);
+            createContainer.connectNetworks(client, cId);
             client.startContainerCmd(cId).exec();
         } catch (RuntimeException failure) {
             try {

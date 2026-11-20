@@ -185,7 +185,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         LOG.debug("Created container {}, for {}", containerId, getDisplayName());
 
         try {
-            dockerCreateContainer.connectAdditionalNetworks(client, containerId);
+            dockerCreateContainer.connectNetworks(client, containerId);
             slaveTemplate.getLauncher().afterContainerCreate(client, containerId);
             client.startContainerCmd(containerId).exec();
             LOG.debug("Running container {}, for {}", containerId, getDisplayName());
