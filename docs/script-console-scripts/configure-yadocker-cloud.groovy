@@ -301,8 +301,7 @@ def newDockerSlaveTemplate(JSONObject obj) {
     dockerSlaveTemplate.setLauncher(launcher)
     dockerSlaveTemplate.setRemoteFs(obj.optString('remote_fs_root', '/srv/jenkins'))
     dockerSlaveTemplate.setMaxCapacity(obj.optInt('max_instances', 10))
-    //dockerSlaveTemplate.setRemoteFsMapping(obj.optString('remote_fs_root_mapping'))
-    //dockerSlaveTemplate.remoteFsMapping = obj.optString('remote_fs_root_mapping')
+    dockerSlaveTemplate.setRemoteFsMapping(obj.optString('remote_fs_root_mapping'))
     //define NODE PROPERTIES
     List<NodeProperty> nodeProperties = [] as List<NodeProperty>
     if(obj.optJSONObject('environment_variables')) {

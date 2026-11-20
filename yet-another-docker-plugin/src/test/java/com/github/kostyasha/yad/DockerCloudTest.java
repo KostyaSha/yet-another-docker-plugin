@@ -5,6 +5,7 @@ import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.github.kostyasha.yad.commons.DockerContainerRestartPolicy;
 import com.github.kostyasha.yad.commons.DockerCreateContainer;
 import hudson.util.Secret;
+import hudson.util.XStream2;
 import com.github.kostyasha.yad.commons.DockerImagePullStrategy;
 import com.github.kostyasha.yad.commons.DockerPullImage;
 import com.github.kostyasha.yad.commons.DockerRemoveContainer;
@@ -141,6 +142,7 @@ public class DockerCloudTest {
             dockerSlaveTemplate.setMode(Node.Mode.EXCLUSIVE);
             dockerSlaveTemplate.setNodeProperties(singletonList(variablesNodeProperty));
             dockerSlaveTemplate.setRemoteFs("/remotefs");
+            dockerSlaveTemplate.setRemoteFsMapping("/mnt/agent");
             dockerSlaveTemplate.setNumExecutors(1); // need to be verified with other retention strategy
             dockerSlaveTemplate.setRetentionStrategy(new DockerOnceRetentionStrategy(30));
 
@@ -162,6 +164,10 @@ public class DockerCloudTest {
 
     @Test
     public void dockerCloud() {
+        assertThat(clouds.getTemplateAfter().getRemoteFsMapping(), is("/mnt/agent"));
+        XStream2 xml = new XStream2();
+        DockerSlaveTemplate restored = (DockerSlaveTemplate) xml.fromXML(xml.toXML(clouds.getTemplateAfter()));
+        assertThat(restored.getRemoteFsMapping(), is("/mnt/agent"));
         assertThatConfig(clouds.after,
                 equalTo(clouds.before));
 

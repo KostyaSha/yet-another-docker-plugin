@@ -1,0 +1,10 @@
+<div>
+    Absolute path on the Jenkins controller where the agent's remote file system root is mounted.
+    For example, if the container sees the volume at <code>/home/jenkins</code> and the controller
+    sees the same volume at <code>/mnt/docker-agent</code>, enter <code>/mnt/docker-agent</code>.
+    Leave this empty to disable workspace mapping.
+    For freestyle builds, open <strong>Docker workspace</strong> on the build page.
+    The link shows the current files on the shared volume, including after the agent is removed.
+    A later build can reuse the same workspace. Custom workspace locations
+    outside the job's standard allocation are excluded.
+</div>
