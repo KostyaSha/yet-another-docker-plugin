@@ -160,35 +160,54 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     }
 
     public HostAndPort getHostAndPort(String cloudId, InspectContainerResponse ir) {
-        // get exposed port
         ExposedPort sshPort = new ExposedPort(sshConnector.getPort());
-        String host = null;
-        Integer port = 22;
-
         final NetworkSettings networkSettings = ir.getNetworkSettings();
-        final Ports ports = networkSettings.getPorts();
-        final Map<ExposedPort, Ports.Binding[]> bindings = ports.getBindings();
-        final Ports.Binding[] sshBindings = bindings.get(sshPort);
+        final Ports.Binding[] sshBindings = networkSettings.getPorts().getBindings().get(sshPort);
 
         if (isNull(sshBindings)) {
             throw new IllegalStateException("SSH Binding not found for " + ir.getId() +
                     ". Add EXPOSE in image or expose SSH port in container create configuration!");
         }
 
-        for (Ports.Binding b : sshBindings) {
-            port = Integer.valueOf(b.getHostPortSpec());
-            host = b.getHostIp();
+        Ports.Binding explicit = null;
+        Ports.Binding wildcardV4 = null;
+        Ports.Binding wildcardV6 = null;
+        for (Ports.Binding binding : sshBindings) {
+            // A routed network can report a binding with no published host port.
+            if (StringUtils.isBlank(binding.getHostPortSpec())) {
+                continue;
+            }
+
+            String hostIp = binding.getHostIp();
+            if ("::".equals(hostIp) || "[::]".equals(hostIp)) {
+                wildcardV6 = binding;
+            } else if (StringUtils.isBlank(hostIp) || "0.0.0.0".equals(hostIp)) {
+                wildcardV4 = binding;
+            } else {
+                explicit = binding;
+            }
         }
 
-        //get address, if docker on localhost, then use docker address from connector
-        if ((isNull(host) || host.equals("0.0.0.0")) && isNull(dockerNetwork)) {
+        if (explicit != null) {
+            return HostAndPort.fromParts(explicit.getHostIp(), Integer.parseInt(explicit.getHostPortSpec()));
+        }
+
+        String host = null;
+        if (getDockerNetwork() == null) {
             final DockerCloud dockerCloud = DockerCloud.getCloudByName(cloudId);
             Preconditions.checkNotNull(dockerCloud, "Can't get cloud '" + cloudId + "'. Cloud was renamed?");
             host = URI.create(dockerCloud.getConnector().getServerUrl()).getHost();
         }
 
+        // Prefer the matching wildcard for an IPv6 literal, with IPv4 as the default for hostnames.
+        Ports.Binding wildcard = wildcardV4;
+        if (wildcardV6 != null && (wildcard == null || (host != null && host.contains(":")))) {
+            wildcard = wildcardV6;
+        }
+        int port = wildcard == null ? sshPort.getPort() : Integer.parseInt(wildcard.getHostPortSpec());
+
         if (isNull(host)) {
-            final Map<String, ContainerNetwork> networks = ir.getNetworkSettings().getNetworks();
+            final Map<String, ContainerNetwork> networks = networkSettings.getNetworks();
             final String dockNet = getDockerNetwork();
             if (nonNull(dockNet)) {
                 final ContainerNetwork nw = networks.get(dockNet);
