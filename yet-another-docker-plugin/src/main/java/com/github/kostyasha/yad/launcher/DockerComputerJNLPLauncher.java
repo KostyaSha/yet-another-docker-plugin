@@ -354,7 +354,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     @Override
     public ComputerLauncher getLauncher() {
-        return new JNLPLauncher(tunnel, jvmOpts);
+        return new JNLPLauncher(tunnel);
     }
 
     @Override
