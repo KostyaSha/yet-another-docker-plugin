@@ -113,4 +113,4 @@ if [ "$(id -nu)" != "$JENKINS_USER" ]; then
     fi
 fi
 
-eval "$RUN_CMD"
+eval "exec $RUN_CMD"
