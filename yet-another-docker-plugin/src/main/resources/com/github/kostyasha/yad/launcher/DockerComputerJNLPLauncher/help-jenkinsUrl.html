@@ -1,4 +1,6 @@
 <div>
-    By default jenkins slave will connect to `Jenkins URL` defined is Jenkins Location section. <br>
-    But if needed (firewall/load balancer/...),  you can ask Jenkins slave to connect to a different jenkins Master server url.
+    Enter the controller URL reachable from inside the agent container, including any context path.
+    The agent uses this URL to download Remoting and to discover its connection endpoint.
+    A configured TCP tunnel still controls the host and port used for the inbound connection.
+    Leave this field empty to use the Jenkins URL from the controller's location settings.
 </div>

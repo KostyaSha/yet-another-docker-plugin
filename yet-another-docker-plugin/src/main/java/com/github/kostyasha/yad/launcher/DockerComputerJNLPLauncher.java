@@ -15,7 +15,6 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Fram
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.TaskListener;
-import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
@@ -200,6 +199,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         // TODO implement PID 1 replacement
 
         try {
+            String inboundArgs = InboundAgentArguments.forAlternateUrl(launcher.getJenkinsUrl(),
+                    dockerComputer, getLauncher());
             String startCmd = null;
             ExecCreateCmdResponse response = null;
             logger.println("Creating exec command...");
@@ -208,6 +209,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                 startCmd =
                         "@\"\n" +
                                 "`$JENKINS_URL='" + rootUrl + WNL +
+                                "`$INBOUND_ARGS_B64='" + inboundArgs + WNL +
                                 "`$JENKINS_USER='" + getUser() + WNL +
                                 "`$JENKINS_HOME='" + dockerSlaveTemplate.getRemoteFs() + WNL +
                                 "`$COMPUTER_URL='" + dockerComputer.getUrl() + WNL +
@@ -230,6 +232,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                 startCmd =
                         "cat << EOF > /tmp/config.sh.tmp && cd /tmp && mv config.sh.tmp config.sh\n" +
                                 "JENKINS_URL=\"" + rootUrl + NL +
+                                "INBOUND_ARGS_B64=\"" + inboundArgs + NL +
                                 "JENKINS_USER=\"" + getUser() + NL +
                                 "JENKINS_HOME=\"" + dockerSlaveTemplate.getRemoteFs() + NL +
                                 "COMPUTER_URL=\"" + dockerComputer.getUrl() + NL +
@@ -353,7 +356,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @Override
-    public ComputerLauncher getLauncher() {
+    public JNLPLauncher getLauncher() {
         return new JNLPLauncher(tunnel);
     }
 

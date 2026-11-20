@@ -2,7 +2,7 @@ param([long]$ConfigTimeoutSeconds)
 
 $progressPreference = 'silentlyContinue'  # no progress bars
 
-$CONFIG="c:\config.ps1"
+$CONFIG=Join-Path $PSScriptRoot 'config.ps1'
 function Test-FileLock {
    param (
       [parameter(Mandatory=$true)]
@@ -45,6 +45,8 @@ if (!$JENKINS_URL) {
    exit 1
 }
 
+$JENKINS_URL = $JENKINS_URL.TrimEnd('/')
+
 if (!$COMPUTER_URL) {
    Write-Output "COMPUTER_URL is not defined! Exiting."
    exit 1
@@ -74,7 +76,13 @@ if ($JAVA_OPTS) {
    $RUN_CMD="$RUN_CMD $JAVA_OPTS"
 }
 
-$RUN_CMD="$RUN_CMD -jar $JENKINS_HOME/slave.jar"
+if ($INBOUND_ARGS_B64) {
+   $inboundArgsFile = [IO.Path]::GetTempFileName()
+   [IO.File]::WriteAllBytes($inboundArgsFile, [Convert]::FromBase64String($INBOUND_ARGS_B64))
+   $RUN_CMD += ' ("@" + $inboundArgsFile)'
+} else {
+   $RUN_CMD += ' -jar slave.jar'
+}
 
 if ($NO_RECONNECT_SLAVE -eq "true") {
    $RUN_CMD="$RUN_CMD -noReconnect"
@@ -88,7 +96,9 @@ if ($SLAVE_OPTS) {
    $RUN_CMD="$RUN_CMD $SLAVE_OPTS"
 }
 
-$RUN_CMD="$RUN_CMD -jnlpUrl $JENKINS_URL/$COMPUTER_URL/slave-agent.jnlp"
+if (!$INBOUND_ARGS_B64) {
+   $RUN_CMD="$RUN_CMD -jnlpUrl $JENKINS_URL/$COMPUTER_URL/slave-agent.jnlp"
+}
 
 if ($COMPUTER_SECRET) {
    $RUN_CMD="$RUN_CMD -secret $COMPUTER_SECRET"
@@ -97,23 +107,19 @@ if ($COMPUTER_SECRET) {
 cd $JENKINS_HOME
 
 try {
-   Write-Host "Enabling TLS 1.2 ...";
-   $tls12RegBase = "HKLM:\\\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\SCHANNEL\\Protocols\\TLS 1.2";
-   if (Test-Path $tls12RegBase) { throw ("'{0}' already exists!" -f $tls12RegBase) }
-   New-Item -Path ("{0}/Client" -f $tls12RegBase) -Force;
-   New-Item -Path ("{0}/Server" -f $tls12RegBase) -Force;
-   New-ItemProperty -Path ("{0}/Client" -f $tls12RegBase) -Name "DisabledByDefault" -PropertyType DWORD -Value 0 -Force;
-   New-ItemProperty -Path ("{0}/Client" -f $tls12RegBase) -Name "Enabled" -PropertyType DWORD -Value 1 -Force;
-   New-ItemProperty -Path ("{0}/Server" -f $tls12RegBase) -Name "DisabledByDefault" -PropertyType DWORD -Value 0 -Force;
-   New-ItemProperty -Path ("{0}/Server" -f $tls12RegBase) -Name "Enabled" -PropertyType DWORD -Value 1 -Force;
+   [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
    Write-Output "Invoke-WebRequest -Uri $JENKINS_URL/jnlpJars/slave.jar -Outfile $JENKINS_HOME/slave.jar";
-   Invoke-WebRequest -Uri "$JENKINS_URL/jnlpJars/slave.jar" -Outfile "$JENKINS_HOME/slave.jar";
+   Invoke-WebRequest -UseBasicParsing -Uri "$JENKINS_URL/jnlpJars/slave.jar" -Outfile "$JENKINS_HOME/slave.jar";
 
    Write-Output "$RUN_CMD";
    Invoke-Expression "$RUN_CMD";
 
-   exit 0
+   exit $LASTEXITCODE
 } catch {
    exit 1
+} finally {
+   if ($inboundArgsFile) {
+      Remove-Item -LiteralPath $inboundArgsFile
+   }
 }
