@@ -5,12 +5,14 @@ package com.github.kostyasha.yad.commons;
  */
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.github.kostyasha.yad.credentials.DockerRegistryAuthCredentials;
 import com.github.kostyasha.yad.utils.CredentialsListBoxModel;
 import hudson.Extension;
 import hudson.model.Describable;
+import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.security.ACL;
@@ -20,7 +22,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Map docke registry host - credentialsId for UI configuration.
@@ -58,8 +59,10 @@ public class DockerRegistryCredential implements Describable<DockerRegistryCrede
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
             return new CredentialsListBoxModel()
                     .includeEmptyValue()
-                    .includeMatchingAs(ACL.SYSTEM2, context, DockerRegistryAuthCredentials.class,
-                            Collections.emptyList(), CredentialsMatchers.always());
+                    .includeMatchingAs(ACL.SYSTEM2, context, StandardCredentials.class,
+                            Collections.emptyList(), CredentialsMatchers.anyOf(
+                                    CredentialsMatchers.instanceOf(DockerRegistryAuthCredentials.class),
+                                    AuthenticationTokens.matcher(DockerRegistryToken.class)));
         }
 
         @Nonnull

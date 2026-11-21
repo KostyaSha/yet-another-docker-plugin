@@ -2,7 +2,6 @@ package com.github.kostyasha.yad.commons;
 
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.github.kostyasha.yad.NoStapler;
 import com.github.kostyasha.yad.connector.YADockerConnector;
@@ -11,11 +10,14 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClie
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.PullImageCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.DockerClientException;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotFoundException;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AuthConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Image;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.core.NameParser;
 import hudson.Extension;
 import hudson.model.Describable;
+import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.model.TaskListener;
@@ -35,7 +37,9 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
@@ -140,15 +144,23 @@ public class DockerPullImage implements Describable<DockerPullImage> {
             long startTime = System.currentTimeMillis();
             final PullImageCmd pullImageCmd = client.pullImageCmd(imageName);
 
-//            final AuthConfig authConfig = pullImageCmd.getAuthConfig();
-            for (DockerRegistryCredential cred : getRegistriesCreds()) {
-                // hostname requirements?
-                Credentials credentials = lookupSystemCredentials(cred.getCredentialsId());
-//                final String registryAddr = cred.getRegistryAddr();
-                if (credentials instanceof DockerRegistryAuthCredentials) {
-                    final DockerRegistryAuthCredentials authCredentials = (DockerRegistryAuthCredentials) credentials;
-                    // TODO update docker-java for multiple entries
+            for (DockerRegistryCredential mapping : getRegistriesCreds()) {
+                if (StringUtils.isBlank(mapping.getCredentialsId())) {
+                    continue;
+                }
+                Credentials credentials = lookupSystemCredentials(mapping.getCredentialsId());
+                if (credentials instanceof DockerRegistryAuthCredentials authCredentials) {
                     pullImageCmd.withAuthConfig(authCredentials.getAuthConfig());
+                } else if (credentials != null && StringUtils.isNotBlank(mapping.getRegistryAddr())) {
+                    NameParser.ReposTag image = NameParser.parseRepositoryTag(imageName);
+                    String registryHost = NameParser.resolveRepositoryName(image.repos).hostname;
+                    if (registryHost.equalsIgnoreCase(mapping.getRegistryAddr().trim())) {
+                        DockerRegistryToken token = AuthenticationTokens.convert(DockerRegistryToken.class, credentials);
+                        if (token == null) {
+                            throw new IOException("Could not obtain a Docker registry token for " + registryHost);
+                        }
+                        pullImageCmd.withAuthConfig(toAuthConfig(token, registryHost));
+                    }
                 }
             }
             // Deprecated
@@ -186,6 +198,24 @@ public class DockerPullImage implements Describable<DockerPullImage> {
             LOG.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
             llog.println(String.format("Finished pulling image '%s', took %d ms", imageName, pullTime));
         }
+    }
+
+    private static AuthConfig toAuthConfig(DockerRegistryToken token, String registryHost) throws IOException {
+        String decoded;
+        try {
+            decoded = new String(Base64.getDecoder().decode(token.getToken()), StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            throw new IOException("Invalid Docker registry token for " + registryHost);
+        }
+        int separator = decoded.indexOf(':');
+        if (separator <= 0) {
+            throw new IOException("Invalid Docker registry token for " + registryHost);
+        }
+        return new AuthConfig()
+                .withRegistryAddress(registryHost)
+                .withEmail(token.getEmail())
+                .withUsername(decoded.substring(0, separator))
+                .withPassword(decoded.substring(separator + 1));
     }
 
     protected boolean shouldPullImage(DockerClient client, String imageName) {
