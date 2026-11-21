@@ -67,6 +67,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     protected String jenkinsUrl = "";
 
+    private String agentJarPath;
+
     protected boolean noCertificateCheck = false;
 
     protected boolean reconnect = false;
@@ -101,6 +103,16 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     @Nonnull
     public String getJenkinsUrl(String rootUrl) {
         return isNotEmpty(jenkinsUrl) ? jenkinsUrl : trimToEmpty(rootUrl);
+    }
+
+    @Nonnull
+    public String getAgentJarPath() {
+        return trimToEmpty(agentJarPath);
+    }
+
+    @DataBoundSetter
+    public void setAgentJarPath(String agentJarPath) {
+        this.agentJarPath = trimToEmpty(agentJarPath);
     }
 
     @DataBoundSetter
@@ -199,7 +211,9 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         // TODO implement PID 1 replacement
 
         try {
-            String inboundArgs = InboundAgentArguments.forAlternateUrl(launcher.getJenkinsUrl(),
+            String localJar = launcher.getAgentJarPath();
+            boolean useLocalAgentJar = !localJar.isEmpty();
+            String inboundArgs = InboundAgentArguments.forLaunch(launcher.getJenkinsUrl(), rootUrl, localJar,
                     dockerComputer, getLauncher());
             String startCmd = null;
             ExecCreateCmdResponse response = null;
@@ -210,6 +224,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                         "@\"\n" +
                                 "`$JENKINS_URL='" + rootUrl + WNL +
                                 "`$INBOUND_ARGS_B64='" + inboundArgs + WNL +
+                                "`$USE_LOCAL_AGENT_JAR='" + useLocalAgentJar + WNL +
                                 "`$JENKINS_USER='" + getUser() + WNL +
                                 "`$JENKINS_HOME='" + dockerSlaveTemplate.getRemoteFs() + WNL +
                                 "`$COMPUTER_URL='" + dockerComputer.getUrl() + WNL +
@@ -233,6 +248,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                         "cat << EOF > /tmp/config.sh.tmp && cd /tmp && mv config.sh.tmp config.sh\n" +
                                 "JENKINS_URL=\"" + rootUrl + NL +
                                 "INBOUND_ARGS_B64=\"" + inboundArgs + NL +
+                                "USE_LOCAL_AGENT_JAR=\"" + useLocalAgentJar + NL +
                                 "JENKINS_USER=\"" + getUser() + NL +
                                 "JENKINS_HOME=\"" + dockerSlaveTemplate.getRemoteFs() + NL +
                                 "COMPUTER_URL=\"" + dockerComputer.getUrl() + NL +
@@ -345,6 +361,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         cloneJNLPlauncher.setSlaveOpts(getSlaveOpts());
         cloneJNLPlauncher.setTunnel(getTunnel());
         cloneJNLPlauncher.setJenkinsUrl(getJenkinsUrl());
+        cloneJNLPlauncher.setAgentJarPath(getAgentJarPath());
         cloneJNLPlauncher.setNoCertificateCheck(isNoCertificateCheck());
         cloneJNLPlauncher.setNoReconnect(isNoReconnect());
 

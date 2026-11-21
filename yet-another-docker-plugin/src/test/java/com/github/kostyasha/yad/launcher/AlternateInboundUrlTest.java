@@ -2,6 +2,7 @@ package com.github.kostyasha.yad.launcher;
 
 import hudson.Functions;
 import hudson.TcpSlaveAgentListener;
+import hudson.model.Slave;
 import hudson.slaves.DumbSlave;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
@@ -21,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
@@ -33,35 +35,62 @@ public class AlternateInboundUrlTest {
     @Test
     public void shellAgentConnectsThroughAlternateUrlAndTunnel() throws Exception {
         assumeFalse(Functions.isWindows());
-        connectThroughAlternateUrl(false);
+        connectAgent(false, true, false);
     }
 
     @Test
     public void powerShellAgentConnectsThroughAlternateUrlAndTunnel() throws Exception {
         assumeTrue("PowerShell is required", Functions.isWindows() || Arrays.stream(System.getenv("PATH").split(File.pathSeparator))
                 .anyMatch(dir -> Files.isExecutable(Path.of(dir, "pwsh"))));
-        connectThroughAlternateUrl(true);
+        connectAgent(true, true, false);
     }
 
-    private void connectThroughAlternateUrl(boolean powerShell) throws Exception {
+    @Test
+    public void shellAgentUsesLocalJarWithAlternateUrl() throws Exception {
+        assumeFalse(Functions.isWindows());
+        connectAgent(false, true, true);
+    }
+
+    @Test
+    public void shellAgentUsesLocalJarWithDefaultUrl() throws Exception {
+        assumeFalse(Functions.isWindows());
+        connectAgent(false, false, true);
+    }
+
+    @Test
+    public void powerShellAgentUsesLocalJar() throws Exception {
+        assumeTrue("PowerShell is required", Functions.isWindows() || Arrays.stream(System.getenv("PATH").split(File.pathSeparator))
+                .anyMatch(dir -> Files.isExecutable(Path.of(dir, "pwsh"))));
+        connectAgent(true, true, true);
+    }
+
+    private void connectAgent(boolean powerShell, boolean alternateUrl, boolean localJar) throws Exception {
         String reachable = j.getURL().toExternalForm();
-        JenkinsLocationConfiguration.get().setUrl("http://127.0.0.1:0/unreachable/");
+        JenkinsLocationConfiguration.get().setUrl(alternateUrl ? "http://127.0.0.1:0/unreachable/" : reachable);
         j.jenkins.setSlaveAgentPort(0);
         DockerComputerJNLPLauncher docker = new DockerComputerJNLPLauncher();
-        docker.setJenkinsUrl(reachable);
+        docker.setJenkinsUrl(alternateUrl ? reachable : "");
         docker.setTunnel("127.0.0.1:" + j.jenkins.getTcpSlaveAgentListener().getPort());
         JNLPLauncher inbound = docker.getLauncher();
 
         Path root = temp.newFolder("agent with spaces").toPath();
-        DumbSlave agent = new DumbSlave("alternate url agent", root.toString(), inbound);
+        if (localJar) {
+            Path jar = root.resolve("preinstalled agent's $runtime.jar");
+            Files.write(jar, new Slave.JnlpJar("slave.jar").readFully());
+            docker.setAgentJarPath(jar.toString());
+        }
+        DumbSlave agent = new DumbSlave("inbound agent", root.toString(), inbound);
         j.jenkins.addNode(agent);
         SlaveComputer computer = (SlaveComputer) agent.toComputer();
         assertNotNull(computer);
-        assertEquals("", InboundAgentArguments.forAlternateUrl("", computer, inbound));
+        String rootUrl = docker.getJenkinsUrl(j.jenkins.getRootUrl());
+        assertEquals("", InboundAgentArguments.forLaunch("", rootUrl, "", computer, inbound));
 
         Map<String, String> config = new LinkedHashMap<>();
-        config.put("JENKINS_URL", docker.getJenkinsUrl(j.jenkins.getRootUrl()));
-        config.put("INBOUND_ARGS_B64", InboundAgentArguments.forAlternateUrl(docker.getJenkinsUrl(), computer, inbound));
+        config.put("JENKINS_URL", rootUrl);
+        config.put("INBOUND_ARGS_B64", InboundAgentArguments.forLaunch(docker.getJenkinsUrl(), rootUrl,
+                docker.getAgentJarPath(), computer, inbound));
+        config.put("USE_LOCAL_AGENT_JAR", Boolean.toString(localJar));
         config.put("COMPUTER_URL", computer.getUrl());
         config.put("COMPUTER_SECRET", computer.getJnlpMac());
         config.put("JENKINS_HOME", root.toString());
@@ -81,8 +110,13 @@ public class AlternateInboundUrlTest {
                 while (computer.isOffline() && process.isAlive() && System.nanoTime() < deadline) {
                     Thread.sleep(100);
                 }
-                assertTrue("Remoting did not connect through the alternate URL and tunnel", computer.isOnline());
+                assertTrue("Remoting did not connect through the configured URL and tunnel", computer.isOnline());
                 assertTrue("Remoting did not use the agent work directory", Files.isDirectory(root.resolve("remoting")));
+                if (localJar) {
+                    assertFalse("The bootstrap downloaded slave.jar", Files.exists(root.resolve("slave.jar")));
+                } else {
+                    assertTrue("The bootstrap did not download slave.jar", Files.isRegularFile(root.resolve("slave.jar")));
+                }
             } finally {
                 process.descendants().forEach(ProcessHandle::destroyForcibly);
                 process.destroyForcibly().waitFor(10, TimeUnit.SECONDS);

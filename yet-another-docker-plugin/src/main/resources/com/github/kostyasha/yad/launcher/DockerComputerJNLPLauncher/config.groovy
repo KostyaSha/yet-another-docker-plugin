@@ -24,6 +24,10 @@ f.entry(title: _("Slave (slave.jar) options"), field: "slaveOpts") {
     f.textbox()
 }
 
+f.entry(title: _("Agent JAR path"), field: "agentJarPath") {
+    f.textbox()
+}
+
 f.entry(title: _("Slave JVM options"), field: "jvmOpts") {
     f.textbox()
 }

@@ -2,6 +2,7 @@ package com.github.kostyasha.yad.launcher;
 
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
+import org.apache.commons.lang3.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -12,24 +13,31 @@ final class InboundAgentArguments {
     private InboundAgentArguments() {}
 
     /**
-     * An explicit URL must be passed directly to Remoting. The JNLP descriptor advertises the
-     * controller's global URL. Encode a Java launcher argument file so paths and node names
-     * survive both shell parsers without interpolation. The secret is supplied separately.
+     * Encode launch arguments so paths and node names survive both shell parsers.
+     * An alternate URL connects directly because the JNLP descriptor advertises the global URL.
      */
-    static String forAlternateUrl(String alternateUrl, SlaveComputer computer, JNLPLauncher launcher) {
-        if (alternateUrl == null || alternateUrl.isBlank()) {
+    static String forLaunch(String alternateUrl, String rootUrl, String agentJarPath,
+                            SlaveComputer computer, JNLPLauncher launcher) {
+        boolean useAlternateUrl = StringUtils.isNotBlank(alternateUrl);
+        if (!useAlternateUrl && agentJarPath.isEmpty()) {
             return "";
         }
-        List<String> args = new ArrayList<>(List.of("-jar", "slave.jar", "-url", alternateUrl,
-                "-name", computer.getName()));
-        if (launcher.getTunnel() != null) {
-            args.add("-tunnel");
-            args.add(launcher.getTunnel());
+
+        List<String> args = new ArrayList<>(List.of("-jar", agentJarPath.isEmpty() ? "slave.jar" : agentJarPath));
+        if (useAlternateUrl) {
+            args.addAll(List.of("-url", alternateUrl, "-name", computer.getName()));
+            if (launcher.getTunnel() != null) {
+                args.addAll(List.of("-tunnel", launcher.getTunnel()));
+            }
+            if (launcher.isWebSocket()) {
+                args.add("-webSocket");
+            }
+            args.addAll(launcher.getWorkDirSettings().toCommandLineArgs(computer));
+        } else {
+            String jnlpUrl = StringUtils.removeEnd(rootUrl, "/") + "/"
+                    + StringUtils.removeEnd(computer.getUrl(), "/") + "/slave-agent.jnlp";
+            args.addAll(List.of("-jnlpUrl", jnlpUrl));
         }
-        if (launcher.isWebSocket()) {
-            args.add("-webSocket");
-        }
-        args.addAll(launcher.getWorkDirSettings().toCommandLineArgs(computer));
 
         StringBuilder file = new StringBuilder();
         for (String arg : args) {
