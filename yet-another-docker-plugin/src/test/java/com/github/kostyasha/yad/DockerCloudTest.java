@@ -107,6 +107,7 @@ public class DockerCloudTest {
             createContainer.setHostname("hostname.local");
             createContainer.setMacAddress("33:44:33:66:66:33");
             createContainer.setMemoryLimit(33333333L);
+            createContainer.setCapAdd("CAP_SYS_PTRACE\nNET_ADMIN");
             createContainer.setPrivileged(false);
             createContainer.setTty(false);
             createContainer.setVolumes(singletonList("ssdf:/sdfsdf/sdf"));

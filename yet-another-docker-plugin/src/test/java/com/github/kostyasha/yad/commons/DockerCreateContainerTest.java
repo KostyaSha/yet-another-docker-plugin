@@ -40,6 +40,31 @@ public class DockerCreateContainerTest {
     }
 
     @Test
+    public void addsSelectedCapabilitiesWithoutEnablingPrivilegedMode() throws Exception {
+        DockerCreateContainer settings = new DockerCreateContainer();
+        settings.setCapAdd(" CAP_SYS_PTRACE\r\n\r\n NET_ADMIN\nSYS_PTRACE ");
+        HostConfig config = hostConfig(settings);
+        ObjectMapper mapper = new ObjectMapper();
+        assertEquals(mapper.readTree("[\"SYS_PTRACE\",\"NET_ADMIN\"]"), mapper.valueToTree(config).get("CapAdd"));
+        assertNull(config.getPrivileged());
+    }
+
+    @Test
+    public void omitsCapabilitiesForOldAndClearedConfigurations() {
+        DockerCreateContainer settings = new DockerCreateContainer();
+        assertNull(hostConfig(settings).getCapAdd());
+        settings.setCapAdd("SYS_PTRACE");
+        settings.setCapAdd(" \r\n ");
+        assertNull(hostConfig(settings).getCapAdd());
+    }
+
+    @Test
+    public void rejectsUnknownCapability() {
+        assertEquals(FormValidation.Kind.ERROR,
+                new DockerCreateContainer.DescriptorImpl().doCheckCapAdd("CAP_UNKNOWN").kind);
+    }
+
+    @Test
     public void passesEachSecurityOptionToHostConfig() {
         DockerCreateContainer settings = new DockerCreateContainer();
         settings.setSecurityOptsString("credentialspec=file://domain_gmsa-group.json\r\n  \r\n no-new-privileges=true ");

@@ -78,6 +78,10 @@ f.advanced(title: _("Create Container settings"), align: "left") {
         f.number(name: "cpuShares", min: "0", step: "1")
     }
 
+    f.entry(title: _("Capabilities to add"), field: "capAdd") {
+        f.textarea()
+    }
+
     f.entry(title: _("Run container privileged"), field: "privileged") {
         f.checkbox()
     }

@@ -7,6 +7,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Bind;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Capability;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Device;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.HostConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Link;
@@ -128,6 +129,9 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
 
     @CheckForNull
     private Boolean privileged;
+
+    @CheckForNull
+    private String capAdd;
 
     @CheckForNull
     private Boolean tty;
@@ -282,6 +286,16 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
     @DataBoundSetter
     public void setPrivileged(Boolean privileged) {
         this.privileged = privileged;
+    }
+
+    @CheckForNull
+    public String getCapAdd() {
+        return capAdd;
+    }
+
+    @DataBoundSetter
+    public void setCapAdd(String capAdd) {
+        this.capAdd = trimToNull(capAdd);
     }
 
     @CheckForNull
@@ -664,6 +678,10 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
             hostConfig.withPrivileged(getPrivileged());
         }
 
+        if (capAdd != null) {
+            hostConfig.withCapAdd(parseCapabilities(capAdd));
+        }
+
         if (getCpuShares() != null && getCpuShares() > 0) {
             hostConfig.withCpuShares(getCpuShares());
         }
@@ -805,6 +823,11 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
     }
 
 
+    private static Capability[] parseCapabilities(String value) {
+        return Splitter.on('\n').trimResults().omitEmptyStrings().splitToList(StringUtils.defaultString(value))
+                .stream().map(Capability::fromValue).distinct().toArray(Capability[]::new);
+    }
+
     private static Map<String, String> parseStorageOpts(String storageOptsString) {
         Map<String, String> options = new LinkedHashMap<>();
         for (String option : Splitter.on('\n').trimResults().omitEmptyStrings()
@@ -929,6 +952,15 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
 
             return FormValidation.ok();
 
+        }
+
+        public FormValidation doCheckCapAdd(@QueryParameter String capAdd) {
+            try {
+                parseCapabilities(capAdd);
+                return FormValidation.ok();
+            } catch (IllegalArgumentException e) {
+                return FormValidation.error(e.getMessage());
+            }
         }
 
         public FormValidation doCheckStorageOptsString(@QueryParameter String storageOptsString) {
