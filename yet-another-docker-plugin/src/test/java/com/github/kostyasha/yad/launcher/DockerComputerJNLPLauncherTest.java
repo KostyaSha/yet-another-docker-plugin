@@ -8,6 +8,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertEquals;
 
 public class DockerComputerJNLPLauncherTest {
     @Rule
@@ -22,6 +23,14 @@ public class DockerComputerJNLPLauncherTest {
                 containsString("<argument>-tunnel</argument><argument>agents.example.test:31067</argument>"));
         assertThat(slaveAgentJnlp("without-tunnel", new DockerComputerJNLPLauncher()),
                 not(containsString("<argument>-tunnel</argument>")));
+    }
+
+    @Test
+    public void preparesLauncherWithAgentJarPath() {
+        DockerComputerJNLPLauncher launcher = new DockerComputerJNLPLauncher();
+        launcher.setAgentJarPath("/opt/jenkins/agent runtime.jar");
+        var prepared = (DockerComputerJNLPLauncher) launcher.getPreparedLauncher(null, null, null);
+        assertEquals("/opt/jenkins/agent runtime.jar", prepared.getAgentJarPath());
     }
 
     private String slaveAgentJnlp(String name, DockerComputerJNLPLauncher launcher) throws Exception {

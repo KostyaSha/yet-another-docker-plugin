@@ -75,14 +75,14 @@ else
     NO_SLAVE_CERT=""
 fi
 
-# download slave jar
-# TODO some caching mechanism with checksums
-if [ -x "$(command -v wget)" ]; then
-   wget $WGET_OPTIONS "${JENKINS_URL}/jnlpJars/slave.jar" -O "slave.jar"
-elif [ -x "$(command -v curl)" ]; then
-    curl $CURL_OPTIONS --remote-name "${JENKINS_URL}/jnlpJars/slave.jar"
-else
-    echo "Error: no wget or curl for fetching slave.jar."
+if [ "${USE_LOCAL_AGENT_JAR:-false}" != "true" ]; then
+    if [ -x "$(command -v wget)" ]; then
+        wget $WGET_OPTIONS "${JENKINS_URL}/jnlpJars/slave.jar" -O "slave.jar"
+    elif [ -x "$(command -v curl)" ]; then
+        curl $CURL_OPTIONS --remote-name "${JENKINS_URL}/jnlpJars/slave.jar"
+    else
+        echo "Error: no wget or curl for fetching slave.jar."
+    fi
 fi
 
 echo "Dumping env"

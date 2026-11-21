@@ -107,10 +107,12 @@ if ($COMPUTER_SECRET) {
 cd $JENKINS_HOME
 
 try {
-   [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+   if ($USE_LOCAL_AGENT_JAR -ne "true") {
+      [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
-   Write-Output "Invoke-WebRequest -Uri $JENKINS_URL/jnlpJars/slave.jar -Outfile $JENKINS_HOME/slave.jar";
-   Invoke-WebRequest -UseBasicParsing -Uri "$JENKINS_URL/jnlpJars/slave.jar" -Outfile "$JENKINS_HOME/slave.jar";
+      Write-Output "Invoke-WebRequest -Uri $JENKINS_URL/jnlpJars/slave.jar -Outfile $JENKINS_HOME/slave.jar";
+      Invoke-WebRequest -UseBasicParsing -Uri "$JENKINS_URL/jnlpJars/slave.jar" -Outfile "$JENKINS_HOME/slave.jar";
+   }
 
    Write-Output "$RUN_CMD";
    Invoke-Expression "$RUN_CMD";
