@@ -67,6 +67,18 @@ public class DockerCloudStartTest {
     }
 
     @Test
+    public void keepsExistingAgentNameByDefault() {
+        assertEquals("docker-cloud-agent-contai", cloud.agentName(template, IMAGE, CONTAINER_ID));
+    }
+
+    @Test
+    public void namesAgentAfterImageRepositoryWithoutRegistryTagOrDigest() {
+        when(template.isIncludeImageInAgentName()).thenReturn(true);
+        assertEquals("docker-cloud-build-agent-agent-contai", cloud.agentName(template,
+                "registry.example.test:5000/team/build-agent:latest@sha256:1234", CONTAINER_ID));
+    }
+
+    @Test
     public void successfulStartKeepsContainer() throws Exception {
         assertEquals(CONTAINER_ID, cloud.runContainer(template));
 

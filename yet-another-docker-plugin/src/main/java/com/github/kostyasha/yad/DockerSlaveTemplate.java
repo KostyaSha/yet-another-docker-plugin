@@ -37,6 +37,7 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
 
     private String remoteFsMapping;
     private int maxCapacity = 10;
+    private boolean includeImageInAgentName;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
     private transient OsType osType;
@@ -120,6 +121,15 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
         this.maxCapacity = maxCapacity;
     }
 
+    public boolean isIncludeImageInAgentName() {
+        return includeImageInAgentName;
+    }
+
+    @DataBoundSetter
+    public void setIncludeImageInAgentName(boolean includeImageInAgentName) {
+        this.includeImageInAgentName = includeImageInAgentName;
+    }
+
     @Nonnull
     public Set<LabelAtom> getLabelSet() {
         return labelSet != null ? labelSet : Collections.emptySet();
@@ -170,6 +180,7 @@ public class DockerSlaveTemplate extends DockerSlaveConfig {
         return new EqualsBuilder()
                 .appendSuper(true)
                 .append(maxCapacity, that.maxCapacity)
+                .append(includeImageInAgentName, that.includeImageInAgentName)
                 .append(remoteFsMapping, that.remoteFsMapping)
                 .isEquals();
     }

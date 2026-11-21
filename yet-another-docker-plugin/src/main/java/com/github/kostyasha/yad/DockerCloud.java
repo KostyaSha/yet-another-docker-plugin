@@ -295,7 +295,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
         String nodeDescription = String.format("Docker Node [%s on %s]", imageId, getDisplayName());
 
-        String slaveName = String.format("%s-%s", getDisplayName(), containerId.substring(0, 12));
+        String slaveName = agentName(template, imageId, containerId);
 
         try {
             if (computerLauncher.waitUp(getDisplayName(), template, ir)) {
@@ -313,6 +313,18 @@ public class DockerCloud extends AbstractCloud implements Serializable {
         final DockerComputerLauncher launcher = computerLauncher.getPreparedLauncher(getDisplayName(), template, ir);
 
         return getDockerSlaveWithRetry(template, id, containerId, nodeDescription, slaveName, launcher);
+    }
+
+    String agentName(DockerSlaveTemplate template, String image, String containerId) {
+        String prefix = getDisplayName();
+        if (template.isIncludeImageInAgentName()) {
+            String imageName = image.substring(image.lastIndexOf('/') + 1).split("[:@]", 2)[0]
+                    .replaceAll("[^A-Za-z0-9_.-]+", "-");
+            if (!imageName.isEmpty()) {
+                prefix += "-" + imageName;
+            }
+        }
+        return prefix + "-" + containerId.substring(0, 12);
     }
 
     private DockerSlave getDockerSlaveWithRetry(DockerSlaveTemplate template, ProvisioningActivity.Id id,
