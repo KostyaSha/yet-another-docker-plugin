@@ -180,6 +180,9 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
     @CheckForNull
     private String user;
 
+    @CheckForNull
+    private List<String> supplementaryGroups;
+
     @DataBoundConstructor
     public DockerCreateContainer() {
     }
@@ -617,6 +620,18 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
         this.user = user;
     }
 
+    @Nonnull
+    public String getSupplementaryGroupsString() {
+        return joinToStr(supplementaryGroups);
+    }
+
+    @DataBoundSetter
+    public void setSupplementaryGroupsString(String supplementaryGroupsString) {
+        List<String> groups = Splitter.on('\n').trimResults().omitEmptyStrings()
+                .splitToList(StringUtils.defaultString(supplementaryGroupsString));
+        supplementaryGroups = groups.isEmpty() ? null : groups;
+    }
+
     /**
      * Fills user specified values
      *
@@ -778,6 +793,10 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
 
         if (StringUtils.isNotBlank(getUser())) {
             containerConfig.withUser(getUser());
+        }
+
+        if (CollectionUtils.isNotEmpty(supplementaryGroups)) {
+            hostConfig.withGroupAdd(supplementaryGroups);
         }
 
         return containerConfig;

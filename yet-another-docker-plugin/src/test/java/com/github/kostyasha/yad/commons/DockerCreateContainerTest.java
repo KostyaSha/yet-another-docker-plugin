@@ -105,6 +105,25 @@ public class DockerCreateContainerTest {
     }
 
     @Test
+    public void serializesSupplementaryGroupsForDocker() throws Exception {
+        DockerCreateContainer settings = new DockerCreateContainer();
+        settings.setSupplementaryGroupsString("  997 \r\n  \r\n video ");
+        ObjectMapper mapper = new ObjectMapper();
+
+        assertEquals(mapper.readTree("[\"997\",\"video\"]"),
+                mapper.valueToTree(hostConfig(settings)).get("GroupAdd"));
+    }
+
+    @Test
+    public void omitsSupplementaryGroupsForOldAndClearedConfigurations() {
+        DockerCreateContainer settings = new DockerCreateContainer();
+        assertNull(hostConfig(settings).getGroupAdd());
+        settings.setSupplementaryGroupsString("997");
+        settings.setSupplementaryGroupsString("  \r\n");
+        assertNull(hostConfig(settings).getGroupAdd());
+    }
+
+    @Test
     public void readOnlyBindsSurviveTrailingSpacesAndWindowsLineEndings() {
         DockerCreateContainer settings = new DockerCreateContainer();
         settings.setVolumesString("/src1:/dst1:ro\n/src2:/dst2:ro \n/src3:/dst3:ro\r\n/src4:/dst4:rw");
