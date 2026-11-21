@@ -19,6 +19,20 @@ import static org.mockito.Mockito.when;
 
 public class DockerCreateContainerTest {
     @Test
+    public void validatesOptionalContainerHostname() {
+        DockerCreateContainer.DescriptorImpl descriptor = new DockerCreateContainer.DescriptorImpl();
+        String label = "a".repeat(63);
+        String longest = String.join(".", label, label, label, "a".repeat(61));
+        for (String valid : new String[]{null, "", "  ", "a", "9-Agent.example.local", label, longest}) {
+            assertEquals(valid, FormValidation.Kind.OK, descriptor.doCheckHostname(valid).kind);
+        }
+        for (String invalid : List.of("foo_bar-invalid", "-agent", "agent-", ".agent", "agent.", "a..b",
+                " agent", "agent ", "a b", "é", label + "a", longest + "a")) {
+            assertEquals(invalid, FormValidation.Kind.ERROR, descriptor.doCheckHostname(invalid).kind);
+        }
+    }
+
+    @Test
     public void setsQuarterCpuLimit() {
         assertEquals(Long.valueOf(250_000_000L), nanoCpus("0.25"));
     }
