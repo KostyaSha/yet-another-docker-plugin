@@ -1,0 +1,34 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout">
+    <l:layout title="Docker agents">
+        <l:main-panel>
+            <h1>Docker agents</h1>
+            <table class="jenkins-table">
+                <thead>
+                    <tr>
+                        <th>Agent</th>
+                        <th>Cloud</th>
+                        <th>Container ID</th>
+                        <th>Image</th>
+                        <th>Docker endpoint</th>
+                        <th>Worker name</th>
+                        <th>Worker ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <j:forEach var="agent" items="${it.agents}">
+                        <tr>
+                            <td>${agent.name}</td>
+                            <td>${agent.cloud}</td>
+                            <td>${agent.containerId}</td>
+                            <td>${agent.image}</td>
+                            <td>${agent.dockerEndpoint}</td>
+                            <td>${agent.workerName}</td>
+                            <td>${agent.workerId}</td>
+                        </tr>
+                    </j:forEach>
+                </tbody>
+            </table>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>
