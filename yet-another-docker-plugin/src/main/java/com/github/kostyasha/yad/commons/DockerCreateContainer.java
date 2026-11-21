@@ -143,6 +143,9 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
     private String storageOptsString;
 
     @CheckForNull
+    private String tmpfsMounts;
+
+    @CheckForNull
     private String networkMode;
 
     private List<String> connectNetworks;
@@ -448,6 +451,16 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
         this.storageOptsString = trimToNull(storageOptsString);
     }
 
+    @CheckForNull
+    public String getTmpfsMounts() {
+        return tmpfsMounts;
+    }
+
+    @DataBoundSetter
+    public void setTmpfsMounts(String tmpfsMounts) {
+        this.tmpfsMounts = trimToNull(tmpfsMounts);
+    }
+
     // extrahosts
     @CheckForNull
     public List<String> getExtraHosts() {
@@ -690,6 +703,10 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
             hostConfig.withBinds(binds.toArray(new Bind[0]));
         }
 
+        if (nonNull(tmpfsMounts)) {
+            hostConfig.withTmpFs(parseTmpfsMounts(tmpfsMounts));
+        }
+
         if (CollectionUtils.isNotEmpty(getVolumesFrom())) {
             ArrayList<VolumesFrom> volFrom = new ArrayList<>();
             for (String volFromStr : getVolumesFrom()) {
@@ -781,6 +798,20 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
             options.put(key, value);
         }
         return options;
+    }
+
+    private static Map<String, String> parseTmpfsMounts(String tmpfsMounts) {
+        Map<String, String> mounts = new LinkedHashMap<>();
+        for (String mount : Splitter.on('\n').trimResults().omitEmptyStrings()
+                .split(StringUtils.defaultString(tmpfsMounts))) {
+            String path = StringUtils.substringBefore(mount, ":").trim();
+            if (!path.startsWith("/")) {
+                throw new IllegalArgumentException("Enter an absolute container path for each tmpfs mount.");
+            }
+
+            mounts.put(path, StringUtils.substringAfter(mount, ":").trim());
+        }
+        return mounts;
     }
 
     private static Bind parseBind(String[] fields) {
@@ -875,6 +906,15 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
         public FormValidation doCheckStorageOptsString(@QueryParameter String storageOptsString) {
             try {
                 parseStorageOpts(storageOptsString);
+                return FormValidation.ok();
+            } catch (IllegalArgumentException e) {
+                return FormValidation.error(e.getMessage());
+            }
+        }
+
+        public FormValidation doCheckTmpfsMounts(@QueryParameter String tmpfsMounts) {
+            try {
+                parseTmpfsMounts(tmpfsMounts);
                 return FormValidation.ok();
             } catch (IllegalArgumentException e) {
                 return FormValidation.error(e.getMessage());

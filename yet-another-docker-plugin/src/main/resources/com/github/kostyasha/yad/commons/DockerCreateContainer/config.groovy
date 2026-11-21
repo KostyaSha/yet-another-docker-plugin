@@ -42,6 +42,10 @@ f.advanced(title: _("Create Container settings"), align: "left") {
         f.textarea()
     }
 
+    f.entry(title: _("Tmpfs mounts"), field: "tmpfsMounts") {
+        f.textarea()
+    }
+
     f.entry(title: _("Storage options"), field: "storageOptsString") {
         f.textarea()
     }

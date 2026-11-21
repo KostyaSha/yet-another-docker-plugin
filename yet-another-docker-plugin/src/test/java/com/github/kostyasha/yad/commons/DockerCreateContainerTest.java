@@ -1,5 +1,6 @@
 package com.github.kostyasha.yad.commons;
 
+import com.github.kostyasha.yad_docker_java.com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.AccessMode;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Bind;
@@ -74,6 +75,32 @@ public class DockerCreateContainerTest {
     public void rejectsStorageOptionsWithoutAnEqualsSign() {
         DockerCreateContainer settings = new DockerCreateContainer();
         settings.setStorageOptsString("size=50GB\ninvalid");
+        hostConfig(settings);
+    }
+
+    @Test
+    public void serializesTmpfsMountsForDocker() throws Exception {
+        DockerCreateContainer settings = new DockerCreateContainer();
+        settings.setTmpfsMounts("/run\r\n  \r\n /run/lock:size=64m,mode=1777 ");
+        ObjectMapper mapper = new ObjectMapper();
+
+        assertEquals(mapper.readTree("{\"/run\":\"\",\"/run/lock\":\"size=64m,mode=1777\"}"),
+                mapper.valueToTree(hostConfig(settings)).get("Tmpfs"));
+    }
+
+    @Test
+    public void omitsTmpfsMountsForOldAndClearedConfigurations() {
+        DockerCreateContainer settings = new DockerCreateContainer();
+        assertNull(hostConfig(settings).getTmpFs());
+        settings.setTmpfsMounts("/run");
+        settings.setTmpfsMounts("  \r\n");
+        assertNull(hostConfig(settings).getTmpFs());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void rejectsRelativeTmpfsMountPaths() {
+        DockerCreateContainer settings = new DockerCreateContainer();
+        settings.setTmpfsMounts("run:size=64m");
         hostConfig(settings);
     }
 
