@@ -3,6 +3,7 @@ package com.github.kostyasha.yad;
 import com.github.kostyasha.yad.action.DockerTerminateCmdAction;
 import com.github.kostyasha.yad.queue.FlyweightCauseOfBlockage;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.DockerClient;
+import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.kostyasha.yad_docker_java.com.google.common.base.MoreObjects;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -59,6 +60,8 @@ public class DockerSlave extends AbstractCloudSlave implements TrackedItem {
     @CheckForNull
     private final String cloudId;
 
+    private DockerAgentBuildAction.Agent buildMetadata;
+
     private String displayName;
 
     protected ProvisioningActivity.Id provisioningId;
@@ -86,6 +89,23 @@ public class DockerSlave extends AbstractCloudSlave implements TrackedItem {
 
     public String getCloudId() {
         return cloudId;
+    }
+
+    void captureBuildMetadata(String endpoint, InspectContainerResponse inspect) {
+        InspectContainerResponse.Node worker = inspect.getNode();
+        buildMetadata = new DockerAgentBuildAction.Agent(getNodeName(), cloudId, containerId,
+                dockerSlaveTemplate.getDockerContainerLifecycle().getImage(), endpoint,
+                worker == null ? null : worker.getName(), worker == null ? null : worker.getId());
+    }
+
+    DockerAgentBuildAction.Agent getBuildMetadata() {
+        if (buildMetadata != null) {
+            return buildMetadata;
+        }
+        Cloud cloud = cloudId == null ? null : Jenkins.get().getCloud(cloudId);
+        String endpoint = cloud instanceof DockerCloud dockerCloud ? dockerCloud.getConnector().getServerUrl() : null;
+        return new DockerAgentBuildAction.Agent(getNodeName(), cloudId, containerId,
+                dockerSlaveTemplate.getDockerContainerLifecycle().getImage(), endpoint, null, null);
     }
 
     public DockerSlaveTemplate getDockerSlaveTemplate() {

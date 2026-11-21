@@ -312,7 +312,7 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
         final DockerComputerLauncher launcher = computerLauncher.getPreparedLauncher(getDisplayName(), template, ir);
 
-        return getDockerSlaveWithRetry(template, id, containerId, nodeDescription, slaveName, launcher);
+        return getDockerSlaveWithRetry(template, id, containerId, nodeDescription, slaveName, launcher, ir);
     }
 
     String agentName(DockerSlaveTemplate template, String image, String containerId) {
@@ -329,12 +329,15 @@ public class DockerCloud extends AbstractCloud implements Serializable {
 
     private DockerSlave getDockerSlaveWithRetry(DockerSlaveTemplate template, ProvisioningActivity.Id id,
                                                 String containerId, String nodeDescription, String slaveName,
-                                                DockerComputerLauncher launcher)
+                                                DockerComputerLauncher launcher, InspectContainerResponse inspect)
             throws IOException, Descriptor.FormException, InterruptedException {
         int retries = 6;
         while (retries >= 0) {
             try {
-                return new DockerSlave(slaveName, nodeDescription, launcher, containerId, template, getDisplayName(), id);
+                DockerSlave agent = new DockerSlave(slaveName, nodeDescription, launcher, containerId,
+                        template, getDisplayName(), id);
+                agent.captureBuildMetadata(getConnector().getServerUrl(), inspect);
+                return agent;
             } catch (IOException t) {
                 if (retries <= 0) {
                     throw t;
