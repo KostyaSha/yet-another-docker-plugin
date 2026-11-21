@@ -922,6 +922,24 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
 
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerCreateContainer> {
+        private static final Pattern HOSTNAME_LABEL = Pattern.compile("[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?");
+
+        public FormValidation doCheckHostname(@QueryParameter String value) {
+            if (StringUtils.isBlank(value)) {
+                return FormValidation.ok();
+            }
+            if (value.length() > 253) {
+                return FormValidation.error("Enter a hostname of at most 253 characters.");
+            }
+            for (String label : value.split("\\.", -1)) {
+                if (!HOSTNAME_LABEL.matcher(label).matches()) {
+                    return FormValidation.error("Each dot-separated part of the hostname must contain 1–63 ASCII "
+                            + "letters, digits or hyphens and begin and end with a letter or digit.");
+                }
+            }
+            return FormValidation.ok();
+        }
+
 
         @CheckReturnValue
         public FormValidation doCheckVolumesString(@QueryParameter String volumesString) {
