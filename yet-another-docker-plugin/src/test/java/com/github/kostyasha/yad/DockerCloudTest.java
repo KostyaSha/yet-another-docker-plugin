@@ -15,6 +15,7 @@ import com.github.kostyasha.yad.strategy.DockerOnceRetentionStrategy;
 import hudson.model.Node;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
 import org.hamcrest.Matcher;
+import org.htmlunit.html.HtmlCheckBoxInput;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -265,6 +266,20 @@ public class DockerCloudTest {
         DockerCloud restored = (DockerCloud) xml.fromXML(xml.toXML(saved));
         assertThat(restored.getTemplates().get(0).getDockerContainerLifecycle()
                 .getCreateContainer().getSupplementaryGroupsString(), is("997\nvideo"));
+    }
+
+    @Test
+    public void persistsImageBasedAgentNaming() throws Exception {
+        try (JenkinsRule.WebClient client = j.createWebClient()) {
+            var form = client.goTo(clouds.after.getUrl() + "configure").getFormByName("config");
+            HtmlCheckBoxInput checkbox = form.getInputByName("_.includeImageInAgentName");
+            checkbox.setChecked(true);
+            j.submit(form);
+        }
+        DockerCloud saved = (DockerCloud) j.jenkins.getCloud(clouds.after.name);
+        XStream2 xml = new XStream2();
+        DockerCloud restored = (DockerCloud) xml.fromXML(xml.toXML(saved));
+        assertThat(restored.getTemplates().get(0).isIncludeImageInAgentName(), is(true));
     }
 
     @Test
