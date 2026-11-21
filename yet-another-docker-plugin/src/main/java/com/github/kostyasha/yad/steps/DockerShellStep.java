@@ -70,8 +70,10 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
 
     private DockerContainerLifecycle containerLifecycle = new DockerContainerLifecycle();
 
+    private static final String DEFAULT_EXECUTOR = "exec /tmp/script.sh";
+
     private String shellScript = "";
-    private String executorScript = "exec /tmp/script.sh";
+    private String executorScript = DEFAULT_EXECUTOR;
 
     @DataBoundConstructor
     public DockerShellStep() {
@@ -152,10 +154,9 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             addRunVars(run, listener, containerConfig);
             insertLabels(containerConfig, run);
 
-            if (nonNull(executorScript)) {
-                containerConfig.withUser("root");
-                containerConfig.withEntrypoint("/bin/sh", "/tmp/executor.sh");
-                containerConfig.withCmd("");
+            ScriptPlatform platform = ScriptPlatform.forImage(client.inspectImageCmd(imageId).exec().getOs());
+            if (executorScript != null) {
+                platform.configureExecutor(containerConfig);
             }
 
             containerConfig
@@ -171,60 +172,14 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             llog.println("Created container " + cId + ", for " + run.getDisplayName());
             LOG.debug("Created container {}, for {}", cId, run.getDisplayName());
 
-            final InspectContainerResponse inspect = client.inspectContainerCmd(cId).exec();
-            llog.println("Starting container with:");
-            llog.print("CMD:");
-            final String[] cmd = inspect.getConfig().getCmd();
-            if (nonNull(cmd)) {
-                for (String command : cmd) {
-                    llog.print("'" + command + "',");
-                }
-            } else {
-                llog.print("''");
-            }
-            llog.println("\nEntrypoint: ");
-            final String[] entrypoint = inspect.getConfig().getEntrypoint();
-            if (nonNull(entrypoint)) {
-                for (String entry : entrypoint) {
-                    llog.print("'" + entry + "',");
-                }
-            } else {
-                llog.print("''");
-            }
-            llog.println();
-
-            // upload archive
-            try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                 TarArchiveOutputStream tarOut = new TarArchiveOutputStream(byteArrayOutputStream)) {
-                // script.sh tar entry
-                if (nonNull(shellScript)) {
-                    TarArchiveEntry entry = new TarArchiveEntry("script.sh");
-                    entry.setSize(shellScript.length());
-                    entry.setMode(0777);
-                    tarOut.putArchiveEntry(entry);
-                    tarOut.write(shellScript.getBytes("UTF-8"));
-                    tarOut.closeArchiveEntry();
-                }
-
-                if (nonNull(executorScript)) {
-                    // executor.sh tar entry
-                    TarArchiveEntry entry2 = new TarArchiveEntry("executor.sh");
-                    entry2.setSize(executorScript.length());
-                    entry2.setMode(0777);
-                    tarOut.putArchiveEntry(entry2);
-                    tarOut.write(executorScript.getBytes("UTF-8"));
-                    tarOut.closeArchiveEntry();
-                }
-
-                tarOut.close();
-                try (InputStream is = new ByteArrayInputStream(byteArrayOutputStream.toByteArray())) {
-                    client.copyArchiveToContainerCmd(cId).withTarInputStream(is)
-                            .withRemotePath("/tmp")
-                            .exec();
-                }
-            }
-
             try {
+                logCommand(client.inspectContainerCmd(cId).exec(), llog);
+                if (shellScript != null || executorScript != null) {
+                    try (InputStream scripts = platform.archive(shellScript, executorScript)) {
+                        client.copyArchiveToContainerCmd(cId).withTarInputStream(scripts)
+                                .withRemotePath(platform.directory).exec();
+                    }
+                }
                 createContainer.connectNetworks(client, cId);
                 // start cmd
                 StartContainerCmd startCommand = client.startContainerCmd(cId);
@@ -273,6 +228,88 @@ public class DockerShellStep extends Builder implements SimpleBuildStep {
             LOG.error("", ex);
             llog.println("failed to start cmd");
             throw new IOException(ex);
+        }
+    }
+
+    private static void logCommand(InspectContainerResponse inspect, PrintStream llog) {
+        llog.println("Starting container with:");
+        llog.print("CMD:");
+        final String[] cmd = inspect.getConfig().getCmd();
+        if (nonNull(cmd)) {
+            for (String command : cmd) {
+                llog.print("'" + command + "',");
+            }
+        } else {
+            llog.print("''");
+        }
+        llog.println("\nEntrypoint: ");
+        final String[] entrypoint = inspect.getConfig().getEntrypoint();
+        if (nonNull(entrypoint)) {
+            for (String entry : entrypoint) {
+                llog.print("'" + entry + "',");
+            }
+        } else {
+            llog.print("''");
+        }
+        llog.println();
+    }
+
+    enum ScriptPlatform {
+        UNIX("/tmp", "script.sh", "executor.sh"),
+        WINDOWS("C:\\", "yad-shell/script.cmd", "yad-shell/executor.cmd");
+
+        final String directory;
+        private final String scriptName;
+        private final String executorName;
+
+        ScriptPlatform(String directory, String scriptName, String executorName) {
+            this.directory = directory;
+            this.scriptName = scriptName;
+            this.executorName = executorName;
+        }
+
+        static ScriptPlatform forImage(String os) {
+            return "windows".equalsIgnoreCase(os) ? WINDOWS : UNIX;
+        }
+
+        void configureExecutor(CreateContainerCmd cmd) {
+            if (this == WINDOWS) {
+                cmd.withEntrypoint("cmd.exe", "/D", "/C", directory + executorName.replace('/', '\\'));
+                cmd.withCmd(new String[0]);
+            } else {
+                cmd.withUser("root");
+                cmd.withEntrypoint("/bin/sh", directory + "/" + executorName);
+                cmd.withCmd("");
+            }
+        }
+
+        InputStream archive(String script, String executor) throws IOException {
+            if (this == WINDOWS && DEFAULT_EXECUTOR.equals(executor)) {
+                executor = "@call \"%~dp0script.cmd\"\n@exit /b %ERRORLEVEL%";
+            }
+            try (ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                 TarArchiveOutputStream tar = new TarArchiveOutputStream(buffer)) {
+                writeScript(tar, scriptName, script);
+                writeScript(tar, executorName, executor);
+                tar.finish();
+                return new ByteArrayInputStream(buffer.toByteArray());
+            }
+        }
+
+        private void writeScript(TarArchiveOutputStream tar, String name, String content) throws IOException {
+            if (content == null) {
+                return;
+            }
+            if (this == WINDOWS) {
+                content = content.replace("\r\n", "\n").replace("\n", "\r\n");
+            }
+            byte[] bytes = content.getBytes(UTF_8);
+            TarArchiveEntry entry = new TarArchiveEntry(name);
+            entry.setMode(0777);
+            entry.setSize(bytes.length);
+            tar.putArchiveEntry(entry);
+            tar.write(bytes);
+            tar.closeArchiveEntry();
         }
     }
 
