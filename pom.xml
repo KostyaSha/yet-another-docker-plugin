@@ -11,7 +11,7 @@
 
     <groupId>com.github.kostyasha.yet-another-docker</groupId>
     <artifactId>yet-another-docker-parent</artifactId>
-    <version>0.4.0</version>
+    <version>0.4.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Yet Another Docker Plugin Parent</name>
