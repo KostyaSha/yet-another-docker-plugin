@@ -25,7 +25,7 @@ public final class BindUtils {
     }
 
     /**
-     * Helper for converting List<String> -> UI String
+     * Joins a {@code List<String>} into a newline-delimited string for the UI.
      */
     @Nonnull
     public static String joinToStr(List<String> joinList) {
