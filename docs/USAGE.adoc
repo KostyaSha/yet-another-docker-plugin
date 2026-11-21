@@ -12,6 +12,34 @@
 == Freestyle Job
  - Set checkbox for `Restrict where this project can be run` and specify label that you configured in `Cloud Configuration`
 
+== Declarative Pipeline
+
+Set the Docker cloud template's label to `docker-node` and use that label in your `Jenkinsfile`.
+When the build needs an executor and no matching agent is available, Jenkins can ask the cloud
+to start an agent from the matching template.
+
+[source,groovy]
+----
+pipeline {
+    agent { label 'docker-node' }
+    stages {
+        stage('Build') {
+            steps {
+                echo "Running on ${env.NODE_NAME}"
+            }
+        }
+    }
+}
+----
+
+The equivalent `agent { node { label 'docker-node' } }` form also accepts options such as
+`customWorkspace`. See the https://www.jenkins.io/doc/book/pipeline/syntax/#agent[Jenkins agent reference].
+
+If the build stays queued, check that the template label matches the Jenkinsfile and that the
+cloud and template have capacity. In the Jenkins system log, look for `Asked to provision load`
+with the requested label. If provisioning started, check Cloud Statistics for the attempt and
+the agent launch log for connection errors.
+
 == Matrix-project
 
 === Nuances
