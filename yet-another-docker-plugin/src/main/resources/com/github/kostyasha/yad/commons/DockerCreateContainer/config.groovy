@@ -30,6 +30,10 @@ f.advanced(title: _("Create Container settings"), align: "left") {
         f.textbox()
     }
 
+    f.entry(title: _("Supplementary groups"), field: "supplementaryGroupsString") {
+        f.textarea()
+    }
+
     f.entry(title: _("DNS"), field: "dnsString") {
         f.textbox()
     }
