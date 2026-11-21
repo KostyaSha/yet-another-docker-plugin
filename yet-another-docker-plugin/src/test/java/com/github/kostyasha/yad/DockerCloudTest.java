@@ -225,6 +225,20 @@ public class DockerCloudTest {
     }
 
     @Test
+    public void persistsStorageOptions() throws Exception {
+        try (JenkinsRule.WebClient client = j.createWebClient()) {
+            var form = client.goTo(clouds.after.getUrl() + "configure").getFormByName("config");
+            form.getTextAreaByName("_.storageOptsString").setText("size=50GB");
+            j.submit(form);
+        }
+        DockerCloud saved = (DockerCloud) j.jenkins.getCloud(clouds.after.name);
+        XStream2 xml = new XStream2();
+        DockerCloud restored = (DockerCloud) xml.fromXML(xml.toXML(saved));
+        assertThat(restored.getTemplates().get(0).getDockerContainerLifecycle()
+                .getCreateContainer().getStorageOptsString(), is("size=50GB"));
+    }
+
+    @Test
     public void stopContainer() {
         assertThatConfig(clouds.getLifecycleAfter().getStopContainer(),
                 equalTo(clouds.getLifecycleBefore().getStopContainer()));

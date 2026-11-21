@@ -50,6 +50,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -137,6 +138,9 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
 
     @CheckForNull
     private List<String> securityOpts;
+
+    @CheckForNull
+    private String storageOptsString;
 
     @CheckForNull
     private String networkMode;
@@ -432,6 +436,16 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
     public void setSecurityOptsString(String securityOptsString) {
         securityOpts = Splitter.on('\n').trimResults().omitEmptyStrings()
                 .splitToList(StringUtils.defaultString(securityOptsString));
+    }
+
+    @CheckForNull
+    public String getStorageOptsString() {
+        return storageOptsString;
+    }
+
+    @DataBoundSetter
+    public void setStorageOptsString(String storageOptsString) {
+        this.storageOptsString = trimToNull(storageOptsString);
     }
 
     // extrahosts
@@ -733,6 +747,10 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
             hostConfig.withShmSize(shmSize);
         }
 
+        if (nonNull(storageOptsString)) {
+            hostConfig.withStorageOpt(parseStorageOpts(storageOptsString));
+        }
+
         if (nonNull(restartPolicy)) {
             hostConfig.withRestartPolicy(restartPolicy.getRestartPolicy());
         }
@@ -748,6 +766,22 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
         return containerConfig;
     }
 
+
+    private static Map<String, String> parseStorageOpts(String storageOptsString) {
+        Map<String, String> options = new LinkedHashMap<>();
+        for (String option : Splitter.on('\n').trimResults().omitEmptyStrings()
+                .split(StringUtils.defaultString(storageOptsString))) {
+            int separator = option.indexOf('=');
+            if (separator <= 0) {
+                throw new IllegalArgumentException("Enter storage options as key=value, one per line.");
+            }
+
+            String key = option.substring(0, separator).trim();
+            String value = option.substring(separator + 1).trim();
+            options.put(key, value);
+        }
+        return options;
+    }
 
     private static Bind parseBind(String[] fields) {
         if (fields.length == 3) {
@@ -836,6 +870,15 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
 
             return FormValidation.ok();
 
+        }
+
+        public FormValidation doCheckStorageOptsString(@QueryParameter String storageOptsString) {
+            try {
+                parseStorageOpts(storageOptsString);
+                return FormValidation.ok();
+            } catch (IllegalArgumentException e) {
+                return FormValidation.error(e.getMessage());
+            }
         }
 
         public FormValidation doCheckVolumesFromString(@QueryParameter String volumesFromString) {

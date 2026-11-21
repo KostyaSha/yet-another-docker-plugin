@@ -8,6 +8,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Prop
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -51,6 +52,29 @@ public class DockerCreateContainerTest {
         settings.setSecurityOptsString("credentialspec=file://domain_gmsa-group.json");
         settings.setSecurityOptsString("  \r\n");
         assertNull(hostConfig(settings).getSecurityOpts());
+    }
+
+    @Test
+    public void passesStorageOptionsToHostConfig() {
+        DockerCreateContainer settings = new DockerCreateContainer();
+        settings.setStorageOptsString("size=30GB\r\n  \r\n size = 50GB \r\n example=a=b ");
+        assertEquals(Map.of("size", "50GB", "example", "a=b"), hostConfig(settings).getStorageOpt());
+    }
+
+    @Test
+    public void omitsStorageOptionsForOldAndClearedConfigurations() {
+        DockerCreateContainer settings = new DockerCreateContainer();
+        assertNull(hostConfig(settings).getStorageOpt());
+        settings.setStorageOptsString("size=50GB");
+        settings.setStorageOptsString("  \r\n");
+        assertNull(hostConfig(settings).getStorageOpt());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void rejectsStorageOptionsWithoutAnEqualsSign() {
+        DockerCreateContainer settings = new DockerCreateContainer();
+        settings.setStorageOptsString("size=50GB\ninvalid");
+        hostConfig(settings);
     }
 
     @Test
