@@ -6,6 +6,7 @@ import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Acce
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.Bind;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.HostConfig;
 import com.github.kostyasha.yad_docker_java.com.github.dockerjava.api.model.PropagationMode;
+import hudson.util.FormValidation;
 import org.junit.Test;
 
 import java.util.List;
@@ -146,6 +147,33 @@ public class DockerCreateContainerTest {
         assertEquals("/container path ", bind.getVolume().getPath());
         assertEquals(AccessMode.ro, bind.getAccessMode());
         assertEquals(PropagationMode.RSHARED, bind.getPropagationMode());
+    }
+
+    @Test
+    public void supportsForwardSlashesInWindowsVolumePaths() {
+        String volumes = "data:c:/data\nc:/jenkins:c:/jenkins: ro\nC:\\host:D:/container/work";
+        assertEquals(FormValidation.Kind.OK,
+                new DockerCreateContainer.DescriptorImpl().doCheckVolumesString(volumes).kind);
+
+        DockerCreateContainer settings = new DockerCreateContainer();
+        settings.setVolumesString(volumes);
+        Bind[] binds = hostConfig(settings).getBinds();
+
+        assertEquals(3, binds.length);
+        assertEquals("data:c:\\data:rw", binds[0].toString());
+        assertEquals("c:\\jenkins:c:\\jenkins:ro", binds[1].toString());
+        assertEquals("C:\\host:D:\\container\\work:rw", binds[2].toString());
+    }
+
+    @Test
+    public void preservesSingleLetterVolumeNamesWithUnixDestinations() {
+        DockerCreateContainer settings = new DockerCreateContainer();
+        settings.setVolumesString("a:/data\nb:/logs:ro");
+
+        Bind[] binds = hostConfig(settings).getBinds();
+        assertEquals(2, binds.length);
+        assertEquals("a:/data:rw", binds[0].toString());
+        assertEquals("b:/logs:ro", binds[1].toString());
     }
 
     private HostConfig hostConfig(DockerCreateContainer settings) {

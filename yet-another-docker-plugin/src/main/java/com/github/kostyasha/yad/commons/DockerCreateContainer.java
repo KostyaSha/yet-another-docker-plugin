@@ -75,6 +75,8 @@ import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 public class DockerCreateContainer implements Describable<DockerCreateContainer> {
     // Match docker-java's field separator, keeping Windows drive prefixes such as C:\ intact.
     private static final Pattern BIND_SEPARATOR = Pattern.compile(":(?!\\\\)");
+    private static final Pattern WINDOWS_FORWARD_SLASH_BIND_PATH = Pattern.compile(
+            "^[A-Za-z]:/[^:]*(?=:(?:[A-Za-z]:)?[/\\\\])|(?<=:)[A-Za-z]:/[^:]*");
     private static final Logger LOG = LoggerFactory.getLogger(DockerCreateContainer.class);
 
     /**
@@ -700,7 +702,7 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
             for (String vol : getVolumes()) {
                 if (nonNull(resolveVar)) vol = resolveVar.apply(vol);
 
-                final String[] group = BIND_SEPARATOR.split(vol);
+                final String[] group = splitVolumeSpec(vol);
                 if (group.length > 1) {
                     if (group[1].equals("/")) {
                         throw new IllegalArgumentException("Invalid bind mount: destination can't be '/'");
@@ -833,6 +835,13 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
         return mounts;
     }
 
+    private static String[] splitVolumeSpec(String specification) {
+        // A leading drive-like prefix needs a destination to distinguish it from a one-letter volume name.
+        String normalized = WINDOWS_FORWARD_SLASH_BIND_PATH.matcher(specification)
+                .replaceAll(match -> Matcher.quoteReplacement(match.group().replace('/', '\\')));
+        return BIND_SEPARATOR.split(normalized);
+    }
+
     private static Bind parseBind(String[] fields) {
         if (fields.length == 3) {
             fields[2] = String.join(",", Splitter.on(',').trimResults().split(fields[2]));
@@ -900,7 +909,7 @@ public class DockerCreateContainer implements Describable<DockerCreateContainer>
                         return FormValidation.error("Invalid volume: path can't be '/'");
                     }
 
-                    final String[] group = BIND_SEPARATOR.split(s);
+                    final String[] group = splitVolumeSpec(s);
                     if (group.length > 3) {
                         return FormValidation.error("Wrong syntax: " + s);
                     } else if (group.length == 2 || group.length == 3) {
